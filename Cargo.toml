@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "sise",
+    "sise-atom",
+    "sise-encoder",
+    "sise-decoder",
+]

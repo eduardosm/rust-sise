@@ -1,0 +1,9 @@
+[package]
+name = "sise-atom"
+version = "0.1.0"
+authors = ["Eduardo Sánchez Muñoz <esm@eduardosm.net>"]
+description = "Auxiliary functions used to encode and decode SISE atom values."
+repository = "https://github.com/eduardosm/rust-sise"
+license = "MIT/Apache-2.0"
+
+[dependencies]
