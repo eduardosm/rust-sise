@@ -5,7 +5,6 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-#[cfg_attr(test, macro_use)]
 extern crate sise;
 
 #[cfg(test)]
@@ -49,16 +48,13 @@ mod compact_style {
     /// # Example
     ///
     /// ```
-    /// #[macro_use]
     /// extern crate sise;
-    /// extern crate sise_encoder;
+    /// use sise::sise_expr;
     ///
-    /// fn main() {
-    ///     let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+    /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
     ///
-    ///     let compact = sise_encoder::serialize(&tree, &mut sise_encoder::CompactStyle::new());
-    ///     assert_eq!(compact, "(example (1 2 3) (a b c))");
-    /// }
+    /// let compact = sise_encoder::serialize(&tree, &mut sise_encoder::CompactStyle::new());
+    /// assert_eq!(compact, "(example (1 2 3) (a b c))");
     /// ```
     #[derive(Debug)]
     pub struct CompactStyle {
@@ -232,26 +228,23 @@ mod spaced_style {
     /// # Example
     ///
     /// ```
-    /// #[macro_use]
     /// extern crate sise;
-    /// extern crate sise_encoder;
+    /// use sise::sise_expr;
     ///
-    /// fn main() {
-    ///     let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+    /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
     ///
-    ///     let spacing_config = sise_encoder::SpacingConfig {
-    ///         line_ending: sise_encoder::LineEnding::Lf,
-    ///         indent_len: 4,
-    ///         indent_char: sise_encoder::IndentChar::Space,
-    ///     };
-    ///     let mut keep_same_line = std::collections::HashSet::new();
-    ///     keep_same_line.insert(tree.index_path(&[1, 1]).unwrap().ref_as_usize());
-    ///     keep_same_line.insert(tree.index_path(&[1, 2]).unwrap().ref_as_usize());
-    ///     keep_same_line.insert(tree.index_path(&[2, 1]).unwrap().ref_as_usize());
-    ///     keep_same_line.insert(tree.index_path(&[2, 2]).unwrap().ref_as_usize());
-    ///     let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
-    ///     assert_eq!(spaced, "(example\n    (1 2 3)\n    (a b c)\n)\n");
-    /// }
+    /// let spacing_config = sise_encoder::SpacingConfig {
+    ///     line_ending: sise_encoder::LineEnding::Lf,
+    ///     indent_len: 4,
+    ///     indent_char: sise_encoder::IndentChar::Space,
+    /// };
+    /// let mut keep_same_line = std::collections::HashSet::new();
+    /// keep_same_line.insert(tree.index_path(&[1, 1]).unwrap().ref_as_usize());
+    /// keep_same_line.insert(tree.index_path(&[1, 2]).unwrap().ref_as_usize());
+    /// keep_same_line.insert(tree.index_path(&[2, 1]).unwrap().ref_as_usize());
+    /// keep_same_line.insert(tree.index_path(&[2, 2]).unwrap().ref_as_usize());
+    /// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+    /// assert_eq!(spaced, "(example\n    (1 2 3)\n    (a b c)\n)\n");
     /// ```
     #[derive(Debug)]
     pub struct SpacedStyle {
@@ -484,27 +477,24 @@ pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, o
 /// # Example
 ///
 /// ```
-/// #[macro_use]
 /// extern crate sise;
-/// extern crate sise_encoder;
+/// use sise::sise_expr;
 ///
-/// fn main() {
-///     let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+/// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 ///
-///     // Compact
-///     let compact = sise_encoder::serialize(&tree, &mut sise_encoder::CompactStyle::new());
-///     assert_eq!(compact, "(example (1 2 3) (a b c))");
+/// // Compact
+/// let compact = sise_encoder::serialize(&tree, &mut sise_encoder::CompactStyle::new());
+/// assert_eq!(compact, "(example (1 2 3) (a b c))");
 ///
-///     // Spaced
-///     let spacing_config = sise_encoder::SpacingConfig {
-///         line_ending: sise_encoder::LineEnding::Lf,
-///         indent_len: 4,
-///         indent_char: sise_encoder::IndentChar::Space,
-///     };
-///     let keep_same_line = std::collections::HashSet::new();
-///     let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
-///     assert_eq!(spaced, "(example\n    (1\n        2\n        3\n    )\n    (a\n        b\n        c\n    )\n)\n");
-/// }
+/// // Spaced
+/// let spacing_config = sise_encoder::SpacingConfig {
+///     line_ending: sise_encoder::LineEnding::Lf,
+///     indent_len: 4,
+///     indent_char: sise_encoder::IndentChar::Space,
+/// };
+/// let keep_same_line = std::collections::HashSet::new();
+/// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+/// assert_eq!(spaced, "(example\n    (1\n        2\n        3\n    )\n    (a\n        b\n        c\n    )\n)\n");
 /// ```
 #[inline]
 pub fn serialize<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>) -> String {

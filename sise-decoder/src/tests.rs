@@ -6,6 +6,7 @@
 // copied, modified, or distributed except according to those terms.
 
 use sise;
+use sise::sise_expr;
 
 macro_rules! pos_array {
     [$(($line:expr, $column:expr)),*] => {

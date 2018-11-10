@@ -17,44 +17,41 @@ mod tests;
 /// Example
 /// -------
 /// ```
-/// #[macro_use]
-/// extern crate sise;
+/// use sise::sise_expr;
 ///
-/// fn main() {
-///     // atom
-///     let value1 = Box::new(sise::Node::Atom(String::from("atom")));
-///     let value2 = sise_expr!("atom");
-///     assert_eq!(value1, value2);
+/// // atom
+/// let value1 = Box::new(sise::Node::Atom(String::from("atom")));
+/// let value2 = sise_expr!("atom");
+/// assert_eq!(value1, value2);
 ///
-///     // ()
-///     let value1 = Box::new(sise::Node::List(vec![]));
-///     let value2 = sise_expr!([]);
-///     assert_eq!(value1, value2);
+/// // ()
+/// let value1 = Box::new(sise::Node::List(vec![]));
+/// let value2 = sise_expr!([]);
+/// assert_eq!(value1, value2);
 ///
-///     // (atom)
-///     let value1 = Box::new(sise::Node::List(vec![
-///         Box::new(sise::Node::Atom(String::from("atom")))
-///     ]));
-///     let value2 = sise_expr!(["atom"]);
-///     assert_eq!(value1, value2);
+/// // (atom)
+/// let value1 = Box::new(sise::Node::List(vec![
+///     Box::new(sise::Node::Atom(String::from("atom")))
+/// ]));
+/// let value2 = sise_expr!(["atom"]);
+/// assert_eq!(value1, value2);
 ///
-///     // (atom (1 2 3) (a b c))
-///     let value1 = Box::new(sise::Node::List(vec![
-///         Box::new(sise::Node::Atom(String::from("atom"))),
-///         Box::new(sise::Node::List(vec![
-///             Box::new(sise::Node::Atom(String::from("1"))),
-///             Box::new(sise::Node::Atom(String::from("2"))),
-///             Box::new(sise::Node::Atom(String::from("3"))),
-///         ])),
-///         Box::new(sise::Node::List(vec![
-///             Box::new(sise::Node::Atom(String::from("a"))),
-///             Box::new(sise::Node::Atom(String::from("b"))),
-///             Box::new(sise::Node::Atom(String::from("c"))),
-///         ])),
-///     ]));
-///     let value2 = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
-///     assert_eq!(value1, value2);
-/// }
+/// // (atom (1 2 3) (a b c))
+/// let value1 = Box::new(sise::Node::List(vec![
+///     Box::new(sise::Node::Atom(String::from("atom"))),
+///     Box::new(sise::Node::List(vec![
+///         Box::new(sise::Node::Atom(String::from("1"))),
+///         Box::new(sise::Node::Atom(String::from("2"))),
+///         Box::new(sise::Node::Atom(String::from("3"))),
+///     ])),
+///     Box::new(sise::Node::List(vec![
+///         Box::new(sise::Node::Atom(String::from("a"))),
+///         Box::new(sise::Node::Atom(String::from("b"))),
+///         Box::new(sise::Node::Atom(String::from("c"))),
+///     ])),
+/// ]));
+/// let value2 = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
+/// assert_eq!(value1, value2);
 /// ```
 #[macro_export]
 macro_rules! sise_expr {
@@ -240,18 +237,15 @@ impl Node {
     /// # Example
     ///
     /// ```
-    /// #[macro_use]
-    /// extern crate sise;
+    /// use sise::sise_expr;
     ///
-    /// pub fn main() {
-    ///     let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
-    ///     assert_eq!(tree.index_path(&[0]).unwrap(), "example");
-    ///     assert_eq!(tree.index_path(&[1]).unwrap(), &*sise_expr!(["1", "2", "3"]));
-    ///     assert_eq!(tree.index_path(&[1, 0]).unwrap(), "1");
-    ///     assert_eq!(tree.index_path(&[2, 0]).unwrap(), "a");
-    ///     assert!(tree.index_path(&[3]).is_none());
-    ///     assert!(tree.index_path(&[0, 1]).is_none());
-    /// }
+    /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+    /// assert_eq!(tree.index_path(&[0]).unwrap(), "example");
+    /// assert_eq!(tree.index_path(&[1]).unwrap(), &*sise_expr!(["1", "2", "3"]));
+    /// assert_eq!(tree.index_path(&[1, 0]).unwrap(), "1");
+    /// assert_eq!(tree.index_path(&[2, 0]).unwrap(), "a");
+    /// assert!(tree.index_path(&[3]).is_none());
+    /// assert!(tree.index_path(&[0, 1]).is_none());
     /// ```
     pub fn index_path(&self, path: &[usize]) -> Option<&Self> {
         let mut current_node = self;

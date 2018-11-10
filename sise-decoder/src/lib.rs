@@ -5,7 +5,6 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-#[cfg_attr(test, macro_use)]
 extern crate sise;
 
 #[cfg(test)]
