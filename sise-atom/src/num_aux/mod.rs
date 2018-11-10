@@ -1,4 +1,4 @@
-// Taken from rust 3bc2ca7e4f8507f82a4c357ee19300166bcd8099 libcore.
+// Taken from rust 4cd3294a1d0c5b34020ac35cf7cc00044f7c3b19 libcore.
 //
 // Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
