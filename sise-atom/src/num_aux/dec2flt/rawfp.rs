@@ -30,11 +30,11 @@
 use std::cmp::Ordering::{Less, Equal, Greater};
 use std::ops::{Add, Mul, Div, Neg};
 use std::fmt::{Debug, LowerExp};
-use num_aux::diy_float::Fp;
+use crate::num_aux::diy_float::Fp;
 use std::num::FpCategory::{Infinite, Zero, Subnormal, Normal, Nan};
 use std::num::FpCategory;
-use num_aux::dec2flt::num::{self, Big};
-use num_aux::dec2flt::table;
+use crate::num_aux::dec2flt::num::{self, Big};
+use crate::num_aux::dec2flt::table;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Unpacked {
@@ -153,8 +153,8 @@ macro_rules! other_constants {
         const MAX_SIG: u64 = (1 << Self::SIG_BITS) - 1;
         const MIN_SIG: u64 = 1 << (Self::SIG_BITS - 1);
 
-        const INFINITY: Self = $crate::std::$type::INFINITY;
-        const NAN: Self = $crate::std::$type::NAN;
+        const INFINITY: Self = std::$type::INFINITY;
+        const NAN: Self = std::$type::NAN;
         const ZERO: Self = 0.0;
     }
 }
@@ -364,7 +364,7 @@ pub fn prev_float<T: RawFloat>(x: T) -> T {
 }
 
 // Find the smallest floating point number strictly larger than the argument.
-// This operation is saturating, i.e. next_float(inf) == inf.
+// This operation is saturating, i.e., next_float(inf) == inf.
 // Unlike most code in this module, this function does handle zero, subnormals, and infinities.
 // However, like all other code here, it does not deal with NaN and negative numbers.
 pub fn next_float<T: RawFloat>(x: T) -> T {

@@ -14,7 +14,7 @@
 
 use std::cmp::Ordering::{self, Less, Equal, Greater};
 
-pub use num_aux::bignum::Big32x40 as Big;
+pub use crate::num_aux::bignum::Big32x40 as Big;
 
 /// Test whether truncating all bits less significant than `ones_place` introduces
 /// a relative error less, equal, or greater than 0.5 ULP.

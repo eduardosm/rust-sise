@@ -1,4 +1,4 @@
-// Taken from rust 4cd3294a1d0c5b34020ac35cf7cc00044f7c3b19 libcore.
+// Taken from rust 3a75e80557a103497cffbcab395a2f37061a77ea libcore.
 //
 // Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
@@ -129,7 +129,7 @@ fn from_str_radix<T: FromStrRadixHelper>(src: &str, radix: u32) -> Result<T, Par
 /// # Potential causes
 ///
 /// Among other causes, `ParseIntError` can be thrown because of leading or trailing whitespace
-/// in the string e.g. when it is obtained from the standard input.
+/// in the string e.g., when it is obtained from the standard input.
 /// Using the [`str.trim()`] method ensures that no whitespace remains before parsing.
 ///
 /// [`str.trim()`]: ../../std/primitive.str.html#method.trim
@@ -140,14 +140,28 @@ pub struct ParseIntError {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum IntErrorKind {
+pub enum IntErrorKind {
+    /// Value being parsed is empty.
+    ///
+    /// Among other causes, this variant will be constructed when parsing an empty string.
     Empty,
+    /// Contains an invalid digit.
+    ///
+    /// Among other causes, this variant will be constructed when parsing a string that
+    /// contains a letter.
     InvalidDigit,
+    /// Integer is too large to store in target integer type.
     Overflow,
+    /// Integer is too small to store in target integer type.
     Underflow,
 }
 
 impl ParseIntError {
+    /// Outputs the detailed cause of parsing an integer failing.
+    pub fn kind(&self) -> &IntErrorKind {
+        &self.kind
+    }
+
     #[doc(hidden)]
     pub fn __description(&self) -> &str {
         match self.kind {
@@ -165,7 +179,7 @@ impl fmt::Display for ParseIntError {
     }
 }
 
-pub use num_aux::dec2flt::ParseFloatError;
+pub use self::dec2flt::ParseFloatError;
 
 static ASCII_LOWERCASE_MAP: [u8; 256] = [
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,

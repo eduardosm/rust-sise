@@ -12,7 +12,7 @@
 
 use std::{f32, f64};
 use std::num::FpCategory;
-use num_aux::dec2flt::rawfp::RawFloat;
+use crate::num_aux::dec2flt::rawfp::RawFloat;
 
 /// Decoded unsigned finite value, such that:
 ///

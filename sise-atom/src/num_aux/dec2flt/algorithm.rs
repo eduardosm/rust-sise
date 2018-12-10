@@ -12,10 +12,10 @@
 
 use std::cmp::min;
 use std::cmp::Ordering::{Less, Equal, Greater};
-use num_aux::diy_float::Fp;
-use num_aux::dec2flt::table;
-use num_aux::dec2flt::rawfp::{self, Unpacked, RawFloat, fp_to_float, next_float, prev_float};
-use num_aux::dec2flt::num::{self, Big};
+use crate::num_aux::diy_float::Fp;
+use crate::num_aux::dec2flt::table;
+use crate::num_aux::dec2flt::rawfp::{self, Unpacked, RawFloat, fp_to_float, next_float, prev_float};
+use crate::num_aux::dec2flt::num::{self, Big};
 
 /// Number of significand bits in Fp
 const P: u32 = 64;
@@ -61,9 +61,9 @@ mod fpu_precision {
     ///
     /// The only field which is relevant for the following code is PC, Precision Control. This
     /// field determines the precision of the operations performed by the  FPU. It can be set to:
-    ///  - 0b00, single precision i.e. 32-bits
-    ///  - 0b10, double precision i.e. 64-bits
-    ///  - 0b11, double extended precision i.e. 80-bits (default state)
+    ///  - 0b00, single precision i.e., 32-bits
+    ///  - 0b10, double precision i.e., 64-bits
+    ///  - 0b11, double extended precision i.e., 80-bits (default state)
     /// The 0b01 value is reserved and should not be used.
     pub struct FPUControlWord(u16);
 
