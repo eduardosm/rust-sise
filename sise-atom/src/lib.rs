@@ -21,12 +21,9 @@ pub fn encode_bool(value: bool) -> &'static str {
 macro_rules! encode_signed_int {
     ($sint:ident, $uint:ident, $value:expr, $output:expr) => {
         let mut remaining_digits: $uint = {
-            if $value == $sint::min_value() {
+            if $value < 0 {
                 $output.push('-');
-                $sint::min_value() as $uint
-            } else if $value < 0 {
-                $output.push('-');
-                (-$value) as $uint
+                $value.wrapping_neg() as $uint
             } else {
                 $value as $uint
             }
@@ -433,10 +430,8 @@ macro_rules! decode_signed_int {
         }
 
         if sign {
-            if num == ($sint::min_value() as $uint) {
-                Some($sint::min_value())
-            } else if num <= ($sint::max_value() as $uint) {
-                Some(-(num as $sint))
+            if num <= ($sint::min_value() as $uint) {
+                Some(num.wrapping_neg() as $sint)
             } else {
                 None
             }
