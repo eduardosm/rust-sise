@@ -2,6 +2,7 @@
 name = "sise-encoder"
 version = "0.1.0"
 authors = ["Eduardo Sánchez Muñoz <esm@eduardosm.net>"]
+edition = "2018"
 description = "SISE (Simple S-expression) serializer."
 repository = "https://github.com/eduardosm/rust-sise"
 license = "MIT/Apache-2.0"

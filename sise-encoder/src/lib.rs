@@ -31,8 +31,6 @@ pub trait Style<'a> {
 }
 
 mod compact_style {
-    use sise;
-
     #[derive(Debug)]
     enum State {
         Invalid,
@@ -71,11 +69,11 @@ mod compact_style {
         }
 
         fn get_state(&mut self) -> State {
-            ::std::mem::replace(&mut self.state, State::Invalid)
+            std::mem::replace(&mut self.state, State::Invalid)
         }
     }
 
-    impl<'a> ::Style<'a> for CompactStyle {
+    impl<'a> crate::Style<'a> for CompactStyle {
         fn begin(&mut self, _output: &mut String) {
             self.state = State::Beginning;
         }
@@ -151,8 +149,7 @@ mod compact_style {
         }
     }
 }
-
-pub use compact_style::CompactStyle;
+pub use self::compact_style::CompactStyle;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum LineEnding {
@@ -206,7 +203,6 @@ impl SpacingConfig {
 
 mod spaced_style {
     use std::collections::HashSet;
-    use sise;
 
     #[derive(Debug)]
     enum State {
@@ -248,7 +244,7 @@ mod spaced_style {
     /// ```
     #[derive(Debug)]
     pub struct SpacedStyle {
-        spacing_config: ::SpacingConfig,
+        spacing_config: crate::SpacingConfig,
         keep_same_line: HashSet<usize>,
 
         indent_depth: usize,
@@ -257,7 +253,7 @@ mod spaced_style {
     }
 
     impl SpacedStyle {
-        pub fn new(spacing_config: ::SpacingConfig, keep_same_line: HashSet<usize>) -> Self {
+        pub fn new(spacing_config: crate::SpacingConfig, keep_same_line: HashSet<usize>) -> Self {
             SpacedStyle {
                 spacing_config: spacing_config,
                 keep_same_line: keep_same_line,
@@ -269,7 +265,7 @@ mod spaced_style {
         }
 
         fn get_state(&mut self) -> State {
-            ::std::mem::replace(&mut self.state, State::Invalid)
+            std::mem::replace(&mut self.state, State::Invalid)
         }
 
         fn keep_same_line(&self, node: &sise::Node) -> bool {
@@ -277,7 +273,7 @@ mod spaced_style {
         }
     }
 
-    impl<'a> ::Style<'a> for SpacedStyle {
+    impl<'a> crate::Style<'a> for SpacedStyle {
         fn begin(&mut self, _output: &mut String) {
             self.state = State::Beginning;
         }
@@ -390,8 +386,7 @@ mod spaced_style {
         }
     }
 }
-
-pub use spaced_style::SpacedStyle;
+pub use self::spaced_style::SpacedStyle;
 
 /// Serializes `root_node`, appending the result to `output`.
 ///
