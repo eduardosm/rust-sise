@@ -1,9 +1,9 @@
 [package]
-name = "sise-decoder"
+name = "sise-read-util"
 version = "0.2.0"
 authors = ["Eduardo Sánchez Muñoz <esm@eduardosm.net>"]
 edition = "2018"
-description = "SISE (Simple S-expression) parser."
+description = "SISE (Simple S-expression) read utilities."
 repository = "https://github.com/eduardosm/rust-sise"
 license = "MIT/Apache-2.0"
 
