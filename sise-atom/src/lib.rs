@@ -32,7 +32,7 @@ macro_rules! encode_signed_int {
         loop {
             let current_digit = (remaining_digits % 10) as u8;
             remaining_digits /= 10;
-            $output.insert(digits_beginning, (current_digit + b'0') as char);
+            $output.insert(digits_beginning, char::from(current_digit + b'0'));
             if remaining_digits == 0 {
                 break;
             }
@@ -102,7 +102,7 @@ macro_rules! encode_unsigned_int {
         loop {
             let current_digit = (remaining_digits % 10) as u8;
             remaining_digits /= 10;
-            $output.insert(digits_beginning, (current_digit + b'0') as char);
+            $output.insert(digits_beginning, char::from(current_digit + b'0'));
             if remaining_digits == 0 {
                 break;
             }
@@ -187,35 +187,35 @@ fn encode_float_generic(sign: bool, full_decoded: num_aux::flt2dec::decoder::Ful
             if exp <= 0 {
                 let exp = (-exp) as u16;
                 if exp > ZEROS_THRESHOLD {
-                    output.push(buf[0] as char);
+                    output.push(char::from(buf[0]));
                     output.push('.');
                     if digits > 1 {
                         for &chr in buf[1 .. digits].iter() {
-                            output.push(chr as char);
+                            output.push(char::from(chr));
                         }
                     } else {
                         output.push('0');
                     }
                     output.push_str("e-");
-                    encode_u32_into((exp + 1) as u32, output);
+                    encode_u32_into(u32::from(exp + 1), output);
                 } else {
                     output.push_str("0.");
                     for _ in 0 .. exp {
                         output.push('0');
                     }
                     for &chr in buf[0 .. digits].iter() {
-                        output.push(chr as char);
+                        output.push(char::from(chr));
                     }
                 }
             } else /*if exp>0*/ {
                 let exp = exp as usize;
                 if exp >= digits {
                     if exp > ZEROS_THRESHOLD as usize {
-                        output.push(buf[0] as char);
+                        output.push(char::from(buf[0]));
                         output.push('.');
                         if digits > 1 {
                             for &chr in buf[1 .. digits].iter() {
-                                output.push(chr as char);
+                                output.push(char::from(chr));
                             }
                         } else {
                             output.push('0');
@@ -224,7 +224,7 @@ fn encode_float_generic(sign: bool, full_decoded: num_aux::flt2dec::decoder::Ful
                         encode_u32_into((exp - 1) as u32, output);
                     } else {
                         for &chr in buf[0 .. digits].iter() {
-                            output.push(chr as char);
+                            output.push(char::from(chr));
                         }
                         for _ in 0 .. (exp - digits) {
                             output.push('0');
@@ -233,11 +233,11 @@ fn encode_float_generic(sign: bool, full_decoded: num_aux::flt2dec::decoder::Ful
                     }
                 } else /*if exp < digits*/ {
                     for &chr in buf[0 .. exp].iter() {
-                        output.push(chr as char);
+                        output.push(char::from(chr));
                     }
                     output.push('.');
                     for &chr in buf[exp .. digits].iter() {
-                        output.push(chr as char);
+                        output.push(char::from(chr));
                     }
                 }
             }
@@ -271,9 +271,9 @@ pub fn encode_f64(value: f64) -> String {
 
 fn nibble_to_hex(nibble: u8) -> char {
     if nibble < 10 {
-        (b'0' + nibble) as char
+        char::from(b'0' + nibble)
     } else {
-        (b'a' + nibble - 10) as char
+        char::from(b'a' + nibble - 10)
     }
 }
 
@@ -286,7 +286,7 @@ pub fn encode_byte_string_into(string: &[u8], output: &mut String) {
             b'\r' => output.push_str("\\r"),
             b'"' => output.push_str("\\\""),
             b'\\' => output.push_str("\\\\"),
-            0x20 ... 0x7E => output.push(chr as char),
+            0x20 ... 0x7E => output.push(char::from(chr)),
             _ => {
                 output.push_str("\\x");
                 output.push(nibble_to_hex(chr >> 4));
@@ -313,7 +313,7 @@ pub fn encode_ascii_string_into(string: &str, output: &mut String) {
             b'\r' => output.push_str("\\r"),
             b'"' => output.push_str("\\\""),
             b'\\' => output.push_str("\\\\"),
-            0x20 ... 0x7E => output.push(chr as char),
+            0x20 ... 0x7E => output.push(char::from(chr)),
             _ => {
                 assert!(chr <= 0x7F, "Invalid ASCII character");
                 output.push_str("\\x");
@@ -341,11 +341,11 @@ pub fn encode_utf8_string_into(string: &str, output: &mut String) {
             '\r' => output.push_str("\\r"),
             '"' => output.push_str("\\\""),
             '\\' => output.push_str("\\\\"),
-            '\x20' ... '\x7E' => output.push(chr as char),
+            '\x20' ... '\x7E' => output.push(chr),
             _ => {
                 output.push_str("\\u{");
                 let code_beginning = output.len();
-                let mut remaining_digits = chr as u32;
+                let mut remaining_digits = u32::from(chr);
                 loop {
                     output.insert(code_beginning, nibble_to_hex((remaining_digits & 0xF) as u8));
                     remaining_digits >>= 4;
@@ -402,7 +402,7 @@ macro_rules! decode_signed_int {
                         }
                         Some('+') => state = State::AfterSign,
                         Some(chr @ '0' ... '9') => {
-                            num = (chr as u8 - b'0') as $uint;
+                            num = $uint::from(chr as u8 - b'0');
                             state = State::Digits;
                         }
                         Some(_) | None => return None,
@@ -411,7 +411,7 @@ macro_rules! decode_signed_int {
                 State::AfterSign => {
                     match iter.next() {
                         Some(chr @ '0' ... '9') => {
-                            num = (chr as u8 - b'0') as $uint;
+                            num = $uint::from(chr as u8 - b'0');
                             state = State::Digits;
                         }
                         Some(_) | None => return None,
@@ -420,7 +420,7 @@ macro_rules! decode_signed_int {
                 State::Digits => {
                     match iter.next() {
                         Some(chr @ '0' ... '9') => {
-                            num = num.checked_mul(10)?.checked_add((chr as u8 - b'0') as $uint)?;
+                            num = num.checked_mul(10)?.checked_add($uint::from(chr as u8 - b'0'))?;
                         }
                         Some(_) => return None,
                         None => break,
@@ -481,7 +481,7 @@ macro_rules! decode_unsigned_int {
                 State::Beginning => {
                     match iter.next() {
                         Some(chr @ '0' ... '9') => {
-                            num = (chr as u8 - b'0') as $uint;
+                            num = $uint::from(chr as u8 - b'0');
                             state = State::Digits;
                         }
                         Some(_) | None => return None,
@@ -490,7 +490,7 @@ macro_rules! decode_unsigned_int {
                 State::Digits => {
                     match iter.next() {
                         Some(chr @ '0' ... '9') => {
-                            num = num.checked_mul(10)?.checked_add((chr as u8 - b'0') as $uint)?;
+                            num = num.checked_mul(10)?.checked_add($uint::from(chr as u8 - b'0'))?;
                         }
                         Some(_) => return None,
                         None => break,
@@ -523,7 +523,7 @@ pub fn decode_u128(atom: &str) -> Option<u128> {
     decode_unsigned_int!(u128, atom)
 }
 
-trait Float {
+trait Float: Copy {
     const NEG_INFINITY: Self;
 
     fn is_finite(&self) -> bool;
@@ -656,7 +656,7 @@ fn decode_float_generic<T>(atom: &str) -> Option<T>
                     }
                     Some('+') => state = State::AfterExponentSign,
                     Some(chr @ '0' ... '9') => {
-                        exp_abs = (chr as u8 - b'0') as u64;
+                        exp_abs = u64::from(chr as u8 - b'0');
                         state = State::ExponentDigits;
                     }
                     Some(_) | None => return None,
@@ -665,7 +665,7 @@ fn decode_float_generic<T>(atom: &str) -> Option<T>
             State::AfterExponentSign => {
                 match iter.next() {
                     Some(chr @ '0' ... '9') => {
-                        exp_abs = (chr as u8 - b'0') as u64;
+                        exp_abs = u64::from(chr as u8 - b'0');
                         state = State::ExponentDigits;
                     }
                     Some(_) | None => return None,
@@ -676,7 +676,7 @@ fn decode_float_generic<T>(atom: &str) -> Option<T>
                     Some(chr @ '0' ... '9') => {
                         if exp_abs != u64::max_value() {
                             exp_abs = exp_abs.checked_mul(10)
-                                .and_then(|x| x.checked_add((chr as u8 - b'0') as u64))
+                                .and_then(|x| x.checked_add(u64::from(chr as u8 - b'0')))
                                 .unwrap_or(u64::max_value());
                         }
                     }
@@ -906,7 +906,7 @@ pub fn decode_ascii_string(atom: &str) -> Option<String> {
                         if chr > 0x7F {
                             return None;
                         }
-                        string.push(chr as char);
+                        string.push(char::from(chr));
                         state = State::Normal;
                     }
                     None => return None,
@@ -1003,7 +1003,7 @@ pub fn decode_utf8_string(atom: &str) -> Option<String> {
                         if chr > 0x7F {
                             return None;
                         }
-                        string.push(chr as char);
+                        string.push(char::from(chr));
                         state = State::Normal;
                     }
                     None => return None,
@@ -1019,7 +1019,7 @@ pub fn decode_utf8_string(atom: &str) -> Option<String> {
                 match iter.next() {
                     Some(chr) => {
                         let hex1 = hex_digit_to_u8(chr)?;
-                        state = State::UnicodeEscape3(hex1 as u32);
+                        state = State::UnicodeEscape3(u32::from(hex1));
                     }
                     None => return None,
                 }
@@ -1034,7 +1034,7 @@ pub fn decode_utf8_string(atom: &str) -> Option<String> {
                         if current_hex >= 0x10000000 {
                             return None;
                         }
-                        let new_digit = hex_digit_to_u8(chr)? as u32;
+                        let new_digit = u32::from(hex_digit_to_u8(chr)?);
                         state = State::UnicodeEscape3((current_hex << 4) | new_digit);
                     }
                     None => return None,
