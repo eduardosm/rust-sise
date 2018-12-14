@@ -206,7 +206,7 @@ impl std::error::Error for Error {
 /// let data = b"(test (1 2 3))";
 /// let limits = sise_decoder::Limits::unlimited();
 /// match sise_decoder::parse(data, &limits) {
-///     Ok((root_node, pos_map)) => {
+///     Ok((root_node, pos_tree)) => {
 ///         println!("{:?}", root_node);
 ///     }
 ///     Err(e) => {
@@ -214,25 +214,24 @@ impl std::error::Error for Error {
 ///     }
 /// }
 /// ```
-pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::PosMap), Error> {
+pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::PosTree), Error> {
     assert!(limits.max_atom_len >= 1);
 
     let mut lexer = Lexer::new(data.iter().map(|&c| c).peekable());
 
     enum State {
         Beginning,
-        List(sise::Pos, Vec<Box<sise::Node>>),
-        Finishing(Box<sise::Node>),
+        List(sise::PosTree, Vec<Box<sise::Node>>),
+        Finishing(sise::PosTree, Box<sise::Node>),
     }
 
     enum StackItem {
-        List(sise::Pos, Vec<Box<sise::Node>>),
+        List(sise::PosTree, Vec<Box<sise::Node>>),
     }
 
     let mut state = State::Beginning;
     let mut stack = Vec::new();
     let mut depth = 0;
-    let mut pos_map = sise::PosMap::new();
 
     loop {
         let (token_pos, token) = lexer.get_token(limits.max_atom_len)?;
@@ -243,20 +242,19 @@ pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::Pos
                         if depth == limits.max_depth {
                             return Err(Error::TooDeep { pos: token_pos });
                         }
-                        state = State::List(token_pos, Vec::new());
+                        state = State::List(sise::PosTree::new(token_pos), Vec::new());
                         depth += 1;
                     }
                     Token::Atom(atom) => {
                         let root_node = Box::new(sise::Node::Atom(atom));
-                        pos_map.set_pos(&root_node, token_pos);
-                        state = State::Finishing(root_node);
+                        state = State::Finishing(sise::PosTree::new(token_pos), root_node);
                     }
                     token => {
                         return Err(Error::UnexpectedToken { pos: token_pos, token: token });
                     }
                 }
             }
-            State::List(list_node_pos, mut list) => {
+            State::List(mut list_node_pos_tree, mut list) => {
                 match token {
                     Token::LeftParen => {
                         if list.len() == limits.max_list_len {
@@ -266,21 +264,21 @@ pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::Pos
                             return Err(Error::TooDeep { pos: token_pos });
                         }
 
-                        stack.push(StackItem::List(list_node_pos, list));
-                        state = State::List(token_pos, Vec::new());
+                        stack.push(StackItem::List(list_node_pos_tree, list));
+                        state = State::List(sise::PosTree::new(token_pos), Vec::new());
                         depth += 1;
                     }
                     Token::RightParen => {
                         let node = Box::new(sise::Node::List(list));
-                        pos_map.set_pos(&node, list_node_pos);
                         depth -= 1;
                         match stack.pop() {
-                            Some(StackItem::List(parent_node_pos, mut parent_list)) => {
+                            Some(StackItem::List(mut parent_node_pos_tree, mut parent_list)) => {
+                                parent_node_pos_tree.children.push(list_node_pos_tree);
                                 parent_list.push(node);
-                                state = State::List(parent_node_pos, parent_list);
+                                state = State::List(parent_node_pos_tree, parent_list);
                             }
                             None => {
-                                state = State::Finishing(node);
+                                state = State::Finishing(list_node_pos_tree, node);
                             }
                         }
                     }
@@ -290,21 +288,21 @@ pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::Pos
                         }
 
                         let atom_node = Box::new(sise::Node::Atom(atom));
-                        pos_map.set_pos(&atom_node, token_pos);
+                        list_node_pos_tree.children.push(sise::PosTree::new(token_pos));
                         list.push(atom_node);
-                        state = State::List(list_node_pos, list);
+                        state = State::List(list_node_pos_tree, list);
                     }
                     _ => {
                         return Err(Error::UnexpectedToken { pos: token_pos, token: token });
                     }
                 }
             }
-            State::Finishing(root_node) => {
+            State::Finishing(pos_tree, root_node) => {
                 assert!(stack.is_empty());
                 assert_eq!(depth, 0);
                 match token {
                     Token::Eof => {
-                        return Ok((root_node, pos_map));
+                        return Ok((root_node, pos_tree));
                     }
                     _ => {
                         return Err(Error::ExpectedEof { pos: token_pos });

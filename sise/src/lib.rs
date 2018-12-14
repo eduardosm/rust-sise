@@ -91,27 +91,32 @@ impl std::fmt::Display for ReprPosValue {
 }
 
 /// Maps nodes with their positions in the original text file.
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct PosMap {
-    map: HashMap<usize, Pos>,
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PosTree {
+    pub pos: Pos,
+    pub children: Vec<PosTree>,
 }
 
-impl PosMap {
+impl PosTree {
     #[inline]
-    pub fn new() -> Self {
-        PosMap { map: HashMap::new() }
+    pub fn new(pos: Pos) -> Self {
+        Self {
+            pos: pos,
+            children: Vec::new(),
+        }
     }
 
-    /// Gets the position of node `node`, returning `None` if unknown.
-    #[inline]
-    pub fn get_pos(&self, node: &Node) -> Option<Pos> {
-        self.map.get(&node.ref_as_usize()).map(|&pos| pos)
-    }
-
-    /// Sets or overrides the position of node `node`.
-    #[inline]
-    pub fn set_pos(&mut self, node: &Node, pos: Pos) {
-        self.map.insert(node.ref_as_usize(), pos);
+    /// Traverses a tree with indices from `path`. Similar to `Node::index_path`.
+    pub fn index_path(&self, path: &[usize]) -> Option<&Self> {
+        let mut current_node = self;
+        for &index in path {
+            if let Some(next_node) = self.children.get(index) {
+                current_node = next_node;
+            } else {
+                return None;
+            }
+        }
+        Some(current_node)
     }
 }
 
