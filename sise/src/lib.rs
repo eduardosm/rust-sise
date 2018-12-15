@@ -326,18 +326,18 @@ pub struct BuilderBase {
 /// let mut builder = builder_base.builder();
 ///
 /// builder.push_atom(String::from("atom-1"));
-/// assert_eq!(builder.last_item_index_path(), [0]);
+/// assert_eq!(builder.last_index_path(), [0]);
 /// builder.push_atom(String::from("atom-2"));
-/// assert_eq!(builder.last_item_index_path(), [1]);
+/// assert_eq!(builder.last_index_path(), [1]);
 /// builder.begin_list();
 /// builder.push_atom(String::from("atom-3"));
-/// assert_eq!(builder.last_item_index_path(), [2, 0]);
+/// assert_eq!(builder.last_index_path(), [2, 0]);
 /// builder.push_atom(String::from("atom-4"));
-/// assert_eq!(builder.last_item_index_path(), [2, 1]);
+/// assert_eq!(builder.last_index_path(), [2, 1]);
 /// builder.end_list();
-/// assert_eq!(builder.last_item_index_path(), [2]);
+/// assert_eq!(builder.last_index_path(), [2]);
 /// builder.push_atom(String::from("atom-5"));
-/// assert_eq!(builder.last_item_index_path(), [3]);
+/// assert_eq!(builder.last_index_path(), [3]);
 /// builder.finish();
 ///
 /// let root_node = builder_base.into_node();
@@ -384,7 +384,7 @@ impl Default for BuilderBase {
 
 impl<'a> Builder<'a> {
     /// Returns the index path of the last inserted node.
-    pub fn last_item_index_path(&self) -> Vec<usize> {
+    pub fn last_index_path(&self) -> Vec<usize> {
         let mut path = Vec::with_capacity(self.base.stack.len() + 1);
         for stack_item in self.base.stack.iter() {
             path.push(stack_item.len());
