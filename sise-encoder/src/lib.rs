@@ -224,7 +224,6 @@ mod spaced_style {
     /// # Example
     ///
     /// ```
-    /// extern crate sise;
     /// use sise::sise_expr;
     ///
     /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
@@ -239,6 +238,45 @@ mod spaced_style {
     /// keep_same_line.insert(tree.index_path(&[1, 2]).unwrap().ref_as_usize());
     /// keep_same_line.insert(tree.index_path(&[2, 1]).unwrap().ref_as_usize());
     /// keep_same_line.insert(tree.index_path(&[2, 2]).unwrap().ref_as_usize());
+    /// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+    /// assert_eq!(spaced, "(example\n    (1 2 3)\n    (a b c)\n)\n");
+    /// ```
+    ///
+    /// # Example with 'sise::Builder'
+    ///
+    /// ```
+    /// let mut builder_base = sise::BuilderBase::new();
+    /// let mut builder = builder_base.builder();
+    ///
+    /// let mut keep_same_line_paths = Vec::new();
+    ///
+    /// builder.push_atom(String::from("example"));
+    /// builder.begin_list();
+    /// builder.push_atom(String::from("1"));
+    /// builder.push_atom(String::from("2"));
+    /// keep_same_line_paths.push(builder.last_item_index_path());
+    /// builder.push_atom(String::from("3"));
+    /// keep_same_line_paths.push(builder.last_item_index_path());
+    /// builder.end_list();
+    /// builder.begin_list();
+    /// builder.push_atom(String::from("a"));
+    /// builder.push_atom(String::from("b"));
+    /// keep_same_line_paths.push(builder.last_item_index_path());
+    /// builder.push_atom(String::from("c"));
+    /// keep_same_line_paths.push(builder.last_item_index_path());
+    /// builder.end_list();
+    /// builder.finish();
+    /// let tree = builder_base.into_node();
+    ///
+    /// let spacing_config = sise_encoder::SpacingConfig {
+    ///     line_ending: sise_encoder::LineEnding::Lf,
+    ///     indent_len: 4,
+    ///     indent_char: sise_encoder::IndentChar::Space,
+    /// };
+    /// let mut keep_same_line = std::collections::HashSet::new();
+    /// for keep_same_line_path in keep_same_line_paths {
+    ///     keep_same_line.insert(tree.index_path(&keep_same_line_path).unwrap().ref_as_usize());
+    /// }
     /// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
     /// assert_eq!(spaced, "(example\n    (1 2 3)\n    (a b c)\n)\n");
     /// ```
