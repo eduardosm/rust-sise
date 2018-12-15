@@ -7,8 +7,6 @@
 
 //! SISE (Simple S-expression) is a file format based on S-expressions.
 
-use std::collections::HashMap;
-
 #[cfg(test)]
 mod tests;
 
@@ -306,6 +304,150 @@ impl From<Vec<Box<Node>>> for Node {
     #[inline]
     fn from(list: Vec<Box<Node>>) -> Node {
         Node::List(list)
+    }
+}
+
+/// Base struct from which `TreeBuilder` are created.
+/// See `TreeBuilder` example.
+pub struct TreeBuilderBase {
+    stack: Vec<Vec<Box<Node>>>,
+    current: Vec<Box<Node>>,
+}
+
+/// Helper struct to build SISE trees and get index paths
+/// of the inserted nodes.
+///
+/// # Example
+///
+/// ```
+/// use sise::sise_expr;
+///
+/// let mut builder_base = sise::TreeBuilderBase::new();
+/// let mut builder = builder_base.builder();
+///
+/// builder.push_atom(String::from("atom-1"));
+/// assert_eq!(builder.last_item_index_path(), [0]);
+/// builder.push_atom(String::from("atom-2"));
+/// assert_eq!(builder.last_item_index_path(), [1]);
+/// builder.begin_list();
+/// builder.push_atom(String::from("atom-3"));
+/// assert_eq!(builder.last_item_index_path(), [2, 0]);
+/// builder.push_atom(String::from("atom-4"));
+/// assert_eq!(builder.last_item_index_path(), [2, 1]);
+/// builder.end_list();
+/// assert_eq!(builder.last_item_index_path(), [2]);
+/// builder.push_atom(String::from("atom-5"));
+/// assert_eq!(builder.last_item_index_path(), [3]);
+/// builder.finish();
+///
+/// let root_node = builder_base.into_node();
+/// let expected = sise_expr!(["atom-1", "atom-2", ["atom-3", "atom-4"], "atom-5"]);
+/// assert_eq!(root_node, *expected);
+/// ```
+pub struct TreeBuilder<'a> {
+    base: &'a mut TreeBuilderBase,
+    min_depth: usize,
+}
+
+impl TreeBuilderBase {
+    #[inline]
+    pub fn new() -> Self {
+        Self {
+            stack: Vec::new(),
+            current: Vec::new(),
+        }
+    }
+
+    #[inline]
+    pub fn builder(&mut self) -> TreeBuilder {
+        assert!(self.stack.is_empty());
+        assert!(self.current.is_empty());
+        TreeBuilder {
+            base: self,
+            min_depth: 0,
+        }
+    }
+
+    #[inline]
+    pub fn into_node(self) -> Node {
+        assert!(self.stack.is_empty());
+        Node::List(self.current)
+    }
+}
+
+impl Default for TreeBuilderBase {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<'a> TreeBuilder<'a> {
+    /// Returns the index path of the last inserted node.
+    pub fn last_item_index_path(&self) -> Vec<usize> {
+        let mut path = Vec::with_capacity(self.base.stack.len() + 1);
+        for stack_item in self.base.stack.iter() {
+            path.push(stack_item.len());
+        }
+        if !self.base.current.is_empty() {
+            path.push(self.base.current.len() - 1);
+        }
+        path
+    }
+
+    /// Creates a builder that won't allow to pop further.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let r = std::panic::catch_unwind(|| {
+    ///     let mut builder_base = sise::TreeBuilderBase::new();
+    ///     let mut builder = builder_base.builder();
+    ///
+    ///     builder.begin_list();
+    ///     let mut builder2 = builder.sub_builder();
+    ///     builder2.end_list();
+    /// });
+    /// assert!(r.is_err());
+    /// ```
+    #[inline]
+    pub fn sub_builder(&'a mut self) -> Self {
+        let min_depth = self.base.stack.len();
+        TreeBuilder {
+            base: self.base,
+            min_depth: min_depth,
+        }
+    }
+
+    /// Adds `node` into the current list.
+    pub fn push_node(&mut self, node: Node) {
+        self.base.current.push(Box::new(node));
+    }
+
+    /// Adds `atom` into the current list.
+    pub fn push_atom(&mut self, atom: String) {
+        self.base.current.push(Box::new(Node::Atom(atom)));
+    }
+
+    /// Creates a new list, pushing the current one into a stack.
+    /// This new list will be pushed into the current one.
+    pub fn begin_list(&mut self) {
+        self.base.stack.push(std::mem::replace(&mut self.base.current, Vec::new()));
+    }
+
+    /// Finishes the current list, popping a list from the
+    /// stack and setting it as current.
+    pub fn end_list(&mut self) {
+        assert!(self.base.stack.len() > self.min_depth);
+        let parent_list = self.base.stack.pop().unwrap();
+        let current_list = std::mem::replace(&mut self.base.current, parent_list);
+        self.base.current.push(Box::new(Node::List(current_list)));
+    }
+
+    /// Finishes the builder, making sure that the stack depth
+    /// is the same as when it was created.
+    pub fn finish(self) {
+        assert_eq!(self.base.stack.len(), self.min_depth);
     }
 }
 
