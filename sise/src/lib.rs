@@ -307,9 +307,9 @@ impl From<Vec<Box<Node>>> for Node {
     }
 }
 
-/// Base struct from which `TreeBuilder` are created.
-/// See `TreeBuilder` example.
-pub struct TreeBuilderBase {
+/// Base struct from which `Builder` are created.
+/// See `Builder` example.
+pub struct BuilderBase {
     stack: Vec<Vec<Box<Node>>>,
     current: Vec<Box<Node>>,
 }
@@ -322,7 +322,7 @@ pub struct TreeBuilderBase {
 /// ```
 /// use sise::sise_expr;
 ///
-/// let mut builder_base = sise::TreeBuilderBase::new();
+/// let mut builder_base = sise::BuilderBase::new();
 /// let mut builder = builder_base.builder();
 ///
 /// builder.push_atom(String::from("atom-1"));
@@ -344,12 +344,12 @@ pub struct TreeBuilderBase {
 /// let expected = sise_expr!(["atom-1", "atom-2", ["atom-3", "atom-4"], "atom-5"]);
 /// assert_eq!(root_node, *expected);
 /// ```
-pub struct TreeBuilder<'a> {
-    base: &'a mut TreeBuilderBase,
+pub struct Builder<'a> {
+    base: &'a mut BuilderBase,
     min_depth: usize,
 }
 
-impl TreeBuilderBase {
+impl BuilderBase {
     #[inline]
     pub fn new() -> Self {
         Self {
@@ -359,10 +359,10 @@ impl TreeBuilderBase {
     }
 
     #[inline]
-    pub fn builder(&mut self) -> TreeBuilder {
+    pub fn builder(&mut self) -> Builder {
         assert!(self.stack.is_empty());
         assert!(self.current.is_empty());
-        TreeBuilder {
+        Builder {
             base: self,
             min_depth: 0,
         }
@@ -375,14 +375,14 @@ impl TreeBuilderBase {
     }
 }
 
-impl Default for TreeBuilderBase {
+impl Default for BuilderBase {
     #[inline]
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> TreeBuilder<'a> {
+impl<'a> Builder<'a> {
     /// Returns the index path of the last inserted node.
     pub fn last_item_index_path(&self) -> Vec<usize> {
         let mut path = Vec::with_capacity(self.base.stack.len() + 1);
@@ -401,7 +401,7 @@ impl<'a> TreeBuilder<'a> {
     ///
     /// ```
     /// let r = std::panic::catch_unwind(|| {
-    ///     let mut builder_base = sise::TreeBuilderBase::new();
+    ///     let mut builder_base = sise::BuilderBase::new();
     ///     let mut builder = builder_base.builder();
     ///
     ///     builder.begin_list();
@@ -413,7 +413,7 @@ impl<'a> TreeBuilder<'a> {
     #[inline]
     pub fn sub_builder(&'a mut self) -> Self {
         let min_depth = self.base.stack.len();
-        TreeBuilder {
+        Builder {
             base: self.base,
             min_depth: min_depth,
         }
