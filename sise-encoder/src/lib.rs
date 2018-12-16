@@ -434,12 +434,12 @@ pub use self::spaced_style::SpacedStyle;
 pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, output: &mut String) {
     enum State<'b> {
         Beginning(&'b sise::Node),
-        List(&'b sise::Node, std::slice::Iter<'b, Box<sise::Node>>),
+        List(&'b sise::Node, std::slice::Iter<'b, sise::Node>),
         Finish,
     }
 
     enum StackItem<'b> {
-        List(&'b sise::Node, std::slice::Iter<'b, Box<sise::Node>>),
+        List(&'b sise::Node, std::slice::Iter<'b, sise::Node>),
     }
 
     let mut state = State::Beginning(root_node);
@@ -465,7 +465,7 @@ pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, o
             }
             State::List(list_node, mut list_iter) => {
                 if let Some(item) = list_iter.next() {
-                    match **item {
+                    match *item {
                         sise::Node::Atom(ref atom) => {
                             assert!(sise::check_atom(atom));
                             style.atom(item, output);

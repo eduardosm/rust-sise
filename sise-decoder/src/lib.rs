@@ -214,19 +214,19 @@ impl std::error::Error for Error {
 ///     }
 /// }
 /// ```
-pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::PosTree), Error> {
+pub fn parse(data: &[u8], limits: &Limits) -> Result<(sise::Node, sise::PosTree), Error> {
     assert!(limits.max_atom_len >= 1);
 
     let mut lexer = Lexer::new(data.iter().map(|&c| c).peekable());
 
     enum State {
         Beginning,
-        List(sise::PosTree, Vec<Box<sise::Node>>),
-        Finishing(sise::PosTree, Box<sise::Node>),
+        List(sise::PosTree, Vec<sise::Node>),
+        Finishing(sise::PosTree, sise::Node),
     }
 
     enum StackItem {
-        List(sise::PosTree, Vec<Box<sise::Node>>),
+        List(sise::PosTree, Vec<sise::Node>),
     }
 
     let mut state = State::Beginning;
@@ -246,7 +246,7 @@ pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::Pos
                         depth += 1;
                     }
                     Token::Atom(atom) => {
-                        let root_node = Box::new(sise::Node::Atom(atom));
+                        let root_node = sise::Node::Atom(atom);
                         state = State::Finishing(sise::PosTree::new(token_pos), root_node);
                     }
                     token => {
@@ -269,7 +269,7 @@ pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::Pos
                         depth += 1;
                     }
                     Token::RightParen => {
-                        let node = Box::new(sise::Node::List(list));
+                        let node = sise::Node::List(list);
                         depth -= 1;
                         match stack.pop() {
                             Some(StackItem::List(mut parent_node_pos_tree, mut parent_list)) => {
@@ -287,7 +287,7 @@ pub fn parse(data: &[u8], limits: &Limits) -> Result<(Box<sise::Node>, sise::Pos
                             return Err(Error::ListTooLong { pos: token_pos });
                         }
 
-                        let atom_node = Box::new(sise::Node::Atom(atom));
+                        let atom_node = sise::Node::Atom(atom);
                         list_node_pos_tree.children.push(sise::PosTree::new(token_pos));
                         list.push(atom_node);
                         state = State::List(list_node_pos_tree, list);

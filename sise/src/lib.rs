@@ -18,44 +18,44 @@ mod tests;
 /// use sise::sise_expr;
 ///
 /// // atom
-/// let value1 = Box::new(sise::Node::Atom(String::from("atom")));
+/// let value1 = sise::Node::Atom(String::from("atom"));
 /// let value2 = sise_expr!("atom");
 /// assert_eq!(value1, value2);
 ///
 /// // ()
-/// let value1 = Box::new(sise::Node::List(vec![]));
+/// let value1 = sise::Node::List(vec![]);
 /// let value2 = sise_expr!([]);
 /// assert_eq!(value1, value2);
 ///
 /// // (atom)
-/// let value1 = Box::new(sise::Node::List(vec![
-///     Box::new(sise::Node::Atom(String::from("atom")))
-/// ]));
+/// let value1 = sise::Node::List(vec![
+///     sise::Node::Atom(String::from("atom"))
+/// ]);
 /// let value2 = sise_expr!(["atom"]);
 /// assert_eq!(value1, value2);
 ///
 /// // (atom (1 2 3) (a b c))
-/// let value1 = Box::new(sise::Node::List(vec![
-///     Box::new(sise::Node::Atom(String::from("atom"))),
-///     Box::new(sise::Node::List(vec![
-///         Box::new(sise::Node::Atom(String::from("1"))),
-///         Box::new(sise::Node::Atom(String::from("2"))),
-///         Box::new(sise::Node::Atom(String::from("3"))),
-///     ])),
-///     Box::new(sise::Node::List(vec![
-///         Box::new(sise::Node::Atom(String::from("a"))),
-///         Box::new(sise::Node::Atom(String::from("b"))),
-///         Box::new(sise::Node::Atom(String::from("c"))),
-///     ])),
-/// ]));
+/// let value1 = sise::Node::List(vec![
+///     sise::Node::Atom(String::from("atom")),
+///     sise::Node::List(vec![
+///         sise::Node::Atom(String::from("1")),
+///         sise::Node::Atom(String::from("2")),
+///         sise::Node::Atom(String::from("3")),
+///     ]),
+///     sise::Node::List(vec![
+///         sise::Node::Atom(String::from("a")),
+///         sise::Node::Atom(String::from("b")),
+///         sise::Node::Atom(String::from("c")),
+///     ]),
+/// ]);
 /// let value2 = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
 /// assert_eq!(value1, value2);
 /// ```
 #[macro_export]
 macro_rules! sise_expr {
-    ([$($item:tt),*]) => { Box::new($crate::Node::List(vec![$(sise_expr!($item)),*])) };
-    ([$($item:tt,)*]) => { Box::new($crate::Node::List(vec![$(sise_expr!($item)),*])) };
-    ($node:expr) => { Box::new($crate::Node::from($node)) };
+    ([$($item:tt),*]) => { $crate::Node::List(vec![$(sise_expr!($item)),*]) };
+    ([$($item:tt,)*]) => { $crate::Node::List(vec![$(sise_expr!($item)),*]) };
+    ($node:expr) => { $crate::Node::from($node) };
 }
 
 /// Represents a position in a text file.
@@ -138,7 +138,7 @@ pub enum Node {
     Atom(String),
 
     /// A list of nodes
-    List(Vec<Box<Node>>),
+    List(Vec<Node>),
 }
 
 impl Node {
@@ -188,7 +188,7 @@ impl Node {
     /// Consumes the node and returns the list if it is a
     /// `List`.
     #[inline]
-    pub fn into_list(self) -> Option<Vec<Box<Node>>> {
+    pub fn into_list(self) -> Option<Vec<Node>> {
         match self {
             Node::List(l) => Some(l),
             _ => None,
@@ -208,7 +208,7 @@ impl Node {
     /// Returns a reference to the list if the node is
     /// a `List`.
     #[inline]
-    pub fn as_list(&self) -> Option<&Vec<Box<Node>>> {
+    pub fn as_list(&self) -> Option<&Vec<Node>> {
         match *self {
             Node::List(ref l) => Some(l),
             _ => None,
@@ -228,7 +228,7 @@ impl Node {
     /// Returns mutable a reference to the list if the node is
     /// a `List`.
     #[inline]
-    pub fn as_mut_list(&mut self) -> Option<&mut Vec<Box<Node>>> {
+    pub fn as_mut_list(&mut self) -> Option<&mut Vec<Node>> {
         match *self {
             Node::List(ref mut l) => Some(l),
             _ => None,
@@ -243,8 +243,8 @@ impl Node {
     /// use sise::sise_expr;
     ///
     /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
-    /// assert_eq!(tree.index_path(&[0]).unwrap(), "example");
-    /// assert_eq!(tree.index_path(&[1]).unwrap(), &*sise_expr!(["1", "2", "3"]));
+    /// assert_eq!(*tree.index_path(&[0]).unwrap(), "example");
+    /// assert_eq!(*tree.index_path(&[1]).unwrap(), sise_expr!(["1", "2", "3"]));
     /// assert_eq!(tree.index_path(&[1, 0]).unwrap(), "1");
     /// assert_eq!(tree.index_path(&[2, 0]).unwrap(), "a");
     /// assert!(tree.index_path(&[3]).is_none());
@@ -277,6 +277,15 @@ impl PartialEq<str> for Node {
     }
 }
 
+impl PartialEq<&str> for Node {
+    fn eq(&self, other: &&str) -> bool {
+        match *self {
+            Node::Atom(ref atom) => atom == *other,
+            _ => false,
+        }
+    }
+}
+
 impl PartialEq<String> for Node {
     fn eq(&self, other: &String) -> bool {
         match *self {
@@ -300,9 +309,9 @@ impl From<String> for Node {
     }
 }
 
-impl From<Vec<Box<Node>>> for Node {
+impl From<Vec<Node>> for Node {
     #[inline]
-    fn from(list: Vec<Box<Node>>) -> Node {
+    fn from(list: Vec<Node>) -> Node {
         Node::List(list)
     }
 }
@@ -310,8 +319,8 @@ impl From<Vec<Box<Node>>> for Node {
 /// Base struct from which `Builder` are created.
 /// See `Builder` example.
 pub struct BuilderBase {
-    stack: Vec<Vec<Box<Node>>>,
-    current: Vec<Box<Node>>,
+    stack: Vec<Vec<Node>>,
+    current: Vec<Node>,
 }
 
 /// Helper struct to build SISE trees and get index paths
@@ -342,7 +351,7 @@ pub struct BuilderBase {
 ///
 /// let root_node = builder_base.into_node();
 /// let expected = sise_expr!(["atom-1", "atom-2", ["atom-3", "atom-4"], "atom-5"]);
-/// assert_eq!(root_node, *expected);
+/// assert_eq!(root_node, expected);
 /// ```
 pub struct Builder<'a> {
     base: &'a mut BuilderBase,
@@ -421,12 +430,12 @@ impl<'a> Builder<'a> {
 
     /// Adds `node` into the current list.
     pub fn push_node(&mut self, node: Node) {
-        self.base.current.push(Box::new(node));
+        self.base.current.push(node);
     }
 
     /// Adds `atom` into the current list.
     pub fn push_atom(&mut self, atom: String) {
-        self.base.current.push(Box::new(Node::Atom(atom)));
+        self.base.current.push(Node::Atom(atom));
     }
 
     /// Creates a new list, pushing the current one into a stack.
@@ -441,7 +450,7 @@ impl<'a> Builder<'a> {
         assert!(self.base.stack.len() > self.min_depth);
         let parent_list = self.base.stack.pop().unwrap();
         let current_list = std::mem::replace(&mut self.base.current, parent_list);
-        self.base.current.push(Box::new(Node::List(current_list)));
+        self.base.current.push(Node::List(current_list));
     }
 
     /// Finishes the builder, making sure that the stack depth
