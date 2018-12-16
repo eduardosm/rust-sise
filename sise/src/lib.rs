@@ -9,6 +9,7 @@
 
 #[cfg(test)]
 mod tests {
+    mod parser;
     mod util;
 }
 
@@ -23,6 +24,12 @@ pub use self::node::Node;
 mod builder;
 pub use self::builder::BuilderBase;
 pub use self::builder::Builder;
+
+mod parser;
+pub use self::parser::ParseLimits;
+pub use self::parser::ParseError;
+pub use self::parser::parse;
+pub use self::parser::Token;
 
 mod util;
 pub use self::util::is_atom_chr;
