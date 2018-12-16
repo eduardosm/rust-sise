@@ -12,8 +12,8 @@ mod tests;
 
 /// Macro to define values with a lighter syntax.
 ///
-/// Example
-/// -------
+/// # Example
+///
 /// ```
 /// use sise::sise_expr;
 ///
