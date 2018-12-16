@@ -334,6 +334,7 @@ pub struct BuilderBase {
 /// let mut builder_base = sise::BuilderBase::new();
 /// let mut builder = builder_base.builder();
 ///
+/// // Build (atom-1 atom-2 (atom-3 atom-4) atom-5)
 /// builder.add_node("atom-1");
 /// assert_eq!(builder.last_index_path(), [0]);
 /// builder.add_node("atom-2");
