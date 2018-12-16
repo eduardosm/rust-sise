@@ -250,19 +250,19 @@ mod spaced_style {
     ///
     /// let mut keep_same_line_paths = Vec::new();
     ///
-    /// builder.push_atom(String::from("example"));
+    /// builder.add_node("example");
     /// builder.begin_list();
-    /// builder.push_atom(String::from("1"));
-    /// builder.push_atom(String::from("2"));
+    /// builder.add_node("1");
+    /// builder.add_node("2");
     /// keep_same_line_paths.push(builder.last_index_path());
-    /// builder.push_atom(String::from("3"));
+    /// builder.add_node("3");
     /// keep_same_line_paths.push(builder.last_index_path());
     /// builder.end_list();
     /// builder.begin_list();
-    /// builder.push_atom(String::from("a"));
-    /// builder.push_atom(String::from("b"));
+    /// builder.add_node("a");
+    /// builder.add_node("b");
     /// keep_same_line_paths.push(builder.last_index_path());
-    /// builder.push_atom(String::from("c"));
+    /// builder.add_node("c");
     /// keep_same_line_paths.push(builder.last_index_path());
     /// builder.end_list();
     /// builder.finish();

@@ -334,18 +334,18 @@ pub struct BuilderBase {
 /// let mut builder_base = sise::BuilderBase::new();
 /// let mut builder = builder_base.builder();
 ///
-/// builder.push_atom(String::from("atom-1"));
+/// builder.add_node("atom-1");
 /// assert_eq!(builder.last_index_path(), [0]);
-/// builder.push_atom(String::from("atom-2"));
+/// builder.add_node("atom-2");
 /// assert_eq!(builder.last_index_path(), [1]);
 /// builder.begin_list();
-/// builder.push_atom(String::from("atom-3"));
+/// builder.add_node("atom-3");
 /// assert_eq!(builder.last_index_path(), [2, 0]);
-/// builder.push_atom(String::from("atom-4"));
+/// builder.add_node("atom-4");
 /// assert_eq!(builder.last_index_path(), [2, 1]);
 /// builder.end_list();
 /// assert_eq!(builder.last_index_path(), [2]);
-/// builder.push_atom(String::from("atom-5"));
+/// builder.add_node("atom-5");
 /// assert_eq!(builder.last_index_path(), [3]);
 /// builder.finish();
 ///
@@ -429,13 +429,8 @@ impl<'a> Builder<'a> {
     }
 
     /// Adds `node` into the current list.
-    pub fn push_node(&mut self, node: Node) {
-        self.base.current.push(node);
-    }
-
-    /// Adds `atom` into the current list.
-    pub fn push_atom(&mut self, atom: String) {
-        self.base.current.push(Node::Atom(atom));
+    pub fn add_node<T: Into<Node>>(&mut self, node: T) {
+        self.base.current.push(node.into());
     }
 
     /// Creates a new list, pushing the current one into a stack.
