@@ -26,7 +26,7 @@ pub struct ParseLimits {
 }
 
 impl ParseLimits {
-    /// Creates a `Limits` instance with all fields set to maximum.
+    /// Creates a `ParseLimits` instance with all fields set to maximum.
     #[inline]
     pub fn unlimited() -> Self {
         ParseLimits {
