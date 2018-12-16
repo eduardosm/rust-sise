@@ -2,7 +2,5 @@
 members = [
     "sise",
     "sise-atom",
-    "sise-encoder",
-    "sise-decoder",
     "sise-read-util",
 ]

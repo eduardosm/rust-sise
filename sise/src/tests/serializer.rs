@@ -5,25 +5,29 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use sise::sise_expr;
+use crate::sise_expr;
+use crate::CompactSerializeStyle;
+use crate::SpacedSerializeStyle;
+use crate::SerializeSpacingConfig;
+use crate::serialize;
 
-fn compact_style() -> crate::CompactStyle {
-    crate::CompactStyle::new()
+fn compact_style() -> CompactSerializeStyle {
+    CompactSerializeStyle::new()
 }
 
-fn spaced_style() -> crate::SpacedStyle {
+fn spaced_style() -> SpacedSerializeStyle {
     spaced_style_with_keep_same_line(std::collections::HashSet::new())
 }
 
 fn spaced_style_with_keep_same_line(keep_same_line: std::collections::HashSet<usize>)
-    -> crate::SpacedStyle
+    -> SpacedSerializeStyle
 {
-    let spacing_config = crate::SpacingConfig {
-        line_ending: crate::LineEnding::Lf,
+    let spacing_config = SerializeSpacingConfig {
+        line_ending: crate::SerializeLineEnding::Lf,
         indent_len: 1,
-        indent_char: crate::IndentChar::Tab,
+        indent_char: crate::SerializeIndentChar::Tab,
     };
-    crate::SpacedStyle::new(spacing_config, keep_same_line)
+    SpacedSerializeStyle::new(spacing_config, keep_same_line)
 }
 
 #[test]
@@ -31,8 +35,8 @@ fn test_empty_list() {
     let root_node = sise_expr!([]);
     let expected_compact = "()";
     let expected_spaced = "()\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -42,8 +46,8 @@ fn test_single_atom() {
     let root_node = sise_expr!("atom");
     let expected_compact = "atom";
     let expected_spaced = "atom\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -53,8 +57,8 @@ fn test_list_with_one_atom() {
     let root_node = sise_expr!(["1"]);
     let expected_compact = "(1)";
     let expected_spaced = "(1)\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -64,8 +68,8 @@ fn test_list_with_two_atoms() {
     let root_node = sise_expr!(["1", "2"]);
     let expected_compact = "(1 2)";
     let expected_spaced = "(1\n\t2\n)\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -75,8 +79,8 @@ fn test_list_with_three_atoms() {
     let root_node = sise_expr!(["1", "2", "3"]);
     let expected_compact = "(1 2 3)";
     let expected_spaced = "(1\n\t2\n\t3\n)\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -86,8 +90,8 @@ fn test_nested_list() {
     let root_node = sise_expr!([[]]);
     let expected_compact = "(())";
     let expected_spaced = "(\n\t()\n)\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -97,8 +101,8 @@ fn test_list_with_atom_and_list() {
     let root_node = sise_expr!(["atom", []]);
     let expected_compact = "(atom ())";
     let expected_spaced = "(atom\n\t()\n)\n";
-    let result_compact = crate::serialize(&root_node, &mut compact_style());
-    let result_spaced = crate::serialize(&root_node, &mut spaced_style());
+    let result_compact = serialize(&root_node, &mut compact_style());
+    let result_spaced = serialize(&root_node, &mut spaced_style());
     assert_eq!(result_compact, expected_compact);
     assert_eq!(result_spaced, expected_spaced);
 }
@@ -113,7 +117,7 @@ fn test_spaced_with_keep_line_1() {
     keep_same_line.insert(root_node.index_path(&[2, 1]).unwrap().ref_as_usize());
     keep_same_line.insert(root_node.index_path(&[2, 2]).unwrap().ref_as_usize());
 
-    let result = crate::serialize(&root_node, &mut spaced_style_with_keep_same_line(keep_same_line));
+    let result = serialize(&root_node, &mut spaced_style_with_keep_same_line(keep_same_line));
     let expected = "(atom\n\t(1 2 3)\n\t(a b c)\n)\n";
     assert_eq!(result, expected);
 }
@@ -126,7 +130,7 @@ fn test_spaced_with_keep_line_2() {
     keep_same_line.insert(root_node.index_path(&[1, 1]).unwrap().ref_as_usize());
     keep_same_line.insert(root_node.index_path(&[2, 1]).unwrap().ref_as_usize());
 
-    let result = crate::serialize(&root_node, &mut spaced_style_with_keep_same_line(keep_same_line));
+    let result = serialize(&root_node, &mut spaced_style_with_keep_same_line(keep_same_line));
     let expected = "(atom\n\t(1 2\n\t\t3\n\t)\n\t(a b\n\t\tc\n\t)\n)\n";
     assert_eq!(result, expected);
 }

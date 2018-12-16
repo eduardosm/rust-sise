@@ -10,6 +10,7 @@
 #[cfg(test)]
 mod tests {
     mod parser;
+    mod serializer;
     mod util;
 }
 
@@ -30,6 +31,16 @@ pub use self::parser::ParseLimits;
 pub use self::parser::ParseError;
 pub use self::parser::parse;
 pub use self::parser::Token;
+
+mod serializer;
+pub use self::serializer::SerializeStyle;
+pub use self::serializer::CompactSerializeStyle;
+pub use self::serializer::SerializeLineEnding;
+pub use self::serializer::SerializeIndentChar;
+pub use self::serializer::SerializeSpacingConfig;
+pub use self::serializer::SpacedSerializeStyle;
+pub use self::serializer::serialize_into;
+pub use self::serializer::serialize;
 
 mod util;
 pub use self::util::is_atom_chr;

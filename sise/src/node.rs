@@ -31,7 +31,7 @@ pub enum Node {
 impl Node {
     /// Bitcasts the reference to `self` to `usize`. Useful
     /// to insert it in a `HashSet<usize>`, which is used
-    /// by `sise_encoder::SpacedStyle`.
+    /// by `sise::SpacedSerializeStyle`.
     ///
     /// # Example
     ///

@@ -5,8 +5,7 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-extern crate sise_decoder;
-extern crate sise_encoder;
+extern crate sise;
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
     use std::io::Read;
@@ -40,22 +39,22 @@ fn main() {
 
     let file_data = read_file(std::path::Path::new(&args[2])).unwrap();
 
-    let parse_limits = sise_decoder::Limits::unlimited();
-    let (parsed, _) = sise_decoder::parse(&file_data, &parse_limits).unwrap();
+    let parse_limits = sise::ParseLimits::unlimited();
+    let (parsed, _) = sise::parse(&file_data, &parse_limits).unwrap();
 
     match serialize_style {
         SerializeStyle::Compact => {
-            let reserialized = sise_encoder::serialize(&parsed, &mut sise_encoder::CompactStyle::new());
+            let reserialized = sise::serialize(&parsed, &mut sise::CompactSerializeStyle::new());
             println!("{}", reserialized);
         }
         SerializeStyle::Spaced => {
-            let spacing_config = sise_encoder::SpacingConfig {
-                line_ending: sise_encoder::LineEnding::Lf,
+            let spacing_config = sise::SerializeSpacingConfig {
+                line_ending: sise::SerializeLineEnding::Lf,
                 indent_len: 2,
-                indent_char: sise_encoder::IndentChar::Space,
+                indent_char: sise::SerializeIndentChar::Space,
             };
             let keep_same_line = std::collections::HashSet::new();
-            let reserialized = sise_encoder::serialize(&parsed, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+            let reserialized = sise::serialize(&parsed, &mut sise::SpacedSerializeStyle::new(spacing_config, keep_same_line));
             print!("{}", reserialized);
         }
     }

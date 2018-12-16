@@ -5,25 +5,23 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-extern crate sise;
-
-#[cfg(test)]
-mod tests;
+use crate::Node;
+use crate::check_atom;
 
 /// Trait that allows to implement serialization styles.
-pub trait Style<'a> {
+pub trait SerializeStyle<'a> {
     /// Called at the beginning of the serialization (nothing has been writen to
     /// output yet).
     fn begin(&mut self, output: &mut String);
 
     /// Called at the beginning of a list (before writing `(` to `output`)
-    fn begin_list(&mut self, list_node: &'a sise::Node, output: &mut String);
+    fn begin_list(&mut self, list_node: &'a Node, output: &mut String);
 
     /// Called at the end of a list (before writing `)` to `output`)
     fn end_list(&mut self, output: &mut String);
 
     /// Called before writing an atom to output.
-    fn atom(&mut self, atom_node: &'a sise::Node, output: &mut String);
+    fn atom(&mut self, atom_node: &'a Node, output: &mut String);
 
     /// Called at the end of the serialization (nothing more will be writen
     /// to output).
@@ -31,6 +29,8 @@ pub trait Style<'a> {
 }
 
 mod compact_style {
+    use crate::Node;
+
     #[derive(Debug)]
     enum State {
         Invalid,
@@ -46,23 +46,22 @@ mod compact_style {
     /// # Example
     ///
     /// ```
-    /// extern crate sise;
     /// use sise::sise_expr;
     ///
     /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
     ///
-    /// let compact = sise_encoder::serialize(&tree, &mut sise_encoder::CompactStyle::new());
+    /// let compact = sise::serialize(&tree, &mut sise::CompactSerializeStyle::new());
     /// assert_eq!(compact, "(example (1 2 3) (a b c))");
     /// ```
     #[derive(Debug)]
-    pub struct CompactStyle {
+    pub struct CompactSerializeStyle {
         state: State,
         depth: usize,
     }
 
-    impl CompactStyle {
+    impl CompactSerializeStyle {
         pub fn new() -> Self {
-            CompactStyle {
+            CompactSerializeStyle {
                 state: State::Invalid,
                 depth: 0,
             }
@@ -73,12 +72,12 @@ mod compact_style {
         }
     }
 
-    impl<'a> crate::Style<'a> for CompactStyle {
+    impl<'a> super::SerializeStyle<'a> for CompactSerializeStyle {
         fn begin(&mut self, _output: &mut String) {
             self.state = State::Beginning;
         }
 
-        fn begin_list(&mut self, _list_node: &'a sise::Node, output: &mut String) {
+        fn begin_list(&mut self, _list_node: &'a Node, output: &mut String) {
             match self.get_state() {
                 State::Invalid => unreachable!(),
                 State::Beginning => {
@@ -122,7 +121,7 @@ mod compact_style {
             }
         }
 
-        fn atom(&mut self, _atom_node: &'a sise::Node, output: &mut String) {
+        fn atom(&mut self, _atom_node: &'a Node, output: &mut String) {
             match self.get_state() {
                 State::Invalid => unreachable!(),
                 State::Beginning => {
@@ -149,60 +148,62 @@ mod compact_style {
         }
     }
 }
-pub use self::compact_style::CompactStyle;
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum LineEnding {
-    Lf,
-    CrLf,
-    Cr,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum IndentChar {
-    Space,
-    Tab,
-}
-
-impl IndentChar {
-    #[inline]
-    fn get_char(&self) -> char {
-        match *self {
-            IndentChar::Space => ' ',
-            IndentChar::Tab => '\t',
-        }
-    }
-}
-
-/// Structure to configure the `SpacedStyle` style.
-#[derive(Clone, Debug)]
-pub struct SpacingConfig {
-    pub line_ending: LineEnding,
-    pub indent_len: usize,
-    pub indent_char: IndentChar,
-}
-
-impl SpacingConfig {
-    fn put_new_line(&self, output: &mut String) {
-        match self.line_ending {
-            LineEnding::Lf => output.push('\n'),
-            LineEnding::CrLf => output.push_str("\r\n"),
-            LineEnding::Cr => output.push('\r'),
-        }
-    }
-
-    fn put_indent(&self, depth: usize, output: &mut String) {
-        let total = depth.checked_mul(self.indent_len).unwrap();
-        output.reserve(total);
-        let chr = self.indent_char.get_char();
-        for _ in 0 .. total {
-            output.push(chr);
-        }
-    }
-}
+pub use self::compact_style::CompactSerializeStyle;
 
 mod spaced_style {
     use std::collections::HashSet;
+
+    use crate::Node;
+
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub enum SerializeLineEnding {
+        Lf,
+        CrLf,
+        Cr,
+    }
+
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    pub enum SerializeIndentChar {
+        Space,
+        Tab,
+    }
+
+    impl SerializeIndentChar {
+        #[inline]
+        fn get_char(&self) -> char {
+            match *self {
+                SerializeIndentChar::Space => ' ',
+                SerializeIndentChar::Tab => '\t',
+            }
+        }
+    }
+
+    /// Structure to configure the `SpacedStyle` style.
+    #[derive(Clone, Debug)]
+    pub struct SerializeSpacingConfig {
+        pub line_ending: SerializeLineEnding,
+        pub indent_len: usize,
+        pub indent_char: SerializeIndentChar,
+    }
+
+    impl SerializeSpacingConfig {
+        fn put_new_line(&self, output: &mut String) {
+            match self.line_ending {
+                SerializeLineEnding::Lf => output.push('\n'),
+                SerializeLineEnding::CrLf => output.push_str("\r\n"),
+                SerializeLineEnding::Cr => output.push('\r'),
+            }
+        }
+
+        fn put_indent(&self, depth: usize, output: &mut String) {
+            let total = depth.checked_mul(self.indent_len).unwrap();
+            output.reserve(total);
+            let chr = self.indent_char.get_char();
+            for _ in 0 .. total {
+                output.push(chr);
+            }
+        }
+    }
 
     #[derive(Debug)]
     enum State {
@@ -228,17 +229,17 @@ mod spaced_style {
     ///
     /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
     ///
-    /// let spacing_config = sise_encoder::SpacingConfig {
-    ///     line_ending: sise_encoder::LineEnding::Lf,
+    /// let spacing_config = sise::SerializeSpacingConfig {
+    ///     line_ending: sise::SerializeLineEnding::Lf,
     ///     indent_len: 4,
-    ///     indent_char: sise_encoder::IndentChar::Space,
+    ///     indent_char: sise::SerializeIndentChar::Space,
     /// };
     /// let mut keep_same_line = std::collections::HashSet::new();
     /// keep_same_line.insert(tree.index_path(&[1, 1]).unwrap().ref_as_usize());
     /// keep_same_line.insert(tree.index_path(&[1, 2]).unwrap().ref_as_usize());
     /// keep_same_line.insert(tree.index_path(&[2, 1]).unwrap().ref_as_usize());
     /// keep_same_line.insert(tree.index_path(&[2, 2]).unwrap().ref_as_usize());
-    /// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+    /// let spaced = sise::serialize(&tree, &mut sise::SpacedSerializeStyle::new(spacing_config, keep_same_line));
     /// assert_eq!(spaced, "(example\n    (1 2 3)\n    (a b c)\n)\n");
     /// ```
     ///
@@ -268,21 +269,21 @@ mod spaced_style {
     /// builder.finish();
     /// let tree = builder_base.into_node();
     ///
-    /// let spacing_config = sise_encoder::SpacingConfig {
-    ///     line_ending: sise_encoder::LineEnding::Lf,
+    /// let spacing_config = sise::SerializeSpacingConfig {
+    ///     line_ending: sise::SerializeLineEnding::Lf,
     ///     indent_len: 4,
-    ///     indent_char: sise_encoder::IndentChar::Space,
+    ///     indent_char: sise::SerializeIndentChar::Space,
     /// };
     /// let mut keep_same_line = std::collections::HashSet::new();
     /// for keep_same_line_path in keep_same_line_paths {
     ///     keep_same_line.insert(tree.index_path(&keep_same_line_path).unwrap().ref_as_usize());
     /// }
-    /// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+    /// let spaced = sise::serialize(&tree, &mut sise::SpacedSerializeStyle::new(spacing_config, keep_same_line));
     /// assert_eq!(spaced, "(example\n    (1 2 3)\n    (a b c)\n)\n");
     /// ```
     #[derive(Debug)]
-    pub struct SpacedStyle {
-        spacing_config: crate::SpacingConfig,
+    pub struct SpacedSerializeStyle {
+        spacing_config: super::SerializeSpacingConfig,
         keep_same_line: HashSet<usize>,
 
         indent_depth: usize,
@@ -290,9 +291,9 @@ mod spaced_style {
         stack: Vec<StackItem>,
     }
 
-    impl SpacedStyle {
-        pub fn new(spacing_config: crate::SpacingConfig, keep_same_line: HashSet<usize>) -> Self {
-            SpacedStyle {
+    impl SpacedSerializeStyle {
+        pub fn new(spacing_config: super::SerializeSpacingConfig, keep_same_line: HashSet<usize>) -> Self {
+            SpacedSerializeStyle {
                 spacing_config: spacing_config,
                 keep_same_line: keep_same_line,
 
@@ -306,17 +307,17 @@ mod spaced_style {
             std::mem::replace(&mut self.state, State::Invalid)
         }
 
-        fn keep_same_line(&self, node: &sise::Node) -> bool {
+        fn keep_same_line(&self, node: &Node) -> bool {
             self.keep_same_line.contains(&node.ref_as_usize())
         }
     }
 
-    impl<'a> crate::Style<'a> for SpacedStyle {
+    impl<'a> super::SerializeStyle<'a> for SpacedSerializeStyle {
         fn begin(&mut self, _output: &mut String) {
             self.state = State::Beginning;
         }
 
-        fn begin_list(&mut self, list_node: &'a sise::Node, output: &mut String) {
+        fn begin_list(&mut self, list_node: &'a Node, output: &mut String) {
             match self.get_state() {
                 State::Invalid => unreachable!(),
                 State::Beginning => {
@@ -386,7 +387,7 @@ mod spaced_style {
             }
         }
 
-        fn atom(&mut self, atom_node: &'a sise::Node, output: &mut String) {
+        fn atom(&mut self, atom_node: &'a Node, output: &mut String) {
             match self.get_state() {
                 State::Invalid => unreachable!(),
                 State::Beginning => {
@@ -424,22 +425,25 @@ mod spaced_style {
         }
     }
 }
-pub use self::spaced_style::SpacedStyle;
+pub use self::spaced_style::SerializeLineEnding;
+pub use self::spaced_style::SerializeIndentChar;
+pub use self::spaced_style::SerializeSpacingConfig;
+pub use self::spaced_style::SpacedSerializeStyle;
 
 /// Serializes `root_node`, appending the result to `output`.
 ///
 /// # Panics
 ///
-/// Panics if there are invalid atoms (i.e. they fail `sise::check_atom`).
-pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, output: &mut String) {
+/// Panics if there are invalid atoms (i.e. they fail `check_atom`).
+pub fn serialize_into<'a>(root_node: &'a Node, style: &'a mut SerializeStyle<'a>, output: &mut String) {
     enum State<'b> {
-        Beginning(&'b sise::Node),
-        List(&'b sise::Node, std::slice::Iter<'b, sise::Node>),
+        Beginning(&'b Node),
+        List(&'b Node, std::slice::Iter<'b, Node>),
         Finish,
     }
 
     enum StackItem<'b> {
-        List(&'b sise::Node, std::slice::Iter<'b, sise::Node>),
+        List(&'b Node, std::slice::Iter<'b, Node>),
     }
 
     let mut state = State::Beginning(root_node);
@@ -450,13 +454,13 @@ pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, o
             State::Beginning(root_node) => {
                 style.begin(output);
                 match *root_node {
-                    sise::Node::Atom(ref atom) => {
-                        assert!(sise::check_atom(atom));
+                    Node::Atom(ref atom) => {
+                        assert!(check_atom(atom));
                         style.atom(root_node, output);
                         output.push_str(atom);
                         state = State::Finish;
                     }
-                    sise::Node::List(ref list) => {
+                    Node::List(ref list) => {
                         style.begin_list(root_node, output);
                         output.push('(');
                         state = State::List(root_node, list.iter());
@@ -466,13 +470,13 @@ pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, o
             State::List(list_node, mut list_iter) => {
                 if let Some(item) = list_iter.next() {
                     match *item {
-                        sise::Node::Atom(ref atom) => {
-                            assert!(sise::check_atom(atom));
+                        Node::Atom(ref atom) => {
+                            assert!(check_atom(atom));
                             style.atom(item, output);
                             output.push_str(atom);
                             state = State::List(list_node, list_iter);
                         }
-                        sise::Node::List(ref list) => {
+                        Node::List(ref list) => {
                             style.begin_list(item, output);
                             output.push('(');
                             stack.push(StackItem::List(list_node, list_iter));
@@ -505,7 +509,7 @@ pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, o
 ///
 /// # Panics
 ///
-/// Panics if there are invalid atoms (i.e. they fail `sise::check_atom`).
+/// Panics if there are invalid atoms (i.e. they fail `check_atom`).
 ///
 /// # Example
 ///
@@ -516,21 +520,21 @@ pub fn serialize_into<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>, o
 /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 ///
 /// // Compact
-/// let compact = sise_encoder::serialize(&tree, &mut sise_encoder::CompactStyle::new());
+/// let compact = sise::serialize(&tree, &mut sise::CompactSerializeStyle::new());
 /// assert_eq!(compact, "(example (1 2 3) (a b c))");
 ///
 /// // Spaced
-/// let spacing_config = sise_encoder::SpacingConfig {
-///     line_ending: sise_encoder::LineEnding::Lf,
+/// let spacing_config = sise::SerializeSpacingConfig {
+///     line_ending: sise::SerializeLineEnding::Lf,
 ///     indent_len: 4,
-///     indent_char: sise_encoder::IndentChar::Space,
+///     indent_char: sise::SerializeIndentChar::Space,
 /// };
 /// let keep_same_line = std::collections::HashSet::new();
-/// let spaced = sise_encoder::serialize(&tree, &mut sise_encoder::SpacedStyle::new(spacing_config, keep_same_line));
+/// let spaced = sise::serialize(&tree, &mut sise::SpacedSerializeStyle::new(spacing_config, keep_same_line));
 /// assert_eq!(spaced, "(example\n    (1\n        2\n        3\n    )\n    (a\n        b\n        c\n    )\n)\n");
 /// ```
 #[inline]
-pub fn serialize<'a>(root_node: &'a sise::Node, style: &'a mut Style<'a>) -> String {
+pub fn serialize<'a>(root_node: &'a Node, style: &'a mut SerializeStyle<'a>) -> String {
     let mut output = String::new();
     serialize_into(root_node, style, &mut output);
     output
