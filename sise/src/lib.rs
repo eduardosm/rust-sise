@@ -11,6 +11,7 @@
 mod tests {
     mod parser;
     mod serializer;
+    mod read_util;
     mod util;
 }
 
@@ -41,6 +42,13 @@ pub use self::serializer::SerializeSpacingConfig;
 pub use self::serializer::SpacedSerializeStyle;
 pub use self::serializer::serialize_into;
 pub use self::serializer::serialize;
+
+mod read_util;
+pub use self::read_util::ReadUtilError;
+pub use self::read_util::NodeReadUtil;
+pub use self::read_util::AtomNodeReadUtil;
+pub use self::read_util::ListNodeReadUtil;
+pub use self::read_util::ListNodeReadUtilIter;
 
 mod util;
 pub use self::util::is_atom_chr;
