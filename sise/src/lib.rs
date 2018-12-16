@@ -60,7 +60,7 @@ macro_rules! sise_expr {
 
 /// Represents a position in a text file.
 ///
-/// `line` and `column` begin to count with zero.
+/// Lines and columns begin to count with zero.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Pos {
     pub line: u32,
