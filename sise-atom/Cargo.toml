@@ -1,6 +1,6 @@
 [package]
 name = "sise-atom"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Eduardo Sánchez Muñoz <esm@eduardosm.net>"]
 edition = "2018"
 description = "Auxiliary functions used to encode and decode SISE atom values."
