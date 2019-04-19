@@ -1,13 +1,3 @@
-// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! The various algorithms from the paper.
 
 use std::cmp::min;
@@ -45,7 +35,7 @@ mod fpu_precision {
 // computations are performed in the desired precision.
 #[cfg(all(target_arch="x86", not(target_feature="sse2")))]
 mod fpu_precision {
-    use mem::size_of;
+    use crate::mem::size_of;
 
     /// A structure used to preserve the original value of the FPU control word, so that it can be
     /// restored when the structure is dropped.
@@ -71,7 +61,7 @@ mod fpu_precision {
         unsafe { asm!("fldcw $0" :: "m" (cw) :: "volatile") }
     }
 
-    /// Set the precision field of the FPU to `T` and return a `FPUControlWord`
+    /// Sets the precision field of the FPU to `T` and returns a `FPUControlWord`.
     pub fn set_precision<T>() -> FPUControlWord {
         let cw = 0u16;
 
@@ -336,7 +326,7 @@ pub fn algorithm_m<T: RawFloat>(f: &Big, e: i16) -> T {
     round_by_remainder(v, rem, q, z)
 }
 
-/// Skip over most Algorithm M iterations by checking the bit length.
+/// Skips over most Algorithm M iterations by checking the bit length.
 fn quick_start<T: RawFloat>(u: &mut Big, v: &mut Big, k: &mut i16) {
     // The bit length is an estimate of the base two logarithm, and log(u / v) = log(u) - log(v).
     // The estimate is off by at most 1, but always an under-estimate, so the error on log(u)

@@ -1,13 +1,3 @@
-// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! Bit fiddling on positive IEEE 754 floats. Negative numbers aren't and needn't be handled.
 //! Normal floating point numbers have a canonical representation as (frac, exp) such that the
 //! value is 2<sup>exp</sup> * (1 + sum(frac[N-i] / 2<sup>i</sup>)) where N is the number of bits.
@@ -28,6 +18,7 @@
 //! take the universally-correct slow path (Algorithm M) for very small and very large numbers.
 //! That algorithm needs only next_float() which does handle subnormals and zeros.
 use std::cmp::Ordering::{Less, Equal, Greater};
+use std::convert::{TryFrom, TryInto};
 use std::ops::{Add, Mul, Div, Neg};
 use std::fmt::{Debug, LowerExp};
 use crate::num_aux::diy_float::Fp;
@@ -66,16 +57,13 @@ pub trait RawFloat
     const ZERO: Self;
 
     /// Type used by `to_bits` and `from_bits`.
-    type Bits: Add<Output = Self::Bits> + From<u8> ;
+    type Bits: Add<Output = Self::Bits> + From<u8> + TryFrom<u64>;
 
-    /// Raw transmutation to integer.
+    /// Performs a raw transmutation to an integer.
     fn to_bits(self) -> Self::Bits;
 
-    /// Raw transmutation from integer.
+    /// Performs a raw transmutation from an integer.
     fn from_bits(v: Self::Bits) -> Self;
-
-    // Can be removed one TryFrom is stabilized
-    fn try_bits_from_u64(bits: u64) -> Option<Self::Bits>;
 
     /// Returns the category that this number falls into.
     fn classify(self) -> FpCategory;
@@ -83,14 +71,14 @@ pub trait RawFloat
     /// Returns the mantissa, exponent and sign as integers.
     fn integer_decode(self) -> (u64, i16, i8);
 
-    /// Decode the float.
+    /// Decodes the float.
     fn unpack(self) -> Unpacked;
 
-    /// Cast from a small integer that can be represented exactly.  Panic if the integer can't be
+    /// Casts from a small integer that can be represented exactly. Panic if the integer can't be
     /// represented, the other code in this module makes sure to never let that happen.
     fn from_int(x: u64) -> Self;
 
-    /// Get the value 10<sup>e</sup> from a pre-computed table.
+    /// Gets the value 10<sup>e</sup> from a pre-computed table.
     /// Panics for `e >= CEIL_LOG5_OF_MAX_SIG`.
     fn short_fast_pow10(e: usize) -> Self;
 
@@ -203,15 +191,6 @@ impl RawFloat for f32 {
     fn classify(self) -> FpCategory { self.classify() }
     fn to_bits(self) -> Self::Bits { self.to_bits() }
     fn from_bits(v: Self::Bits) -> Self { Self::from_bits(v) }
-
-    fn try_bits_from_u64(bits: u64) -> Option<u32> {
-        let bits_u32 = bits as u32;
-        if bits_u32 as u64 == bits {
-            Some(bits_u32)
-        } else {
-            None
-        }
-    }
 }
 
 
@@ -259,13 +238,9 @@ impl RawFloat for f64 {
     fn classify(self) -> FpCategory { self.classify() }
     fn to_bits(self) -> Self::Bits { self.to_bits() }
     fn from_bits(v: Self::Bits) -> Self { Self::from_bits(v) }
-
-    fn try_bits_from_u64(bits: u64) -> Option<u64> {
-        Some(bits)
-    }
 }
 
-/// Convert an Fp to the closest machine float type.
+/// Converts an `Fp` to the closest machine float type.
 /// Does not handle subnormal results.
 pub fn fp_to_float<T: RawFloat>(x: Fp) -> T {
     let x = x.normalize();
@@ -313,14 +288,14 @@ pub fn encode_normal<T: RawFloat>(x: Unpacked) -> T {
         "encode_normal: exponent out of range");
     // Leave sign bit at 0 ("+"), our numbers are all positive
     let bits = (k_enc as u64) << T::EXPLICIT_SIG_BITS | sig_enc;
-    T::from_bits(T::try_bits_from_u64(bits).unwrap_or_else(|| unreachable!()))
+    T::from_bits(bits.try_into().unwrap_or_else(|_| unreachable!()))
 }
 
 /// Construct a subnormal. A mantissa of 0 is allowed and constructs zero.
 pub fn encode_subnormal<T: RawFloat>(significand: u64) -> T {
     assert!(significand < T::MIN_SIG, "encode_subnormal: not actually subnormal");
     // Encoded exponent is 0, the sign bit is 0, so we just have to reinterpret the bits.
-    T::from_bits(T::try_bits_from_u64(significand).unwrap_or_else(|| unreachable!()))
+    T::from_bits(significand.try_into().unwrap_or_else(|_| unreachable!()))
 }
 
 /// Approximate a bignum with an Fp. Rounds within 0.5 ULP with half-to-even.
@@ -344,7 +319,7 @@ pub fn big_to_fp(f: &Big) -> Fp {
     }
 }
 
-/// Find the largest floating point number strictly smaller than the argument.
+/// Finds the largest floating point number strictly smaller than the argument.
 /// Does not handle subnormals, zero, or exponent underflow.
 pub fn prev_float<T: RawFloat>(x: T) -> T {
     match x.classify() {

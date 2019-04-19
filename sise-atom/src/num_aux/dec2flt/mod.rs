@@ -1,13 +1,3 @@
-// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! Converting decimal strings into IEEE 754 binary floating point numbers.
 //!
 //! # Problem statement
@@ -47,7 +37,7 @@
 //!
 //! In addition, there are numerous helper functions that are used in the paper but not available
 //! in Rust (or at least in core). Our version is additionally complicated by the need to handle
-//! overflow and underflow and the desire to handle subnormal numbers.  Bellerophon and
+//! overflow and underflow and the desire to handle subnormal numbers. Bellerophon and
 //! Algorithm R have trouble with overflow, subnormals, and underflow. We conservatively switch to
 //! Algorithm M (with the modifications described in section 8 of the paper) well before the
 //! inputs get into the critical region.
@@ -64,7 +54,7 @@
 //! operations as well, if you want 0.5 ULP accuracy you need to do *everything* in full precision
 //! and round *exactly once, at the end*, by considering all truncated bits at once.
 //!
-//! FIXME Although some code duplication is necessary, perhaps parts of the code could be shuffled
+//! FIXME: Although some code duplication is necessary, perhaps parts of the code could be shuffled
 //! around such that less code is duplicated. Large parts of the algorithms are independent of the
 //! float type to output, or only needs access to a few constants, which could be passed in as
 //! parameters.
@@ -86,8 +76,6 @@
 //! "such that the exponent +/- the number of decimal digits fits into a 64 bit integer".
 //! Larger exponents are accepted, but we don't do arithmetic with them, they are immediately
 //! turned into {positive,negative} {zero,infinity}.
-
-#![doc(hidden)]
 
 use std::fmt;
 
@@ -122,7 +110,6 @@ enum FloatErrorKind {
 }
 
 impl ParseFloatError {
-    #[doc(hidden)]
     pub fn __description(&self) -> &str {
         match self.kind {
             FloatErrorKind::Empty => "cannot parse float from empty string",
@@ -132,7 +119,7 @@ impl ParseFloatError {
 }
 
 impl fmt::Display for ParseFloatError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.__description().fmt(f)
     }
 }
@@ -145,7 +132,7 @@ fn pfe_invalid() -> ParseFloatError {
     ParseFloatError { kind: FloatErrorKind::Invalid }
 }
 
-/// Split decimal string into sign and the rest, without inspecting or validating the rest.
+/// Splits a decimal string into sign and the rest, without inspecting or validating the rest.
 fn extract_sign(s: &str) -> (Sign, &str) {
     match s.as_bytes()[0] {
         b'+' => (Sign::Positive, &s[1..]),
@@ -155,7 +142,7 @@ fn extract_sign(s: &str) -> (Sign, &str) {
     }
 }
 
-/// Convert a decimal string into a floating point number.
+/// Converts a decimal string into a floating point number.
 fn dec2flt<T: RawFloat>(s: &str) -> Result<T, ParseFloatError> {
     if s.is_empty() {
         return Err(pfe_empty())
@@ -180,7 +167,7 @@ fn dec2flt<T: RawFloat>(s: &str) -> Result<T, ParseFloatError> {
 
 /// The main workhorse for the decimal-to-float conversion: Orchestrate all the preprocessing
 /// and figure out which algorithm should do the actual conversion.
-pub fn convert<T: RawFloat>(mut decimal: Decimal) -> Result<T, ParseFloatError> {
+pub(crate) fn convert<T: RawFloat>(mut decimal: Decimal<'_>) -> Result<T, ParseFloatError> {
     simplify(&mut decimal);
     if let Some(x) = trivial_cases(&decimal) {
         return Ok(x);
@@ -217,7 +204,7 @@ pub fn convert<T: RawFloat>(mut decimal: Decimal) -> Result<T, ParseFloatError> 
 
 /// Strip zeros where possible, even when this requires changing the exponent
 #[inline(always)]
-fn simplify(decimal: &mut Decimal) {
+fn simplify(decimal: &mut Decimal<'_>) {
     let is_zero = &|&&d: &&u8| -> bool { d == b'0' };
     // Trimming these zeros does not change anything but may enable the fast path (< 15 digits).
     let leading_zeros = decimal.integral.iter().take_while(is_zero).count();
@@ -240,9 +227,9 @@ fn simplify(decimal: &mut Decimal) {
     }
 }
 
-/// Quick and dirty upper bound on the size (log10) of the largest value that Algorithm R and
-/// Algorithm M will compute while working on the given decimal.
-fn bound_intermediate_digits(decimal: &Decimal, e: i64) -> u64 {
+/// Returns a quick-an-dirty upper bound on the size (log10) of the largest value that Algorithm R
+/// and Algorithm M will compute while working on the given decimal.
+fn bound_intermediate_digits(decimal: &Decimal<'_>, e: i64) -> u64 {
     // We don't need to worry too much about overflow here thanks to trivial_cases() and the
     // parser, which filter out the most extreme inputs for us.
     let f_len: u64 = decimal.integral.len() as u64 + decimal.fractional.len() as u64;
@@ -260,8 +247,8 @@ fn bound_intermediate_digits(decimal: &Decimal, e: i64) -> u64 {
     }
 }
 
-/// Detect obvious overflows and underflows without even looking at the decimal digits.
-fn trivial_cases<T: RawFloat>(decimal: &Decimal) -> Option<T> {
+/// Detects obvious overflows and underflows without even looking at the decimal digits.
+fn trivial_cases<T: RawFloat>(decimal: &Decimal<'_>) -> Option<T> {
     // There were zeros but they were stripped by simplify()
     if decimal.integral.is_empty() && decimal.fractional.is_empty() {
         return Some(T::ZERO);

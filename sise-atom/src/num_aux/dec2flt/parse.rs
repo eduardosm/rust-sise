@@ -1,13 +1,3 @@
-// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! Validating and decomposing a decimal string of the form:
 //!
 //! `(digits | digits? '.'? digits?) (('e' | 'E') ('+' | '-')? digits)?`
@@ -52,9 +42,9 @@ pub enum ParseResult<'a> {
     Invalid,
 }
 
-/// Check if the input string is a valid floating point number and if so, locate the integral
+/// Checks if the input string is a valid floating point number and if so, locate the integral
 /// part, the fractional part, and the exponent in it. Does not handle signs.
-pub fn parse_decimal(s: &str) -> ParseResult {
+pub fn parse_decimal(s: &str) -> ParseResult<'_> {
     if s.is_empty() {
         return Invalid;
     }
@@ -88,7 +78,7 @@ pub fn parse_decimal(s: &str) -> ParseResult {
     }
 }
 
-/// Carve off decimal digits up to the first non-digit character.
+/// Carves off decimal digits up to the first non-digit character.
 fn eat_digits(s: &[u8]) -> (&[u8], &[u8]) {
     let mut i = 0;
     while i < s.len() && b'0' <= s[i] && s[i] <= b'9' {

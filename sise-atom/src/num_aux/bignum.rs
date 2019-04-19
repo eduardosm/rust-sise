@@ -1,13 +1,3 @@
-// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! Custom arbitrary-precision number (bignum) implementation.
 //!
 //! This is designed to avoid the heap allocation at expense of stack memory.
@@ -19,9 +9,6 @@
 //! inputs, but we don't do so to avoid the code bloat. Each bignum is still
 //! tracked for the actual usages, so it normally doesn't matter.
 
-// This module is only for dec2flt and flt2dec, and only public because of coretests.
-// It is not intended to ever be stabilized.
-#![doc(hidden)]
 #![macro_use]
 
 use std::mem;
@@ -53,22 +40,25 @@ macro_rules! impl_full_ops {
         $(
             impl FullOps for $ty {
                 fn full_add(self, other: $ty, carry: bool) -> (bool, $ty) {
-                    // this cannot overflow, the output is between 0 and 2*2^nbits - 1
-                    // FIXME will LLVM optimize this into ADC or similar???
+                    // This cannot overflow; the output is between `0` and `2 * 2^nbits - 1`.
+                    // FIXME: will LLVM optimize this into ADC or similar?
                     let (v, carry1) = self.overflowing_add(other);
                     let (v, carry2) = v.overflowing_add(if carry {1} else {0});
                     (carry1 || carry2, v)
                 }
 
                 fn full_mul(self, other: $ty, carry: $ty) -> ($ty, $ty) {
-                    // this cannot overflow, the output is between 0 and 2^nbits * (2^nbits - 1)
+                    // This cannot overflow;
+                    // the output is between `0` and `2^nbits * (2^nbits - 1)`.
+                    // FIXME: will LLVM optimize this into ADC or similar?
                     let nbits = mem::size_of::<$ty>() * 8;
                     let v = (self as $bigty) * (other as $bigty) + (carry as $bigty);
                     ((v >> nbits) as $ty, v as $ty)
                 }
 
                 fn full_mul_add(self, other: $ty, other2: $ty, carry: $ty) -> ($ty, $ty) {
-                    // this cannot overflow, the output is between 0 and 2^(2*nbits) - 1
+                    // This cannot overflow;
+                    // the output is between `0` and `2^nbits * (2^nbits - 1)`.
                     let nbits = mem::size_of::<$ty>() * 8;
                     let v = (self as $bigty) * (other as $bigty) + (other2 as $bigty) +
                             (carry as $bigty);
@@ -77,7 +67,7 @@ macro_rules! impl_full_ops {
 
                 fn full_div_rem(self, other: $ty, borrow: $ty) -> ($ty, $ty) {
                     debug_assert!(borrow < other);
-                    // this cannot overflow, the dividend is between 0 and other * 2^nbits - 1
+                    // This cannot overflow; the output is between `0` and `other * (2^nbits - 1)`.
                     let nbits = mem::size_of::<$ty>() * 8;
                     let lhs = ((borrow as $bigty) << nbits) | (self as $bigty);
                     let rhs = other as $bigty;
@@ -92,7 +82,8 @@ impl_full_ops! {
     u8:  add(intrinsics::u8_add_with_overflow),  mul/div(u16);
     u16: add(intrinsics::u16_add_with_overflow), mul/div(u32);
     u32: add(intrinsics::u32_add_with_overflow), mul/div(u64);
-//  u64: add(intrinsics::u64_add_with_overflow), mul/div(u128); // see RFC #521 for enabling this.
+    // See RFC #521 for enabling this.
+    // u64: add(intrinsics::u64_add_with_overflow), mul/div(u128);
 }
 
 /// Table of powers of 5 representable in digits. Specifically, the largest {u8, u16, u32} value
@@ -431,21 +422,21 @@ macro_rules! define_bignum {
             }
         }
 
-        impl ::std::cmp::PartialEq for $name {
+        impl std::cmp::PartialEq for $name {
             fn eq(&self, other: &$name) -> bool { self.base[..] == other.base[..] }
         }
 
-        impl ::std::cmp::Eq for $name {
+        impl std::cmp::Eq for $name {
         }
 
-        impl ::std::cmp::PartialOrd for $name {
-            fn partial_cmp(&self, other: &$name) -> ::std::option::Option<::std::cmp::Ordering> {
-                ::std::option::Option::Some(self.cmp(other))
+        impl std::cmp::PartialOrd for $name {
+            fn partial_cmp(&self, other: &$name) -> std::option::Option<std::cmp::Ordering> {
+                std::option::Option::Some(self.cmp(other))
             }
         }
 
-        impl ::std::cmp::Ord for $name {
-            fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
+        impl std::cmp::Ord for $name {
+            fn cmp(&self, other: &$name) -> std::cmp::Ordering {
                 use std::cmp::max;
                 let sz = max(self.size, other.size);
                 let lhs = self.base[..sz].iter().cloned().rev();
@@ -454,14 +445,14 @@ macro_rules! define_bignum {
             }
         }
 
-        impl ::std::clone::Clone for $name {
+        impl std::clone::Clone for $name {
             fn clone(&self) -> $name {
                 $name { size: self.size, base: self.base }
             }
         }
 
-        impl ::std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 use std::mem;
 
                 let sz = if self.size < 1 {1} else {self.size};
@@ -471,7 +462,7 @@ macro_rules! define_bignum {
                 for &v in self.base[..sz-1].iter().rev() {
                     write!(f, "_{:01$x}", v, digitlen)?;
                 }
-                ::std::result::Result::Ok(())
+                std::result::Result::Ok(())
             }
         }
     )

@@ -1,13 +1,3 @@
-// Copyright 2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! Decodes a floating-point value into individual parts and error ranges.
 
 use std::{f32, f64};
@@ -20,7 +10,7 @@ use crate::num_aux::dec2flt::rawfp::RawFloat;
 ///
 /// - Any number from `(mant - minus) * 2^exp` to `(mant + plus) * 2^exp` will
 ///   round to the original value. The range is inclusive only when
-///   `inclusive` is true.
+///   `inclusive` is `true`.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Decoded {
     /// The scaled mantissa.

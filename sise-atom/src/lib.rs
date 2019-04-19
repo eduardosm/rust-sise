@@ -9,6 +9,7 @@
 mod tests;
 
 #[allow(dead_code)]
+#[allow(clippy::all)]
 mod num_aux;
 
 // Encode
