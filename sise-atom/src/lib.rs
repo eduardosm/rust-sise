@@ -698,7 +698,7 @@ fn decode_float_generic<T>(atom: &str) -> Option<T>
         }
     } else {
         // Less than 18 digits
-        if exp_abs > 99999999999999999 {
+        if exp_abs > 99_999_999_999_999_999 {
             if exp_sign {
                 Some(T::ZERO)
             } else {
@@ -1032,7 +1032,7 @@ pub fn decode_utf8_string(atom: &str) -> Option<String> {
                         state = State::Normal;
                     }
                     Some(chr) => {
-                        if current_hex >= 0x10000000 {
+                        if current_hex >= 0x1000_0000 {
                             return None;
                         }
                         let new_digit = u32::from(hex_digit_to_u8(chr)?);

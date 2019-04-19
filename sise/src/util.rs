@@ -34,7 +34,7 @@ pub fn check_atom(atom: &str) -> bool {
     }
 
     let mut state = State::Beginning;
-    let mut iter = atom.as_bytes().iter().map(|&c| c);
+    let mut iter = atom.as_bytes().iter().cloned();
     loop {
         let chr = iter.next();
         match state {

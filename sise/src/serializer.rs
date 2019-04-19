@@ -170,8 +170,8 @@ mod spaced_style {
 
     impl SerializeIndentChar {
         #[inline]
-        fn get_char(&self) -> char {
-            match *self {
+        fn get_char(self) -> char {
+            match self {
                 SerializeIndentChar::Space => ' ',
                 SerializeIndentChar::Tab => '\t',
             }
