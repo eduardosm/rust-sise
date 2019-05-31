@@ -219,7 +219,7 @@ impl std::error::Error for ParseError {
 pub fn parse(data: &[u8], limits: &ParseLimits) -> Result<(Node, PosTree), ParseError> {
     assert!(limits.max_atom_len >= 1);
 
-    let mut lexer = Lexer::new(data.iter().map(|&c| c).peekable());
+    let mut lexer = Lexer::new(data.iter().cloned().peekable());
 
     enum State {
         Beginning,
@@ -399,6 +399,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
         Ok(())
     }
 
+    #[allow(clippy::cognitive_complexity)]
     fn get_token(&mut self, max_atom_len: usize) -> Result<(Pos, Token), ParseError> {
         enum State {
             Beginning,
@@ -422,7 +423,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                             self.incr_line()?
                         }
                         Some(b'\r') => {
-                            if self.iter.peek().map(|&c| c) == Some(b'\n') {
+                            if self.iter.peek().cloned() == Some(b'\n') {
                                 self.iter.next();
                             }
                             self.incr_line()?;
@@ -469,7 +470,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                             state = State::Beginning;
                         }
                         Some(b'\r') => {
-                            if self.iter.peek().map(|&c| c) == Some(b'\n') {
+                            if self.iter.peek().cloned() == Some(b'\n') {
                                 self.iter.next();
                             }
                             self.incr_line()?;
@@ -487,7 +488,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                     }
                 }
                 State::Atom(pos, mut atom) => {
-                    let chr = self.iter.peek().map(|&c| c);
+                    let chr = self.iter.peek().cloned();
                     match chr {
                         Some(b'"') => {
                             if atom.len() == max_atom_len {

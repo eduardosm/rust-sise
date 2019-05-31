@@ -112,7 +112,7 @@ impl<'a> Builder<'a> {
     /// assert!(r.is_err());
     /// ```
     #[inline]
-    pub fn sub_builder<'b>(&'b mut self) -> Builder<'b> {
+    pub fn sub_builder(&mut self) -> Builder<'_> {
         let min_depth = self.base.stack.len();
         Builder {
             base: self.base,
