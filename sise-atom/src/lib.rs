@@ -281,6 +281,7 @@ fn nibble_to_hex(nibble: u8) -> char {
 pub fn encode_byte_string_into(string: &[u8], output: &mut String) {
     output.push('"');
     for &chr in string {
+        #[allow(clippy::match_overlapping_arm)]
         match chr {
             b'\t' => output.push_str("\\t"),
             b'\n' => output.push_str("\\n"),
@@ -308,6 +309,7 @@ pub fn encode_byte_string(string: &[u8]) -> String {
 pub fn encode_ascii_string_into(string: &str, output: &mut String) {
     output.push('"');
     for &chr in string.as_bytes() {
+        #[allow(clippy::match_overlapping_arm)]
         match chr {
             b'\t' => output.push_str("\\t"),
             b'\n' => output.push_str("\\n"),
