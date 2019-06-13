@@ -252,7 +252,7 @@ pub fn parse(data: &[u8], limits: &ParseLimits) -> Result<(Node, PosTree), Parse
                         state = State::Finishing(PosTree::new(token_pos), root_node);
                     }
                     token => {
-                        return Err(ParseError::UnexpectedToken { pos: token_pos, token: token });
+                        return Err(ParseError::UnexpectedToken { pos: token_pos, token });
                     }
                 }
             }
@@ -295,7 +295,7 @@ pub fn parse(data: &[u8], limits: &ParseLimits) -> Result<(Node, PosTree), Parse
                         state = State::List(list_node_pos_tree, list);
                     }
                     _ => {
-                        return Err(ParseError::UnexpectedToken { pos: token_pos, token: token });
+                        return Err(ParseError::UnexpectedToken { pos: token_pos, token });
                     }
                 }
             }
@@ -377,7 +377,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
         Lexer {
             line: 0,
             column: 0,
-            iter: iter,
+            iter,
         }
     }
 
@@ -492,7 +492,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                     match chr {
                         Some(b'"') => {
                             if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos: pos });
+                                return Err(ParseError::AtomTooLong { pos });
                             }
 
                             self.iter.next();
@@ -502,7 +502,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                         }
                         Some(c) if is_atom_chr(c) => {
                             if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos: pos });
+                                return Err(ParseError::AtomTooLong { pos });
                             }
 
                             self.iter.next();
@@ -520,7 +520,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                     match chr {
                         Some(b'"') => {
                             if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos: pos });
+                                return Err(ParseError::AtomTooLong { pos });
                             }
 
                             self.incr_column()?;
@@ -529,7 +529,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                         }
                         Some(b'\\') => {
                             if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos: pos });
+                                return Err(ParseError::AtomTooLong { pos });
                             }
 
                             self.incr_column()?;
@@ -538,7 +538,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                         }
                         Some(c) if is_atom_string_chr(c) => {
                             if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos: pos });
+                                return Err(ParseError::AtomTooLong { pos });
                             }
 
                             self.incr_column()?;
@@ -558,7 +558,7 @@ impl<I: Iterator<Item=u8>> Lexer<I> {
                     match chr {
                         Some(c) if is_atom_string_chr(c) || c == b'"' || c == b'\\' => {
                             if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos: pos });
+                                return Err(ParseError::AtomTooLong { pos });
                             }
 
                             self.incr_column()?;

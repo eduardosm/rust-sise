@@ -294,8 +294,8 @@ mod spaced_style {
     impl SpacedSerializeStyle {
         pub fn new(spacing_config: super::SerializeSpacingConfig, keep_same_line: HashSet<usize>) -> Self {
             SpacedSerializeStyle {
-                spacing_config: spacing_config,
-                keep_same_line: keep_same_line,
+                spacing_config,
+                keep_same_line,
 
                 indent_depth: 0,
                 state: State::Invalid,

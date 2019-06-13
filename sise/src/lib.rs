@@ -7,8 +7,6 @@
 
 //! SISE (Simple S-expression) is a file format based on S-expressions.
 
-#![allow(clippy::redundant_field_names)]
-
 #[cfg(test)]
 mod tests {
     mod parser;

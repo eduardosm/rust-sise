@@ -116,7 +116,7 @@ impl<'a> Builder<'a> {
         let min_depth = self.base.stack.len();
         Builder {
             base: self.base,
-            min_depth: min_depth,
+            min_depth,
         }
     }
 

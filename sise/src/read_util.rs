@@ -107,10 +107,7 @@ pub struct NodeReadUtil<'a, 'b> {
 impl<'a, 'b> NodeReadUtil<'a, 'b> {
     #[inline]
     pub fn new(node: &'a Node, pos_tree: Option<&'b PosTree>) -> Self {
-        Self {
-            node: node,
-            pos_tree: pos_tree,
-        }
+        Self { node, pos_tree }
     }
 
     /// Returns the node in this utility.
@@ -183,10 +180,7 @@ pub struct AtomNodeReadUtil<'a> {
 impl<'a> AtomNodeReadUtil<'a> {
     #[inline]
     pub fn new(atom: &'a str, pos: Option<Pos>) -> Self {
-        Self {
-            atom: atom,
-            pos: pos,
-        }
+        Self { atom, pos }
     }
 
     /// Returns the atom value in this utility.
@@ -245,8 +239,8 @@ impl<'a, 'b> ListNodeReadUtil<'a, 'b> {
     #[inline]
     pub fn new(list: &'a [Node], pos_tree: Option<&'b PosTree>) -> Self {
         Self {
-            list: list,
-            pos_tree: pos_tree,
+            list,
+            pos_tree,
             index: 0,
         }
     }

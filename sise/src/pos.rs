@@ -17,7 +17,7 @@ pub struct Pos {
 impl Pos {
     #[inline]
     pub fn new(line: u32, column: u32) -> Self {
-        Self { line: line, column: column }
+        Self { line, column }
     }
 }
 
@@ -46,7 +46,7 @@ impl PosTree {
     #[inline]
     pub fn new(pos: Pos) -> Self {
         Self {
-            pos: pos,
+            pos,
             children: Vec::new(),
         }
     }
