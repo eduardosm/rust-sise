@@ -6,6 +6,7 @@
 // copied, modified, or distributed except according to those terms.
 
 #![allow(clippy::cognitive_complexity)]
+#![allow(clippy::excessive_precision)]
 #![allow(clippy::unreadable_literal)]
 
 // Encode
