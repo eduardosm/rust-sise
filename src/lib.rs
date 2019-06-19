@@ -12,6 +12,7 @@
 #[cfg(test)]
 mod tests {
     mod parser;
+    mod tree_reader;
     mod read_into_tree;
     mod writer;
     mod read_util;
@@ -40,6 +41,9 @@ mod parser;
 pub use self::parser::ParseError;
 pub use self::parser::Parser;
 pub use self::parser::TokenKind;
+
+mod tree_reader;
+pub use self::tree_reader::TreeReader;
 
 mod read_into_tree;
 pub use self::read_into_tree::read_into_tree;
