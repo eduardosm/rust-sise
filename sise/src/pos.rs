@@ -1,4 +1,4 @@
-// Copyright 2018 Eduardo Sánchez Muñoz
+// Copyright 2019 Eduardo Sánchez Muñoz
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
 // http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
@@ -27,7 +27,7 @@ impl Pos {
 pub struct ReprPosValue(pub u32);
 
 impl std::fmt::Display for ReprPosValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0.checked_add(1) {
             Some(value) => std::fmt::Display::fmt(&value, f),
             None => f.write_str("4294967296"),
@@ -35,27 +35,26 @@ impl std::fmt::Display for ReprPosValue {
     }
 }
 
-/// Maps nodes with their positions in the original text file.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct PosTree {
-    pub pos: Pos,
-    pub children: Vec<PosTree>,
+/// Maps nodes with their positions in the source.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PosTree<P> {
+    pub pos: P,
+    pub list: Option<PosTreeList<P>>,
 }
 
-impl PosTree {
-    #[inline]
-    pub fn new(pos: Pos) -> Self {
-        Self {
-            pos,
-            children: Vec::new(),
-        }
-    }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PosTreeList<P> {
+    pub items: Vec<PosTree<P>>,
+    pub ending_pos: P,
+}
 
+impl<P> PosTree<P> {
     /// Traverses a tree with indices from `path`. Similar to `Node::index_path`.
     pub fn index_path(&self, path: &[usize]) -> Option<&Self> {
         let mut current_node = self;
         for &index in path {
-            if let Some(next_node) = self.children.get(index) {
+            let next_node = current_node.list.as_ref().and_then(|list| list.items.get(index));
+            if let Some(ref next_node) = next_node {
                 current_node = next_node;
             } else {
                 return None;

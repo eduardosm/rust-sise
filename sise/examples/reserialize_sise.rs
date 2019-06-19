@@ -5,7 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-extern crate sise;
+use sise::Reader as _;
+use sise::Writer as _;
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
     use std::io::Read;
@@ -38,24 +39,28 @@ fn main() {
     };
 
     let file_data = read_file(std::path::Path::new(&args[2])).unwrap();
-
-    let parse_limits = sise::ParseLimits::unlimited();
-    let (parsed, _) = sise::parse(&file_data, &parse_limits).unwrap();
+    let mut parser = sise::Parser::new(&file_data);
+    let parsed = sise::read_into_tree_without_pos(&mut parser).unwrap();
+    parser.finish().unwrap();
 
     match serialize_style {
         SerializeStyle::Compact => {
-            let reserialized = sise::serialize(&parsed, &mut sise::CompactSerializeStyle::new());
+            let mut reserialized = String::new();
+            let mut writer = sise::CompactStringWriter::new(&mut reserialized);
+            sise::write_from_tree(&mut writer, &parsed).unwrap();
+            writer.finish(&sise::VoidWriterOptions).unwrap();
             println!("{}", reserialized);
         }
         SerializeStyle::Spaced => {
-            let spacing_config = sise::SerializeSpacingConfig {
-                line_ending: sise::SerializeLineEnding::Lf,
-                indent_len: 2,
-                indent_char: sise::SerializeIndentChar::Space,
+            let spaced_style = sise::SpacedStringWriterStyle {
+                line_break: "\n",
+                indentation: "  ",
             };
-            let keep_same_line = std::collections::HashSet::new();
-            let reserialized = sise::serialize(&parsed, &mut sise::SpacedSerializeStyle::new(spacing_config, keep_same_line));
-            print!("{}", reserialized);
+            let mut reserialized = String::new();
+            let mut writer = sise::SpacedStringWriter::new(spaced_style, &mut reserialized);
+            sise::write_from_tree(&mut writer, &parsed).unwrap();
+            writer.finish(&sise::VoidWriterOptions).unwrap();
+            println!("{}", reserialized);
         }
     }
 }

@@ -5,11 +5,11 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-extern crate sise;
+use std::io::Read as _;
+
+use sise::Reader as _;
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
-    use std::io::Read;
-
     let mut file = std::fs::OpenOptions::new().read(true).open(path)?;
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
@@ -24,9 +24,9 @@ fn main() {
     }
 
     let file_data = read_file(std::path::Path::new(&args[1])).unwrap();
-
-    let parse_limits = sise::ParseLimits::unlimited();
-    let (parsed, _) = sise::parse(&file_data, &parse_limits).unwrap();
+    let mut parser = sise::Parser::new(&file_data);
+    let parsed = sise::read_into_tree_without_pos(&mut parser).unwrap();
+    parser.finish().unwrap();
 
     println!("{:#?}", parsed);
 }

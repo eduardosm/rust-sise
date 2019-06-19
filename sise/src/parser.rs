@@ -1,65 +1,19 @@
-// Copyright 2018 Eduardo Sánchez Muñoz
+// Copyright 2019 Eduardo Sánchez Muñoz
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
 // http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use std::convert::TryFrom;
+
 use crate::Pos;
 use crate::ReprPosValue;
-use crate::PosTree;
-use crate::Node;
+use crate::Reader;
+use crate::ReadItem;
+use crate::ReadItemKind;
 use crate::is_atom_chr;
 use crate::is_atom_string_chr;
-
-/// Structure to specify parsing limits.
-#[derive(Clone, Debug)]
-pub struct ParseLimits {
-    /// Maximum list nesting depth.
-    max_depth: usize,
-
-    /// Maximum atom length.
-    max_atom_len: usize,
-
-    /// Maximum number of elements in a list.
-    max_list_len: usize,
-}
-
-impl ParseLimits {
-    /// Creates a `ParseLimits` instance with all fields set to maximum.
-    #[inline]
-    pub fn unlimited() -> Self {
-        ParseLimits {
-            max_depth: usize::max_value(),
-            max_atom_len: usize::max_value(),
-            max_list_len: usize::max_value(),
-        }
-    }
-
-    /// Modifies the value of `max_depth` in `self` and returns
-    /// the modified `self`.
-    #[inline]
-    pub fn max_depth(mut self, max_depth: usize) -> Self {
-        self.max_depth = max_depth;
-        self
-    }
-
-    /// Modifies the value of `max_atom_len` in `self` and returns
-    /// the modified `self`.
-    #[inline]
-    pub fn max_atom_len(mut self, max_atom_len: usize) -> Self {
-        self.max_atom_len = max_atom_len;
-        self
-    }
-
-    /// Modifies the value of `max_list_len` in `self` and returns
-    /// the modified `self`.
-    #[inline]
-    pub fn max_list_len(mut self, max_list_len: usize) -> Self {
-        self.max_list_len = max_list_len;
-        self
-    }
-}
 
 /// Represents a parse error.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -90,7 +44,7 @@ pub enum ParseError {
     /// Unexpected token.
     UnexpectedToken {
         pos: Pos,
-        token: Token,
+        token: TokenKind,
     },
 
     /// Found a token when expecting end-of-file.
@@ -105,77 +59,47 @@ pub enum ParseError {
 
     /// There are more than `u32::max_value()` lines.
     TooManyLines,
-
-    /// Maximum specified list nesting depth exceeded.
-    TooDeep {
-        pos: Pos,
-    },
-
-    /// Maximum atom length exceeded.
-    AtomTooLong {
-        pos: Pos,
-    },
-
-    /// Maximum number of list elements exceeded.
-    ListTooLong {
-        pos: Pos,
-    },
 }
 
 impl std::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             ParseError::IllegalChr { pos, chr } => {
-                write!(f, "Illegal character 0x{:02X} at {}:{}",
+                write!(f, "illegal character 0x{:02X} at {}:{}",
                        chr, ReprPosValue(pos.line),
                        ReprPosValue(pos.column))
             }
             ParseError::IllegalChrInString { pos, chr } => {
-                write!(f, "Illegal character 0x{:02X} in string at {}:{}",
+                write!(f, "illegal character 0x{:02X} in string at {}:{}",
                        chr, ReprPosValue(pos.line),
                        ReprPosValue(pos.column))
             }
             ParseError::IllegalChrInComment { pos, chr } => {
-                write!(f, "Illegal character 0x{:02X} in comment at {}:{}",
+                write!(f, "illegal character 0x{:02X} in comment at {}:{}",
                        chr, ReprPosValue(pos.line),
                        ReprPosValue(pos.column))
             }
             ParseError::UnfinishedString { pos } => {
-                write!(f, "Unfinished string at {}:{}",
+                write!(f, "unfinished string at {}:{}",
                        ReprPosValue(pos.line),
                        ReprPosValue(pos.column))
             }
             ParseError::UnexpectedToken { pos, ref token } => {
-                write!(f, "Unexpected token {:?} at {}:{}",
+                write!(f, "unexpected token {:?} at {}:{}",
                        token,
                        ReprPosValue(pos.line),
                        ReprPosValue(pos.column))
             }
             ParseError::ExpectedEof { pos } => {
-                write!(f, "Expected end-of-file at {}:{}",
+                write!(f, "expected end-of-file at {}:{}",
                        ReprPosValue(pos.line),
                        ReprPosValue(pos.column))
             }
             ParseError::LineTooLong { line } => {
-                write!(f, "Line {} too long", ReprPosValue(line))
+                write!(f, "line {} too long", ReprPosValue(line))
             }
             ParseError::TooManyLines => {
-                write!(f, "Too many lines")
-            }
-            ParseError::TooDeep { pos } => {
-                write!(f, "Maximum depth exceeded at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
-            ParseError::AtomTooLong { pos } => {
-                write!(f, "Atom too long at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
-            ParseError::ListTooLong { pos } => {
-                write!(f, "List too long at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
+                write!(f, "too many lines")
             }
         }
     }
@@ -184,392 +108,314 @@ impl std::fmt::Display for ParseError {
 impl std::error::Error for ParseError {
     fn description(&self) -> &str {
         match *self {
-            ParseError::IllegalChr { .. } => "Illegal character",
-            ParseError::IllegalChrInString { .. } => "Illegal character in string",
-            ParseError::IllegalChrInComment { .. } => "Illegal character in comment",
-            ParseError::UnfinishedString { .. } => "Unfinished string",
-            ParseError::UnexpectedToken { .. } => "Unexpected token",
-            ParseError::ExpectedEof { .. } => "Expected end-of-file",
-            ParseError::LineTooLong { .. } => "Line too long",
-            ParseError::TooManyLines => "Too many lines",
-            ParseError::TooDeep { .. } => "Maximum depth exceeded",
-            ParseError::AtomTooLong { .. } => "Atom too long",
-            ParseError::ListTooLong { .. } => "List too long",
+            ParseError::IllegalChr { .. } => "illegal character",
+            ParseError::IllegalChrInString { .. } => "illegal character in string",
+            ParseError::IllegalChrInComment { .. } => "illegal character in comment",
+            ParseError::UnfinishedString { .. } => "unfinished string",
+            ParseError::UnexpectedToken { .. } => "unexpected token",
+            ParseError::ExpectedEof { .. } => "expected end-of-file",
+            ParseError::LineTooLong { .. } => "line too long",
+            ParseError::TooManyLines => "too many lines",
         }
     }
 }
 
-/// Parses `data`. If successful, it returns the root node and a position
-/// map that allows to fetch the position (line and column) of each node.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum TokenKind {
+    Eof,
+    LeftParen,
+    RightParen,
+    Atom,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Token<'a> {
+    Eof,
+    LeftParen,
+    RightParen,
+    Atom(&'a str),
+}
+
+/// Parser that decodes a SISE file from memory.
 ///
 /// # Example
 ///
 /// ```
+/// use sise::Reader as _;
 /// let data = b"(test (1 2 3))";
-/// let limits = sise::ParseLimits::unlimited();
-/// match sise::parse(data, &limits) {
-///     Ok((root_node, pos_tree)) => {
-///         println!("{:?}", root_node);
-///     }
-///     Err(e) => {
-///         panic!("Error: {}", e);
-///     }
-/// }
+/// let mut parser = sise::Parser::new(data);
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("test"));
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("1"));
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("2"));
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("3"));
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
+/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
+/// parser.finish().unwrap();
 /// ```
-pub fn parse(data: &[u8], limits: &ParseLimits) -> Result<(Node, PosTree), ParseError> {
-    assert!(limits.max_atom_len >= 1);
+pub struct Parser<'a> {
+    lexer: Lexer<'a>,
+    depth: usize,
+}
 
-    let mut lexer = Lexer::new(data.iter().cloned().peekable());
-
-    enum State {
-        Beginning,
-        List(PosTree, Vec<Node>),
-        Finishing(PosTree, Node),
+impl<'a> Parser<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        Self {
+            lexer: Lexer::new(data),
+            depth: 1,
+        }
     }
+}
 
-    enum StackItem {
-        List(PosTree, Vec<Node>),
-    }
+impl<'a> Reader for Parser<'a> {
+    type Error = ParseError;
+    type String = &'a str;
+    type Pos = Pos;
 
-    let mut state = State::Beginning;
-    let mut stack = Vec::new();
-    let mut depth = 0;
-
-    loop {
-        let (token_pos, token) = lexer.get_token(limits.max_atom_len)?;
-        match state {
-            State::Beginning => {
-                match token {
-                    Token::LeftParen => {
-                        if depth == limits.max_depth {
-                            return Err(ParseError::TooDeep { pos: token_pos });
-                        }
-                        state = State::List(PosTree::new(token_pos), Vec::new());
-                        depth += 1;
-                    }
-                    Token::Atom(atom) => {
-                        let root_node = Node::Atom(atom);
-                        state = State::Finishing(PosTree::new(token_pos), root_node);
-                    }
-                    token => {
-                        return Err(ParseError::UnexpectedToken { pos: token_pos, token });
-                    }
-                }
+    fn read(&mut self) -> Result<ReadItem<&'a str, Pos>, ParseError> {
+        assert_ne!(self.depth, 0, "parsing finished");
+        let (pos, token) = self.lexer.get_token()?;
+        match token {
+            Token::Eof => {
+                Err(ParseError::UnexpectedToken {
+                    pos,
+                    token: TokenKind::Eof,
+                })
             }
-            State::List(mut list_node_pos_tree, mut list) => {
-                match token {
-                    Token::LeftParen => {
-                        if list.len() == limits.max_list_len {
-                            return Err(ParseError::ListTooLong { pos: token_pos });
-                        }
-                        if depth == limits.max_depth {
-                            return Err(ParseError::TooDeep { pos: token_pos });
-                        }
-
-                        stack.push(StackItem::List(list_node_pos_tree, list));
-                        state = State::List(PosTree::new(token_pos), Vec::new());
-                        depth += 1;
-                    }
-                    Token::RightParen => {
-                        let node = Node::List(list);
-                        depth -= 1;
-                        match stack.pop() {
-                            Some(StackItem::List(mut parent_node_pos_tree, mut parent_list)) => {
-                                parent_node_pos_tree.children.push(list_node_pos_tree);
-                                parent_list.push(node);
-                                state = State::List(parent_node_pos_tree, parent_list);
-                            }
-                            None => {
-                                state = State::Finishing(list_node_pos_tree, node);
-                            }
-                        }
-                    }
-                    Token::Atom(atom) => {
-                        if list.len() == limits.max_list_len {
-                            return Err(ParseError::ListTooLong { pos: token_pos });
-                        }
-
-                        let atom_node = Node::Atom(atom);
-                        list_node_pos_tree.children.push(PosTree::new(token_pos));
-                        list.push(atom_node);
-                        state = State::List(list_node_pos_tree, list);
-                    }
-                    _ => {
-                        return Err(ParseError::UnexpectedToken { pos: token_pos, token });
-                    }
-                }
+            Token::LeftParen => {
+                self.depth += 1;
+                Ok(ReadItem {
+                    pos,
+                    kind: ReadItemKind::ListBeginning,
+                })
             }
-            State::Finishing(pos_tree, root_node) => {
-                assert!(stack.is_empty());
-                assert_eq!(depth, 0);
-                match token {
-                    Token::Eof => {
-                        return Ok((root_node, pos_tree));
-                    }
-                    _ => {
-                        return Err(ParseError::ExpectedEof { pos: token_pos });
-                    }
+            Token::RightParen => {
+                self.depth -= 1;
+                if self.depth == 1 {
+                    self.depth = 0;
                 }
+                Ok(ReadItem {
+                    pos,
+                    kind: ReadItemKind::ListEnding,
+                })
+            }
+            Token::Atom(atom) => {
+                if self.depth == 1 {
+                    self.depth = 0;
+                }
+                Ok(ReadItem {
+                    pos,
+                    kind: ReadItemKind::Atom(atom),
+                })
             }
         }
     }
-}
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Token {
-    Eof,
-    LeftParen,
-    RightParen,
-    Atom(String),
-}
-
-impl Token {
-    #[inline]
-    pub fn is_eof(&self) -> bool {
-        match *self {
-            Token::Eof => true,
-            _ => false,
-        }
-    }
-
-    #[inline]
-    pub fn is_left_paren(&self) -> bool {
-        match *self {
-            Token::LeftParen => true,
-            _ => false,
-        }
-    }
-
-    #[inline]
-    pub fn is_right_paren(&self) -> bool {
-        match *self {
-            Token::RightParen => true,
-            _ => false,
-        }
-    }
-
-    #[inline]
-    pub fn is_atom(&self) -> bool {
-        match *self {
-            Token::Atom(..) => true,
-            _ => false,
-        }
-    }
-
-    #[inline]
-    pub fn into_atom(self) -> Option<String> {
-        match self {
-            Token::Atom(atom) => Some(atom),
-            _ => None,
+    fn finish(mut self) -> Result<(), ParseError> {
+        assert_eq!(self.depth, 0, "parsing not finished yet");
+        let (pos, token) = self.lexer.get_token()?;
+        match token {
+            Token::Eof => Ok(()),
+            _ => Err(ParseError::ExpectedEof { pos }),
         }
     }
 }
 
-struct Lexer<I: Iterator<Item=u8>> {
-    line: u32,
-    column: u32,
-    iter: std::iter::Peekable<I>,
+struct Lexer<'a> {
+    data: &'a [u8],
+    pos: Pos,
 }
 
-impl<I: Iterator<Item=u8>> Lexer<I> {
+impl<'a> Lexer<'a> {
     #[inline]
-    fn new(iter: std::iter::Peekable<I>) -> Self {
+    fn new(data: &'a [u8]) -> Self {
         Lexer {
-            line: 0,
-            column: 0,
-            iter,
+            data,
+            pos: Pos::new(0, 0),
         }
     }
 
-    #[inline]
-    fn get_pos(&self) -> Pos {
-        Pos::new(self.line, self.column)
+    fn increase_line(&mut self) -> Result<(), ParseError> {
+        self.pos.line = self.pos.line.checked_add(1).ok_or(ParseError::TooManyLines)?;
+        self.pos.column = 0;
+        Ok(())
     }
 
-    #[inline]
-    fn incr_line(&mut self) -> Result<(), ParseError> {
-        self.line = self.line.checked_add(1).ok_or(ParseError::LineTooLong { line: self.line })?;
-        self.column = 0;
+    fn increase_column(&mut self, len: usize) -> Result<(), ParseError> {
+        let len = u32::try_from(len)
+            .map_err(|_| ParseError::LineTooLong { line: self.pos.line })?;
+        self.pos.column = self.pos.column.checked_add(len)
+            .ok_or_else(|| ParseError::LineTooLong { line: self.pos.line })?;
         Ok(())
     }
 
     #[inline]
-    fn incr_column(&mut self) -> Result<(), ParseError> {
-        self.column = self.column.checked_add(1).ok_or(ParseError::TooManyLines)?;
-        Ok(())
+    fn peek_char(&self, i: usize) -> Option<u8> {
+        self.data.get(i).cloned()
     }
 
-    #[allow(clippy::cognitive_complexity)]
-    fn get_token(&mut self, max_atom_len: usize) -> Result<(Pos, Token), ParseError> {
-        enum State {
-            Beginning,
-            Comment,
-            Atom(Pos, String),
-            AtomString(Pos, String),
-            AtomStringBackslash(Pos, String),
-        }
+    fn skip_chars(&mut self, len: usize) {
+        self.data = &self.data[len ..];
+    }
 
-        let mut state = State::Beginning;
+    fn data_iter(&self, i: usize) -> std::iter::Cloned<std::slice::Iter<'a, u8>> {
+        self.data[i ..].iter().cloned()
+    }
 
+    fn take_atom(&mut self, len: usize) -> &'a str {
+        let (atom, remaining) = self.data.split_at(len);
+        self.data = remaining;
+        std::str::from_utf8(atom).unwrap()
+    }
+
+    //#[allow(clippy::cognitive_complexity)]
+    fn get_token(&mut self) -> Result<(Pos, Token<'a>), ParseError> {
         loop {
+            match self.peek_char(0) {
+                // end-of-file
+                None => {
+                    return Ok((self.pos, Token::Eof));
+                }
+                // skip whitespace
+                Some(b' ') | Some(b'\t') => {
+                    let mut len = 1;
+                    for c in self.data_iter(len) {
+                        if c != b' ' && c != b'\t' {
+                            break;
+                        }
+                        len += 1;
+                    }
+                    self.increase_column(len)?;
+                    self.skip_chars(len);
+                }
+                // skip line breaks
+                Some(b'\n') => {
+                    self.increase_line()?;
+                    self.skip_chars(1);
+                }
+                Some(b'\r') => {
+                    self.increase_line()?;
+                    if self.peek_char(1) == Some(b'\n') {
+                        self.skip_chars(2);
+                    } else {
+                        self.skip_chars(1);
+                    }
+                }
+                // skip comments
+                Some(b';') => {
+                    let mut len = 1;
+                    for c in self.data_iter(len) {
+                        match c {
+                            b'\n' | b'\r' => break,
+                            b' ' ..= b'~' | b'\t' => {
+                                len += 1;
+                            }
+                            chr => {
+                                self.increase_column(len)?;
+                                return Err(ParseError::IllegalChrInComment { chr, pos: self.pos });
+                            }
+                        }
+                    }
+                    self.increase_column(len)?;
+                    self.skip_chars(len);
+                }
+                // delimiters
+                Some(b'(') => {
+                    let pos = self.pos;
+                    self.increase_column(1)?;
+                    self.skip_chars(1);
+                    return Ok((pos, Token::LeftParen));
+                }
+                Some(b')') => {
+                    let pos = self.pos;
+                    self.increase_column(1)?;
+                    self.skip_chars(1);
+                    return Ok((pos, Token::RightParen));
+                }
+                // atom
+                Some(chr) if is_atom_chr(chr) || chr == b'"' => {
+                    let len = self.lex_atom(chr)?;
+                    let pos = self.pos;
+                    self.increase_column(len)?;
+                    let atom = self.take_atom(len);
+                    return Ok((pos, Token::Atom(atom)));
+                }
+                // invalid character
+                Some(chr) => {
+                    return Err(ParseError::IllegalChr { chr, pos: self.pos });
+                }
+            }
+        }
+    }
+
+    fn lex_atom(&mut self, first_chr: u8) -> Result<usize, ParseError> {
+        enum State {
+            Normal,
+            String,
+            StringBackslash,
+        }
+
+        let mut state = if first_chr == b'"' { State::String } else { State::Normal };
+        let mut len = 1;
+        let mut iter = self.data_iter(len);
+        loop {
+            let chr = iter.next();
             match state {
-                State::Beginning => {
-                    let chr = self.iter.next();
+                State::Normal => {
                     match chr {
-                        Some(b' ') | Some(b'\t') => {
-                            self.incr_column()?
-                        }
-                        Some(b'\n') => {
-                            self.incr_line()?
-                        }
-                        Some(b'\r') => {
-                            if self.iter.peek().cloned() == Some(b'\n') {
-                                self.iter.next();
-                            }
-                            self.incr_line()?;
-                        }
-                        Some(b';') => {
-                            self.incr_column()?;
-                            state = State::Comment;
-                        }
-                        Some(b'(') => {
-                            let pos = self.get_pos();
-                            self.incr_column()?;
-                            return Ok((pos, Token::LeftParen));
-                        }
-                        Some(b')') => {
-                            let pos = self.get_pos();
-                            self.incr_column()?;
-                            return Ok((pos, Token::RightParen));
-                        }
                         Some(b'"') => {
-                            let pos = self.get_pos();
-                            self.incr_column()?;
-                            state = State::AtomString(pos, String::from("\""));
+                            len += 1;
+                            state = State::String;
                         }
                         Some(c) if is_atom_chr(c) => {
-                            let pos = self.get_pos();
-                            self.incr_column()?;
-                            let mut atom = String::new();
-                            atom.push(c as char);
-                            state = State::Atom(pos, atom);
+                            len += 1;
                         }
-                        Some(c) => {
-                            return Err(ParseError::IllegalChr { chr: c, pos: self.get_pos() });
+                        Some(_) => {
+                            return Ok(len);
                         }
                         None => {
-                            return Ok((self.get_pos(), Token::Eof));
-                        }
-                    }
-                },
-                State::Comment => {
-                    let chr = self.iter.next();
-                    match chr {
-                        Some(b'\n') => {
-                            self.incr_line()?;
-                            state = State::Beginning;
-                        }
-                        Some(b'\r') => {
-                            if self.iter.peek().cloned() == Some(b'\n') {
-                                self.iter.next();
-                            }
-                            self.incr_line()?;
-                            state = State::Beginning;
-                        }
-                        Some(c) if c.is_ascii_graphic() || c == b' ' || c == b'\t' => {
-                            self.incr_column()?;
-                        }
-                        Some(c) => {
-                            return Err(ParseError::IllegalChrInComment { chr: c, pos: self.get_pos() });
-                        }
-                        None => {
-                            return Ok((self.get_pos(), Token::Eof));
+                            return Ok(len);
                         }
                     }
                 }
-                State::Atom(pos, mut atom) => {
-                    let chr = self.iter.peek().cloned();
+                State::String => {
                     match chr {
                         Some(b'"') => {
-                            if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos });
-                            }
-
-                            self.iter.next();
-                            self.incr_column()?;
-                            atom.push('"');
-                            state = State::AtomString(pos, atom);
-                        }
-                        Some(c) if is_atom_chr(c) => {
-                            if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos });
-                            }
-
-                            self.iter.next();
-                            self.incr_column()?;
-                            atom.push(c as char);
-                            state = State::Atom(pos, atom);
-                        }
-                        _ => {
-                            return Ok((pos, Token::Atom(atom)));
-                        }
-                    }
-                }
-                State::AtomString(pos, mut atom) => {
-                    let chr = self.iter.next();
-                    match chr {
-                        Some(b'"') => {
-                            if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos });
-                            }
-
-                            self.incr_column()?;
-                            atom.push('"');
-                            state = State::Atom(pos, atom);
+                            len += 1;
+                            state = State::Normal;
                         }
                         Some(b'\\') => {
-                            if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos });
-                            }
-
-                            self.incr_column()?;
-                            atom.push('\\');
-                            state = State::AtomStringBackslash(pos, atom);
+                            len += 1;
+                            state = State::StringBackslash;
                         }
                         Some(c) if is_atom_string_chr(c) => {
-                            if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos });
-                            }
-
-                            self.incr_column()?;
-                            atom.push(c as char);
-                            state = State::AtomString(pos, atom);
+                            len += 1;
+                            state = State::String;
                         }
                         Some(c) => {
-                            return Err(ParseError::IllegalChrInString { chr: c, pos: self.get_pos() });
+                            self.increase_column(len)?;
+                            return Err(ParseError::IllegalChrInString { chr: c, pos: self.pos });
                         }
                         None => {
-                            return Err(ParseError::UnfinishedString { pos: self.get_pos() });
+                            self.increase_column(len)?;
+                            return Err(ParseError::UnfinishedString { pos: self.pos });
                         }
                     }
                 }
-                State::AtomStringBackslash(pos, mut atom) => {
-                    let chr = self.iter.next();
+                State::StringBackslash => {
                     match chr {
                         Some(c) if is_atom_string_chr(c) || c == b'"' || c == b'\\' => {
-                            if atom.len() == max_atom_len {
-                                return Err(ParseError::AtomTooLong { pos });
-                            }
-
-                            self.incr_column()?;
-                            atom.push(c as char);
-                            state = State::AtomString(pos, atom);
+                            len += 1;
+                            state = State::String;
                         }
                         Some(c) => {
-                            return Err(ParseError::IllegalChrInString { chr: c, pos: self.get_pos() });
+                            self.increase_column(len)?;
+                            return Err(ParseError::IllegalChrInString { chr: c, pos: self.pos });
                         }
                         None => {
-                            return Err(ParseError::UnfinishedString { pos: self.get_pos() });
+                            self.increase_column(len)?;
+                            return Err(ParseError::UnfinishedString { pos: self.pos });
                         }
                     }
                 }

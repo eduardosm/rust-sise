@@ -1,4 +1,4 @@
-// Copyright 2018 Eduardo Sánchez Muñoz
+// Copyright 2019 Eduardo Sánchez Muñoz
 //
 // Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
 // http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
@@ -7,192 +7,227 @@
 
 use crate::Pos;
 use crate::ReprPosValue;
-use crate::PosTree;
-use crate::Node;
+use crate::Reader;
+use crate::ReadItemKind;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ReadUtilError {
+pub enum ReadUtilError<E, P> {
+    ReaderError(E),
     ExpectedAtom {
-        pos: Option<Pos>,
+        pos: P,
     },
-    ExpectedList {
-        pos: Option<Pos>,
+    ExpectedListBeginning {
+        pos: P,
     },
-    ExpectedListEnd {
-        node_pos: Option<Pos>,
+    ExpectedListEnding {
+        pos: P,
     },
     ExpectedNodeInList {
-        list_pos: Option<Pos>,
+        pos: P,
     },
     InvalidValue {
         value_type: String,
-        pos: Option<Pos>,
+        pos: P,
     },
 }
 
-impl std::fmt::Display for ReadUtilError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            ReadUtilError::ExpectedAtom { pos } => {
-                if let Some(pos) = pos {
-                    write!(f, "expected atom at {}:{}",
-                           ReprPosValue(pos.line),
-                           ReprPosValue(pos.column))
-                } else {
-                    f.write_str("expected atom")
-                }
-            }
-            ReadUtilError::ExpectedList { pos } => {
-                if let Some(pos) = pos {
-                    write!(f, "expected list at {}:{}",
-                           ReprPosValue(pos.line),
-                           ReprPosValue(pos.column))
-                } else {
-                    f.write_str("expected list")
-                }
-            }
-            ReadUtilError::ExpectedListEnd { node_pos } => {
-                if let Some(node_pos) = node_pos {
-                    write!(f, "unexpected node in list at {}:{}",
-                           ReprPosValue(node_pos.line),
-                           ReprPosValue(node_pos.column))
-                } else {
-                    f.write_str("unexpected node in list")
-                }
-            }
-            ReadUtilError::ExpectedNodeInList { list_pos } => {
-                if let Some(list_pos) = list_pos {
-                    write!(f, "expected node in list at {}:{}",
-                           ReprPosValue(list_pos.line),
-                           ReprPosValue(list_pos.column))
-                } else {
-                    f.write_str("expected node in list")
-                }
-            }
-            ReadUtilError::InvalidValue { value_type, pos } => {
-                if let Some(pos) = pos {
-                    write!(f, "invalid value of type {:?} at {}:{}",
-                           value_type,
-                           ReprPosValue(pos.line),
-                           ReprPosValue(pos.column))
-                } else {
-                    write!(f, "invalid value of type {:?}", value_type)
-                }
-            }
-        }
+impl<E, P> From<E> for ReadUtilError<E, P> {
+    #[inline]
+    fn from(e: E) -> Self {
+        ReadUtilError::ReaderError(e)
     }
 }
 
-impl std::error::Error for ReadUtilError {
-    fn description(&self) -> &str {
+impl<E: std::error::Error, P> ReadUtilError<E, P> {
+    fn common_description(&self) -> &str {
         match self {
+            ReadUtilError::ReaderError(e) => e.description(),
             ReadUtilError::ExpectedAtom { .. } => "expected atom",
-            ReadUtilError::ExpectedList { .. } => "expected list",
-            ReadUtilError::ExpectedListEnd { .. } => "unexpected node in list",
+            ReadUtilError::ExpectedListBeginning { .. } => "expected list beginning",
+            ReadUtilError::ExpectedListEnding { .. } => "expected list ending",
             ReadUtilError::ExpectedNodeInList { .. } => "expected node in list",
             ReadUtilError::InvalidValue { .. } => "invalid value",
         }
     }
 }
 
-/// Utility to read nodes.
-///
-/// See `as_atom` and `as_list` methods.
-#[derive(Clone, Debug)]
-pub struct NodeReadUtil<'a, 'b> {
-    node: &'a Node,
-    pos_tree: Option<&'b PosTree>,
+impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReadUtilError::ReaderError(e) => {
+                write!(f, "reader error: {}", e)
+            }
+            ReadUtilError::ExpectedAtom { .. } => {
+                f.write_str("expected atom")
+            }
+            ReadUtilError::ExpectedListBeginning { .. } => {
+                f.write_str("expected list beginning")
+            }
+            ReadUtilError::ExpectedListEnding { .. } => {
+                f.write_str("expected list ending")
+            }
+            ReadUtilError::ExpectedNodeInList { .. } => {
+                f.write_str("expected node in list")
+            }
+            ReadUtilError::InvalidValue { value_type, .. } => {
+                write!(f, "invalid value of type {:?}", value_type)
+            }
+        }
+    }
 }
 
-impl<'a, 'b> NodeReadUtil<'a, 'b> {
-    #[inline]
-    pub fn new(node: &'a Node, pos_tree: Option<&'b PosTree>) -> Self {
-        Self { node, pos_tree }
+impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, Pos> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReadUtilError::ReaderError(e) => {
+                write!(f, "reader error: {}", e)
+            }
+            ReadUtilError::ExpectedAtom { pos } => {
+                write!(f, "expected atom at {}:{}",
+                       ReprPosValue(pos.line),
+                       ReprPosValue(pos.column))
+            }
+            ReadUtilError::ExpectedListBeginning { pos } => {
+                write!(f, "expected list beginning at {}:{}",
+                       ReprPosValue(pos.line),
+                       ReprPosValue(pos.column))
+            }
+            ReadUtilError::ExpectedListEnding { pos } => {
+                write!(f, "expected list ending at {}:{}",
+                       ReprPosValue(pos.line),
+                       ReprPosValue(pos.column))
+            }
+            ReadUtilError::ExpectedNodeInList { pos } => {
+                write!(f, "expected node in list at {}:{}",
+                       ReprPosValue(pos.line),
+                       ReprPosValue(pos.column))
+            }
+            ReadUtilError::InvalidValue { value_type, pos } => {
+                write!(f, "invalid value of type {:?} at {}:{}",
+                       value_type,
+                       ReprPosValue(pos.line),
+                       ReprPosValue(pos.column))
+            }
+        }
+    }
+}
+
+impl<E: std::error::Error> std::error::Error for ReadUtilError<E, ()> {
+    fn description(&self) -> &str {
+        self.common_description()
+    }
+}
+
+impl<E: std::error::Error> std::error::Error for ReadUtilError<E, Pos> {
+    fn description(&self) -> &str {
+        self.common_description()
+    }
+}
+
+/// Utility to read nodes from a `Reader`.
+pub enum NodeReadUtil<'a, R: Reader> {
+    Atom(AtomReadUtil<R>),
+    List(ListReadUtil<'a, R>),
+}
+
+impl<'a, R: Reader> NodeReadUtil<'a, R> {
+    /// Reads from `reader` and builds a `ReadUtil::Atom` or
+    /// `ReadUtil::List` according to the result. Panics if the
+    /// reader returns `ReadItemKind::ListEnding`.
+    pub fn new(reader: &'a mut R) -> Result<Self, R::Error> {
+        let read_item = reader.read()?;
+        match read_item.kind {
+            ReadItemKind::Atom(s) => Ok(NodeReadUtil::Atom(AtomReadUtil::new(read_item.pos, s))),
+            ReadItemKind::ListBeginning => Ok(NodeReadUtil::List(ListReadUtil::new(read_item.pos, reader))),
+            ReadItemKind::ListEnding => panic!("unexpected ReadItemKind::ListEnding"),
+        }
     }
 
-    /// Returns the node in this utility.
-    #[inline]
-    pub fn node(&self) -> &'a Node {
-        self.node
-    }
-
-    /// Returns the position tree of the node in this utility.
-    #[inline]
-    pub fn pos_tree(&self) -> Option<&'b PosTree> {
-        self.pos_tree
-    }
-
-    /// If the node is an atom, returns a `AtomNodeReadUtil` with such
-    /// atom. Otherwise, it returns a `ReadError::ExpectedAtom` error.
+    /// Consumes `self` and returns an `AtomReadUtil` if it is an atom,
+    /// otherwise it returns a `ReadUtilError::ExpectedAtom`.
     ///
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!("example");
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// assert_eq!(node_read_util.as_atom().unwrap().atom(), "example");
+    /// let src_data = b"example";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let mut node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let atom_read_util = node_read_util.expect_atom().unwrap();
+    /// assert_eq!(atom_read_util.into_atom(), "example");
     /// ```
-    pub fn as_atom(&self) -> Result<AtomNodeReadUtil<'a>, ReadUtilError> {
-        match self.node {
-            Node::Atom(ref atom) => {
-                let pos = self.pos_tree.map(|pos_tree| pos_tree.pos);
-                Ok(AtomNodeReadUtil::new(atom.as_str(), pos))
-            }
-            _ => Err(ReadUtilError::ExpectedAtom {
-                pos: self.pos_tree.map(|pos_tree| pos_tree.pos),
+    pub fn expect_atom(self) -> Result<AtomReadUtil<R>, ReadUtilError<R::Error, R::Pos>> {
+        match self {
+            NodeReadUtil::Atom(atom_read_util) => Ok(atom_read_util),
+            NodeReadUtil::List(list_read_util) => Err(ReadUtilError::ExpectedAtom {
+                pos: list_read_util.into_beginning_pos()
             }),
         }
     }
 
-    /// If the node is a list, returns a `ListNodeReadUtil` with such
-    /// list. Otherwise, it returns a `ReadError::ExpectedList` error.
+    /// Consumes `self` and returns an `AtomReadUtil` if it is a list,
+    /// otherwise it returns a `ReadUtilError::ExpectedListBeginning`.
     ///
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!(["example"]);
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// assert_eq!(node_read_util.as_list().unwrap().list(), [sise_expr!("example")]);
+    /// let src_data = b"()";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let mut list_read_util = node_read_util.expect_list().unwrap();
     /// ```
-    pub fn as_list(&self) -> Result<ListNodeReadUtil<'a, 'b>, ReadUtilError> {
-        match self.node {
-            Node::List(ref list) => {
-                Ok(ListNodeReadUtil::new(list.as_slice(), self.pos_tree))
-            }
-            _ => Err(ReadUtilError::ExpectedList {
-                pos: self.pos_tree.map(|pos_tree| pos_tree.pos),
+    pub fn expect_list(self) -> Result<ListReadUtil<'a, R>, ReadUtilError<R::Error, R::Pos>> {
+        match self {
+            NodeReadUtil::Atom(atom_read_util) => Err(ReadUtilError::ExpectedListBeginning {
+                pos: atom_read_util.into_pos(),
             }),
+            NodeReadUtil::List(list_read_util) => Ok(list_read_util),
         }
     }
 }
 
 /// Utility to read atom nodes.
-#[derive(Clone, Debug)]
-pub struct AtomNodeReadUtil<'a> {
-    atom: &'a str,
-    pos: Option<Pos>,
+pub struct AtomReadUtil<R: Reader> {
+    pos: R::Pos,
+    atom: R::String,
 }
 
-impl<'a> AtomNodeReadUtil<'a> {
+impl<R: Reader> AtomReadUtil<R> {
     #[inline]
-    pub fn new(atom: &'a str, pos: Option<Pos>) -> Self {
-        Self { atom, pos }
+    pub fn new(pos: R::Pos, atom: R::String) -> Self {
+        Self { pos, atom }
     }
 
-    /// Returns the atom value in this utility.
+    /// Returns a reference to the atom position stored in
+    /// this utility.
     #[inline]
-    pub fn atom(&self) -> &'a str {
+    pub fn pos(&self) -> &R::Pos {
+        &self.pos
+    }
+
+    /// Returns a reference to the atom value stored in
+    /// this utility.
+    #[inline]
+    pub fn atom(&self) -> &R::String {
+        &self.atom
+    }
+
+    /// Consumes `self` and returns the stored atom value.
+    #[inline]
+    pub fn into_atom(self) -> R::String {
         self.atom
     }
 
-    /// Returns the position of the atom in this utility.
+    /// Consumes `self` and returns the stored position.
     #[inline]
-    pub fn pos(&self) -> Option<Pos> {
+    pub fn into_pos(self) -> R::Pos {
         self.pos
+    }
+
+    /// Consumes `self` and returns the stored atom position
+    /// and value.
+    #[inline]
+    pub fn into_pos_atom(self) -> (R::Pos, R::String) {
+        (self.pos, self.atom)
     }
 
     /// Decodes the atom using an user-provided function.
@@ -204,19 +239,18 @@ impl<'a> AtomNodeReadUtil<'a> {
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!("example");
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// let atom_read_util = node_read_util.as_atom().unwrap();
-    /// let decoded = atom_read_util.decode(|atom| Some(atom.len()), "decode_as_atom").unwrap();
+    /// let src_data = b"example";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let atom_read_util = node_read_util.expect_atom().unwrap();
+    /// let decoded = atom_read_util.decode(|atom| Some(atom.len()), "decode_as_length").unwrap();
     /// assert_eq!(decoded, 7);
     /// ```
-    pub fn decode<T, F>(&self, f: F, value_type: &str)
-                        -> Result<T, ReadUtilError>
+    pub fn decode<T, F>(self, f: F, value_type: &str)
+        -> Result<T, ReadUtilError<R::Error, R::Pos>>
         where F: FnOnce(&str) -> Option<T>
     {
-        if let Some(value) = f(self.atom) {
+        if let Some(value) = f(self.atom.as_ref()) {
             Ok(value)
         } else {
             Err(ReadUtilError::InvalidValue {
@@ -227,56 +261,48 @@ impl<'a> AtomNodeReadUtil<'a> {
     }
 }
 
-/// Utility to read list nodes.
-#[derive(Clone, Debug)]
-pub struct ListNodeReadUtil<'a, 'b> {
-    list: &'a [Node],
-    pos_tree: Option<&'b PosTree>,
-    index: usize,
+/// Read util list
+pub struct ListReadUtil<'a, R: Reader> {
+    beginning_pos: R::Pos,
+    reader: &'a mut R,
 }
 
-impl<'a, 'b> ListNodeReadUtil<'a, 'b> {
+impl<'a, R: Reader> ListReadUtil<'a, R> {
     #[inline]
-    pub fn new(list: &'a [Node], pos_tree: Option<&'b PosTree>) -> Self {
-        Self {
-            list,
-            pos_tree,
-            index: 0,
-        }
+    pub fn new(beginning_pos: R::Pos, reader: &'a mut R) -> Self {
+        Self { beginning_pos, reader }
     }
 
-    /// Returns the list in this utility.
+    /// Returns a reference to the stored list beginning position.
     #[inline]
-    pub fn list(&self) -> &'a [Node] {
-        self.list
+    pub fn beginning_pos(&self) -> &R::Pos {
+        &self.beginning_pos
     }
 
-    /// Returns the position tree of the list in this utility.
+    /// Consumes `self` and returns the stored list beginning position.
     #[inline]
-    pub fn pos_tree(&self) -> Option<&'b PosTree> {
-        self.pos_tree
+    pub fn into_beginning_pos(self) -> R::Pos {
+        self.beginning_pos
     }
 
     /// Checks if all the nodes in the list have been read.
-    /// If not, it returns a `ReadError::ExpectedListEnd` error.
+    /// If not, it returns a `ReadUtilError::ExpectedListEnding` error.
     ///
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!([]);
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// let list_read_util = node_read_util.as_list().unwrap();
-    /// assert!(list_read_util.expect_end().is_ok());
+    /// let src_data = b"()";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let list_read_util = node_read_util.expect_list().unwrap();
+    /// assert!(list_read_util.expect_ending().is_ok());
     /// ```
-    pub fn expect_end(&self) -> Result<(), ReadUtilError> {
-        if self.index == self.list.len() {
-            Ok(())
-        } else {
-            Err(ReadUtilError::ExpectedListEnd {
-                node_pos: self.pos_tree.map(|pos_tree| pos_tree.children[self.index].pos)
-            })
+    pub fn expect_ending(self) -> Result<R::Pos, ReadUtilError<R::Error, R::Pos>> {
+        let read_item = self.reader.read()?;
+        match read_item.kind {
+            ReadItemKind::Atom(_) => Err(ReadUtilError::ExpectedListEnding { pos: read_item.pos }),
+            ReadItemKind::ListBeginning => Err(ReadUtilError::ExpectedListEnding { pos: read_item.pos }),
+            ReadItemKind::ListEnding => Ok(read_item.pos),
         }
     }
 
@@ -286,169 +312,73 @@ impl<'a, 'b> ListNodeReadUtil<'a, 'b> {
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!(["a", "b"]);
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// let mut list_read_util = node_read_util.as_list().unwrap();
-    ///
-    /// assert_eq!(list_read_util.try_next_item().unwrap().node(), "a");
-    /// assert_eq!(list_read_util.try_next_item().unwrap().node(), "b");
-    /// assert!(list_read_util.try_next_item().is_none());
+    /// let src_data = b"(a b c)";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let mut list_read_util = node_read_util.expect_list().unwrap();
+    /// assert_eq!(list_read_util.try_next_item().unwrap().unwrap().expect_atom().unwrap().into_atom(), "a");
+    /// assert_eq!(list_read_util.try_next_item().unwrap().unwrap().expect_atom().unwrap().into_atom(), "b");
+    /// assert_eq!(list_read_util.try_next_item().unwrap().unwrap().expect_atom().unwrap().into_atom(), "c");
+    /// assert!(list_read_util.try_next_item().unwrap().is_none());
     /// ```
-    pub fn try_next_item(&mut self) -> Option<NodeReadUtil<'a, 'b>> {
-        if self.index == self.list.len() {
-            None
-        } else {
-            let item_pos_tree = self.pos_tree.map(|pos_tree| &pos_tree.children[self.index]);
-            let node = NodeReadUtil::new(&self.list[self.index], item_pos_tree);
-            self.index += 1;
-            Some(node)
+    pub fn try_next_item(&mut self) -> Result<Option<NodeReadUtil<'_, R>>, R::Error> {
+        let read_item = self.reader.read()?;
+        match read_item.kind {
+            ReadItemKind::Atom(s) => Ok(Some(NodeReadUtil::Atom(AtomReadUtil::new(read_item.pos, s)))),
+            ReadItemKind::ListBeginning => Ok(Some(NodeReadUtil::List(ListReadUtil::new(read_item.pos, self.reader)))),
+            ReadItemKind::ListEnding => Ok(None),
         }
     }
 
     /// Reads the next item in the list. If none are left, it
-    /// returns a `ReadError::ExpectedNodeInList` error.
+    /// returns a `ReadUtilError::ExpectedNodeInList`.
     ///
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!(["a", "b"]);
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// let mut list_read_util = node_read_util.as_list().unwrap();
-    ///
-    /// assert_eq!(list_read_util.next_item().unwrap().node(), "a");
-    /// assert_eq!(list_read_util.next_item().unwrap().node(), "b");
+    /// let src_data = b"(a b c)";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let mut list_read_util = node_read_util.expect_list().unwrap();
+    /// assert_eq!(list_read_util.next_item().unwrap().expect_atom().unwrap().into_atom(), "a");
+    /// assert_eq!(list_read_util.next_item().unwrap().expect_atom().unwrap().into_atom(), "b");
+    /// assert_eq!(list_read_util.next_item().unwrap().expect_atom().unwrap().into_atom(), "c");
+    /// assert!(list_read_util.next_item().is_err());
     /// ```
-    pub fn next_item(&mut self) -> Result<NodeReadUtil<'a, 'b>, ReadUtilError> {
-        self.try_next_item().ok_or_else(|| ReadUtilError::ExpectedNodeInList {
-            list_pos: self.pos_tree.map(|pos_tree| pos_tree.pos)
-        })
+    pub fn next_item(&mut self) -> Result<NodeReadUtil<'_, R>, ReadUtilError<R::Error, R::Pos>> {
+        let read_item = self.reader.read()?;
+        match read_item.kind {
+            ReadItemKind::Atom(s) => Ok(NodeReadUtil::Atom(AtomReadUtil::new(read_item.pos, s))),
+            ReadItemKind::ListBeginning => Ok(NodeReadUtil::List(ListReadUtil::new(read_item.pos, self.reader))),
+            ReadItemKind::ListEnding => Err(ReadUtilError::ExpectedNodeInList { pos: read_item.pos }),
+        }
     }
 
     /// Gets the remaining items from the list, checks if they
-    /// are atoms and decodes their value using `f`.
+    /// are atoms and decodes their value using `f`, returning
+    /// a `Vec` with the result.
     ///
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
-    ///
-    /// let node = sise_expr!(["1", "12", "123"]);
-    /// let node_read_util = sise::NodeReadUtil::new(&node, None);
-    /// let list_read_util = node_read_util.as_list().unwrap();
-    /// let decoded = list_read_util.decode_atoms(|atom| Some(atom.len()), "decode_as_atom", false).unwrap();
+    /// let src_data = b"(1 12 123)";
+    /// let mut parser = sise::Parser::new(src_data);
+    /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
+    /// let mut list_read_util = node_read_util.expect_list().unwrap();
+    /// let decoded = list_read_util.decode_atoms(|atom| Some(atom.len()), "decode_as_length", false).unwrap();
     /// assert_eq!(decoded, [1, 2, 3]);
     /// ```
-    pub fn decode_atoms<T, F>(self, mut f: F, value_type: &str, can_be_empty: bool)
-                              -> Result<Vec<T>, ReadUtilError>
+    pub fn decode_atoms<T, F>(mut self, mut f: F, value_type: &str, can_be_empty: bool)
+        -> Result<Vec<T>, ReadUtilError<R::Error, R::Pos>>
         where F: FnMut(&str) -> Option<T>
     {
-        let pos_tree = self.pos_tree;
-        let mut values = Vec::with_capacity(self.list.len() - self.index);
-        for item in self {
-            values.push(item.as_atom()?.decode(|atom| f(atom), value_type)?);
+        let mut result = Vec::new();
+        if !can_be_empty {
+            result.push(self.next_item()?.expect_atom()?.decode(|atom| f(atom), value_type)?);
         }
-        if !can_be_empty && values.is_empty() {
-            Err(ReadUtilError::ExpectedNodeInList {
-                list_pos: pos_tree.map(|pos_tree| pos_tree.pos),
-            })
-        } else {
-            Ok(values)
+        while let Some(item) = self.try_next_item()? {
+            result.push(item.expect_atom()?.decode(|atom| f(atom), value_type)?);
         }
+        Ok(result)
     }
 }
-
-impl<'a, 'b> IntoIterator for ListNodeReadUtil<'a, 'b> {
-    type Item = NodeReadUtil<'a, 'b>;
-    type IntoIter = ListNodeReadUtilIter<'a, 'b>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        let mut iter = ListNodeReadUtilIter {
-            iter: self.list.iter().enumerate(),
-            pos_tree: self.pos_tree,
-        };
-        if self.index != 0 {
-            iter.iter.nth(self.index - 1);
-        }
-        iter
-    }
-}
-
-/// Iterator over the items of the list in a `ListNodeReadUtil`
-/// that produces `NodeReadUtil`.
-///
-/// This iterator is created by the `IntoIterator` implementation
-/// of `ListNodeReadUtil`.
-///
-/// # Example
-///
-/// ```
-/// use sise::sise_expr;
-///
-/// let node = sise_expr!(["a", "b"]);
-/// let node_read_util = sise::NodeReadUtil::new(&node, None);
-/// let list_read_util = node_read_util.as_list().unwrap();
-///
-/// let mut atoms = Vec::new();
-/// for item in list_read_util {
-///     atoms.push(item.as_atom().unwrap().atom());
-/// }
-/// assert_eq!(atoms, ["a", "b"]);
-/// ```
-pub struct ListNodeReadUtilIter<'a, 'b> {
-    iter: std::iter::Enumerate<std::slice::Iter<'a, Node>>,
-    pos_tree: Option<&'b PosTree>,
-}
-
-impl<'a, 'b> ListNodeReadUtilIter<'a, 'b> {
-    #[inline]
-    fn map_fn(i: usize, node: &'a Node, pos_tree: Option<&'b PosTree>)
-              -> NodeReadUtil<'a, 'b>
-    {
-        let node_pos_tree = pos_tree.map(|pos_tree| &pos_tree.children[i]);
-        NodeReadUtil::new(node, node_pos_tree)
-    }
-}
-
-impl<'a, 'b> Iterator for ListNodeReadUtilIter<'a, 'b> {
-    type Item = NodeReadUtil<'a, 'b>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(i, node)| Self::map_fn(i, node, self.pos_tree))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
-    }
-
-    fn count(self) -> usize {
-        self.iter.count()
-    }
-
-    fn last(self) -> Option<Self::Item> {
-        let iter = self.iter;
-        let pos_tree = self.pos_tree;
-        iter.last().map(|(i, node)| Self::map_fn(i, node, pos_tree))
-    }
-
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.iter.nth(n).map(|(i, node)| Self::map_fn(i, node, self.pos_tree))
-    }
-}
-
-impl<'a, 'b> DoubleEndedIterator for ListNodeReadUtilIter<'a, 'b> {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.iter.next_back().map(|(i, node)| Self::map_fn(i, node, self.pos_tree))
-    }
-}
-
-impl<'a, 'b> ExactSizeIterator for ListNodeReadUtilIter<'a, 'b> {
-    fn len(&self) -> usize {
-        self.iter.len()
-    }
-}
-
-impl<'a, 'b> std::iter::FusedIterator for ListNodeReadUtilIter<'a, 'b> {}
