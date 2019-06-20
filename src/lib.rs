@@ -61,6 +61,9 @@ pub use self::spaced_string_writer::SpacedStringWriterStyle;
 pub use self::spaced_string_writer::SpacedStringWriterNodeOptions;
 pub use self::spaced_string_writer::SpacedStringWriter;
 
+mod tree_writer;
+pub use self::tree_writer::TreeWriter;
+
 mod write_from_tree;
 pub use self::write_from_tree::WriteFromTreeAtomOptions;
 pub use self::write_from_tree::write_from_tree;

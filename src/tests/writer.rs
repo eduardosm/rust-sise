@@ -12,6 +12,7 @@ use crate::CompactStringWriter;
 use crate::SpacedStringWriter;
 use crate::SpacedStringWriterStyle;
 use crate::SpacedStringWriterNodeOptions;
+use crate::TreeWriter;
 use crate::VoidWriterOptions;
 use crate::write_from_tree;
 
@@ -41,6 +42,12 @@ impl<'a> StringWriterTest<'a> {
         write_from_tree(&mut writer, &self.root_node).unwrap();
         writer.finish(&VoidWriterOptions).unwrap();
         assert_eq!(result, self.expected_spaced);
+
+        // tree
+        let mut writer = TreeWriter::new();
+        write_from_tree(&mut writer, &self.root_node).unwrap();
+        let result = writer.finish(&VoidWriterOptions).unwrap();
+        assert_eq!(result, self.root_node);
     }
 }
 
