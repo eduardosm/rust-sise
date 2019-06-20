@@ -245,7 +245,7 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
 
     fn end_list(&mut self, _opts: &VoidWriterOptions) -> Result<(), Infallible> {
         match self.state {
-            State::Beginning => unreachable!(),
+            State::Beginning => panic!("no list to end"),
             State::Writing(ref mut state) => {
                 if state.current_list_line_broken {
                     self.dst.push_str(self.style.line_break);
