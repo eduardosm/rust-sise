@@ -97,11 +97,29 @@ fn test_list_with_three_atoms() {
 }
 
 #[test]
-fn test_nested_list() {
+fn test_nested_list_1() {
     StringWriterTest {
         root_node: sise_expr!([[]]),
         expected_compact: "(())",
         expected_spaced: "(\n\t()\n)",
+    }.run();
+}
+
+#[test]
+fn test_nested_list_2() {
+    StringWriterTest {
+        root_node: sise_expr!([[], []]),
+        expected_compact: "(() ())",
+        expected_spaced: "(\n\t()\n\t()\n)",
+    }.run();
+}
+
+#[test]
+fn test_mixed() {
+    StringWriterTest {
+        root_node: sise_expr!(["atom-1", ["atom-2"], ["atom-3", ["atom-4"], "atom-5"], "atom-6"]),
+        expected_compact: "(atom-1 (atom-2) (atom-3 (atom-4) atom-5) atom-6)",
+        expected_spaced: "(atom-1\n\t(atom-2)\n\t(atom-3\n\t\t(atom-4)\n\t\tatom-5\n\t)\n\tatom-6\n)",
     }.run();
 }
 
