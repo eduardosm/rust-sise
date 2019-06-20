@@ -119,51 +119,64 @@ pub fn write_from_tree<W: Writer>(writer: &mut W, root_node: &Node) -> Result<()
     let begin_list_options = W::BeginListOptions::default();
     let end_list_options = W::EndListOptions::default();
 
-    match root_node {
-        Node::Atom(atom) => writer.write_atom(atom, &single_atom_options)?,
-        Node::List(list) => {
-            writer.begin_list(&begin_list_options)?;
+    enum State<'a> {
+        Beginning(&'a Node),
+        Writing {
+            stack: Vec<std::slice::Iter<'a, Node>>,
+            current_list: std::slice::Iter<'a, Node>,
+            list_beginning: bool,
+        },
+        Finished,
+    }
 
-            struct StackItem<'a> {
-                list_iter: std::slice::Iter<'a, Node>,
+    let mut state = State::Beginning(root_node);
+
+    loop {
+        match state {
+            State::Beginning(node) => {
+                match node {
+                    Node::Atom(atom) => {
+                        writer.write_atom(atom, &single_atom_options)?;
+                        state = State::Finished;
+                    }
+                    Node::List(list) => {
+                        writer.begin_list(&begin_list_options)?;
+                        state = State::Writing {
+                            stack: Vec::new(),
+                            current_list: list.iter(),
+                            list_beginning: true,
+                        };
+                    }
+                }
             }
-            let mut stack = Vec::new();
-            let mut current = StackItem {
-                list_iter: list.iter(),
-            };
-            let mut list_beginning = true;
-            loop {
-                if let Some(item) = current.list_iter.next() {
-                    match item {
+            State::Writing { ref mut stack, ref mut current_list, ref mut list_beginning } => {
+                if let Some(node) = current_list.next() {
+                    match node {
                         Node::Atom(atom) => {
-                            if list_beginning {
+                            if *list_beginning {
                                 writer.write_atom(atom, &list_beginning_atom_options)?;
                             } else {
                                 writer.write_atom(atom, &non_list_beginning_atom_options)?;
                             }
-                            list_beginning = false;
-                        },
+                            *list_beginning = false;
+                        }
                         Node::List(list) => {
                             writer.begin_list(&begin_list_options)?;
-                            stack.push(current);
-                            current = StackItem {
-                                list_iter: list.iter(),
-                            };
-                            list_beginning = true;
+                            stack.push(std::mem::replace(current_list, list.iter()));
+                            *list_beginning = true;
                         }
                     }
                 } else {
                     writer.end_list(&end_list_options)?;
-                    if let Some(previous) = stack.pop() {
-                        current = previous;
-                        list_beginning = false;
+                    if let Some(parent_list) = stack.pop() {
+                        *current_list = parent_list;
+                        *list_beginning = false;
                     } else {
-                        break;
+                        state = State::Finished;
                     }
                 }
             }
+            State::Finished => return Ok(()),
         }
     }
-
-    Ok(())
 }
