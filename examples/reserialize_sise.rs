@@ -40,7 +40,7 @@ fn main() {
 
     let file_data = read_file(std::path::Path::new(&args[2])).unwrap();
     let mut parser = sise::Parser::new(&file_data);
-    let parsed = sise::read_into_tree_without_pos(&mut parser).unwrap();
+    let parsed = sise::read_into_tree(&mut parser).unwrap();
     parser.finish().unwrap();
 
     match serialize_style {

@@ -34,32 +34,3 @@ impl std::fmt::Display for ReprPosValue {
         }
     }
 }
-
-/// Maps nodes with their positions in the source.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PosTree<P> {
-    pub pos: P,
-    pub list: Option<PosTreeList<P>>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PosTreeList<P> {
-    pub items: Vec<PosTree<P>>,
-    pub ending_pos: P,
-}
-
-impl<P> PosTree<P> {
-    /// Traverses a tree with indices from `path`. Similar to `Node::index_path`.
-    pub fn index_path(&self, path: &[usize]) -> Option<&Self> {
-        let mut current_node = self;
-        for &index in path {
-            let next_node = current_node.list.as_ref().and_then(|list| list.items.get(index));
-            if let Some(ref next_node) = next_node {
-                current_node = next_node;
-            } else {
-                return None;
-            }
-        }
-        Some(current_node)
-    }
-}

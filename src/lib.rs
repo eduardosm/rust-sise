@@ -22,8 +22,6 @@ mod tests {
 mod pos;
 pub use self::pos::Pos;
 pub use self::pos::ReprPosValue;
-pub use self::pos::PosTree;
-pub use self::pos::PosTreeList;
 
 mod node;
 pub use self::node::Node;
@@ -43,7 +41,6 @@ pub use self::tree_reader::TreeReader;
 
 mod read_into_tree;
 pub use self::read_into_tree::read_into_tree;
-pub use self::read_into_tree::read_into_tree_without_pos;
 
 mod writer;
 pub use self::writer::VoidWriterOptions;
