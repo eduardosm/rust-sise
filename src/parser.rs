@@ -156,14 +156,22 @@ enum Token<'a> {
 /// ```
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    depth: usize,
+    state: State,
+}
+
+enum State {
+    Beginning,
+    Parsing {
+        depth: usize,
+    },
+    Finishing,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(data: &'a [u8]) -> Self {
         Self {
             lexer: Lexer::new(data),
-            depth: 1,
+            state: State::Beginning,
         }
     }
 }
@@ -174,50 +182,87 @@ impl<'a> Reader for Parser<'a> {
     type Pos = Pos;
 
     fn read(&mut self) -> Result<ReadItem<&'a str, Pos>, ParseError> {
-        assert_ne!(self.depth, 0, "parsing finished");
-        let (pos, token) = self.lexer.get_token()?;
-        match token {
-            Token::Eof => {
-                Err(ParseError::UnexpectedToken {
-                    pos,
-                    token: TokenKind::Eof,
-                })
-            }
-            Token::LeftParen => {
-                self.depth += 1;
-                Ok(ReadItem {
-                    pos,
-                    kind: ReadItemKind::ListBeginning,
-                })
-            }
-            Token::RightParen => {
-                self.depth -= 1;
-                if self.depth == 1 {
-                    self.depth = 0;
+        match self.state {
+            State::Beginning => {
+                let (pos, token) = self.lexer.get_token()?;
+                match token {
+                    Token::Eof => {
+                        Err(ParseError::UnexpectedToken {
+                            pos,
+                            token: TokenKind::Eof,
+                        })
+                    }
+                    Token::LeftParen => {
+                        self.state = State::Parsing { depth: 0 };
+                        Ok(ReadItem {
+                            pos,
+                            kind: ReadItemKind::ListBeginning,
+                        })
+                    }
+                    Token::RightParen => {
+                        Err(ParseError::UnexpectedToken {
+                            pos,
+                            token: TokenKind::RightParen,
+                        })
+                    }
+                    Token::Atom(atom) => {
+                        self.state = State::Finishing;
+                        Ok(ReadItem {
+                            pos,
+                            kind: ReadItemKind::Atom(atom),
+                        })
+                    }
                 }
-                Ok(ReadItem {
-                    pos,
-                    kind: ReadItemKind::ListEnding,
-                })
             }
-            Token::Atom(atom) => {
-                if self.depth == 1 {
-                    self.depth = 0;
+            State::Parsing { ref mut depth } => {
+                let (pos, token) = self.lexer.get_token()?;
+                match token {
+                    Token::Eof => {
+                        Err(ParseError::UnexpectedToken {
+                            pos,
+                            token: TokenKind::Eof,
+                        })
+                    }
+                    Token::LeftParen => {
+                        *depth += 1;
+                        Ok(ReadItem {
+                            pos,
+                            kind: ReadItemKind::ListBeginning,
+                        })
+                    }
+                    Token::RightParen => {
+                        if *depth == 0 {
+                            self.state = State::Finishing;
+                        } else {
+                            *depth -= 1;
+                        }
+                        Ok(ReadItem {
+                            pos,
+                            kind: ReadItemKind::ListEnding,
+                        })
+                    }
+                    Token::Atom(atom) => {
+                        Ok(ReadItem {
+                            pos,
+                            kind: ReadItemKind::Atom(atom),
+                        })
+                    }
                 }
-                Ok(ReadItem {
-                    pos,
-                    kind: ReadItemKind::Atom(atom),
-                })
             }
+            State::Finishing => panic!("parsing finished"),
         }
     }
 
     fn finish(mut self) -> Result<(), ParseError> {
-        assert_eq!(self.depth, 0, "parsing not finished yet");
-        let (pos, token) = self.lexer.get_token()?;
-        match token {
-            Token::Eof => Ok(()),
-            _ => Err(ParseError::ExpectedEof { pos }),
+        match self.state {
+            State::Finishing => {
+                let (pos, token) = self.lexer.get_token()?;
+                match token {
+                    Token::Eof => Ok(()),
+                    _ => Err(ParseError::ExpectedEof { pos }),
+                }
+            }
+            _ => panic!("parsing not finished yet"),
         }
     }
 }
