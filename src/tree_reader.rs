@@ -32,28 +32,22 @@ use crate::ReadItemKind;
 /// parser.finish().unwrap();
 /// ```
 pub struct TreeReader<'a> {
-    stack: Vec<std::slice::Iter<'a, Node>>,
-    current_node: CurrentNode<'a>,
+    state: State<'a>,
 }
 
-enum CurrentNode<'a> {
-    None,
-    Atom(&'a str),
-    List(std::slice::Iter<'a, Node>),
+enum State<'a> {
+    Beginning(&'a Node),
+    Reading {
+        stack: Vec<std::slice::Iter<'a, Node>>,
+        current_list: std::slice::Iter<'a, Node>,
+    },
+    Finished,
 }
 
 impl<'a> TreeReader<'a> {
+    #[inline]
     pub fn new(root_node: &'a Node) -> Self {
-        match root_node {
-            Node::Atom(atom) => Self {
-                stack: Vec::new(),
-                current_node: CurrentNode::Atom(atom),
-            },
-            Node::List(list) => Self {
-                stack: vec![list.iter()],
-                current_node: CurrentNode::None,
-            },
-        }
+        Self { state: State::Beginning(root_node) }
     }
 }
 
@@ -64,35 +58,37 @@ impl<'a> Reader for TreeReader<'a> {
     type Pos = ();
 
     fn read(&mut self) -> Result<ReadItem<&'a str, ()>, Infallible> {
-        match self.current_node {
-            CurrentNode::None => {
-                if self.stack.is_empty() {
-                    panic!("reading finished");
+        match self.state {
+            State::Beginning(root_node) => {
+                match root_node {
+                    Node::Atom(atom) => {
+                        self.state = State::Finished;
+                        Ok(ReadItem {
+                            pos: (),
+                            kind: ReadItemKind::Atom(atom),
+                        })
+                    }
+                    Node::List(list) => {
+                        self.state = State::Reading {
+                            stack: Vec::new(),
+                            current_list: list.iter(),
+                        };
+                        Ok(ReadItem {
+                            pos: (),
+                            kind: ReadItemKind::ListBeginning,
+                        })
+                    }
                 }
-                self.current_node = CurrentNode::List(self.stack.pop().unwrap());
-                Ok(ReadItem {
-                    pos: (),
-                    kind: ReadItemKind::ListBeginning,
-                })
-            },
-            CurrentNode::Atom(atom) => {
-                self.current_node = CurrentNode::None;
-                Ok(ReadItem {
-                    pos: (),
-                    kind: ReadItemKind::Atom(atom),
-                })
             }
-            CurrentNode::List(ref mut list) => {
-                if let Some(node) = list.next() {
+            State::Reading { ref mut stack, ref mut current_list } => {
+                if let Some(node) = current_list.next() {
                     match node {
-                        Node::Atom(atom) => {
-                            Ok(ReadItem {
-                                pos: (),
-                                kind: ReadItemKind::Atom(atom),
-                            })
-                        }
-                        Node::List(new_list) => {
-                            self.stack.push(std::mem::replace(list, new_list.iter()));
+                        Node::Atom(atom) => Ok(ReadItem {
+                            pos: (),
+                            kind: ReadItemKind::Atom(atom),
+                        }),
+                        Node::List(list) => {
+                            stack.push(std::mem::replace(current_list, list.iter()));
                             Ok(ReadItem {
                                 pos: (),
                                 kind: ReadItemKind::ListBeginning,
@@ -100,10 +96,10 @@ impl<'a> Reader for TreeReader<'a> {
                         }
                     }
                 } else {
-                    if let Some(current_node) = self.stack.pop() {
-                        self.current_node = CurrentNode::List(current_node);
+                    if let Some(parent_list) = stack.pop() {
+                        *current_list = parent_list;
                     } else {
-                        self.current_node = CurrentNode::None;
+                        self.state = State::Finished;
                     }
                     Ok(ReadItem {
                         pos: (),
@@ -111,13 +107,14 @@ impl<'a> Reader for TreeReader<'a> {
                     })
                 }
             }
+            State::Finished => panic!("reading already finished"),
         }
     }
 
     fn finish(self) -> Result<(), Infallible> {
-        match self.current_node {
-            CurrentNode::None if self.stack.is_empty() => Ok(()),
-            _ => panic!("reading not finished"),
+        match self.state {
+            State::Finished => Ok(()),
+            _ => panic!("reading not finished yet"),
         }
     }
 }
