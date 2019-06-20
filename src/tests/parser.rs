@@ -711,6 +711,19 @@ fn test_fail_unclosed_list() {
 }
 
 #[test]
+fn test_fail_unexpected_closing() {
+    ParserFailTest {
+        src_data: b")",
+        expected_items: &[],
+        error_at_finish: false,
+        expected_error: ParseError::UnexpectedToken {
+            pos: Pos::new(0, 0),
+            token: TokenKind::RightParen,
+        },
+    }.run();
+}
+
+#[test]
 fn test_fail_unclosed_list_with_comment() {
     ParserFailTest {
         src_data: b"(atom-1 ; comment)",
