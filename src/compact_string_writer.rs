@@ -43,8 +43,16 @@ use crate::util::check_atom;
 /// ```
 pub struct CompactStringWriter<'a> {
     dst: &'a mut String,
-    need_space: bool,
-    depth: usize,
+    state: State,
+}
+
+enum State {
+    Beginning,
+    Writing {
+        list_beginning: bool,
+        depth: usize,
+    },
+    Finished,
 }
 
 impl<'a> CompactStringWriter<'a> {
@@ -52,8 +60,7 @@ impl<'a> CompactStringWriter<'a> {
     pub fn new(dst: &'a mut String) -> Self {
         Self {
             dst,
-            need_space: false,
-            depth: 1,
+            state: State::Beginning,
         }
     }
 }
@@ -68,54 +75,71 @@ impl<'a> Writer for CompactStringWriter<'a> {
     type FinishOptions = VoidWriterOptions;
 
     fn write_atom(&mut self, atom: &str, _opts: &VoidWriterOptions) -> Result<(), Infallible> {
-        assert_ne!(self.depth, 0, "writing already finished");
         assert!(check_atom(atom), "invalid atom {:?}", atom);
 
-        if self.need_space {
-            self.dst.push(' ');
+        match self.state {
+            State::Beginning => {
+                self.dst.push_str(atom);
+                self.state = State::Finished;
+                Ok(())
+            }
+            State::Writing { ref mut list_beginning, .. } => {
+                if !*list_beginning {
+                    self.dst.push(' ');
+                }
+                self.dst.push_str(atom);
+                *list_beginning = false;
+                Ok(())
+            }
+            State::Finished => panic!("writing already finished"),
         }
-        self.dst.push_str(atom);
-
-        self.need_space = true;
-        // This atom is the root node, do not allow more writes.
-        if self.depth == 1 {
-            self.depth = 0;
-        }
-
-        Ok(())
     }
 
     fn begin_list(&mut self, _opts: &VoidWriterOptions) -> Result<(), Infallible> {
-        assert_ne!(self.depth, 0, "writing already finished");
-
-        if self.need_space {
-            self.dst.push(' ');
+        match self.state {
+            State::Beginning => {
+                self.dst.push('(');
+                self.state = State::Writing {
+                    list_beginning: true,
+                    depth: 0,
+                };
+                Ok(())
+            }
+            State::Writing { ref mut list_beginning, ref mut depth } => {
+                if !*list_beginning {
+                    self.dst.push_str(" (");
+                } else {
+                    self.dst.push('(');
+                }
+                *list_beginning = true;
+                *depth += 1;
+                Ok(())
+            }
+            State::Finished => panic!("writing already finished"),
         }
-        self.dst.push('(');
-
-        self.need_space = false;
-        self.depth += 1;
-
-        Ok(())
     }
 
     fn end_list(&mut self, _opts: &Self::EndListOptions) -> Result<(), Infallible> {
-        assert_ne!(self.depth, 0, "writing already finished");
-
-        // never write a space in this case
-        self.dst.push(')');
-        self.need_space = true;
-
-        self.depth -= 1;
-        if self.depth == 1 {
-            self.depth = 0;
+        match self.state {
+            State::Beginning => panic!("no list to end"),
+            State::Writing { ref mut list_beginning, ref mut depth } => {
+                self.dst.push(')');
+                if *depth == 0 {
+                    self.state = State::Finished;
+                } else {
+                    *depth -= 1;
+                    *list_beginning = false;
+                }
+                Ok(())
+            }
+            State::Finished => panic!("writing already finished"),
         }
-
-        Ok(())
     }
 
     fn finish(self, _opts: &Self::FinishOptions) -> Result<(), Infallible> {
-        assert_eq!(self.depth, 0, "writing not finished yet");
-        Ok(())
+        match self.state {
+            State::Finished => Ok(()),
+            _ => panic!("writing not finished yet"),
+        }
     }
 }
