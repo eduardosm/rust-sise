@@ -269,7 +269,6 @@ impl<'a> Lexer<'a> {
         std::str::from_utf8(atom).unwrap()
     }
 
-    //#[allow(clippy::cognitive_complexity)]
     fn get_token(&mut self) -> Result<(Pos, Token<'a>), ParseError> {
         loop {
             match self.peek_char(0) {
