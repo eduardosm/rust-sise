@@ -28,10 +28,6 @@ pub use self::pos::PosTreeList;
 mod node;
 pub use self::node::Node;
 
-mod builder;
-pub use self::builder::BuilderBase;
-pub use self::builder::Builder;
-
 mod reader;
 pub use self::reader::Reader;
 pub use self::reader::ReadItem;
