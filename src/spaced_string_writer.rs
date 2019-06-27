@@ -9,6 +9,7 @@ use std::convert::Infallible;
 
 use crate::Writer;
 use crate::VoidWriterOptions;
+use crate::UniversalWriteOptions;
 use crate::check_atom;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -43,6 +44,15 @@ impl Default for SpacedStringWriterNodeOptions {
     #[inline]
     fn default() -> Self {
         Self::break_line()
+    }
+}
+
+impl From<UniversalWriteOptions> for SpacedStringWriterNodeOptions {
+    #[inline]
+    fn from(opts: UniversalWriteOptions) -> Self {
+        Self {
+            break_line_len: opts.break_line_len.unwrap_or(0),
+        }
     }
 }
 

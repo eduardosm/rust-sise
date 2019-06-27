@@ -44,6 +44,7 @@ pub use self::read_into_tree::read_into_tree;
 
 mod writer;
 pub use self::writer::VoidWriterOptions;
+pub use self::writer::UniversalWriteOptions;
 pub use self::writer::Writer;
 
 mod compact_string_writer;

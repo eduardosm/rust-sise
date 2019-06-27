@@ -7,33 +7,24 @@
 
 use crate::Node;
 use crate::Writer;
+use crate::UniversalWriteOptions;
 
 pub trait WriteFromTreeAtomOptions {
     fn list_beginning() -> Self;
     fn non_list_beginning() -> Self;
 }
 
-impl WriteFromTreeAtomOptions for crate::VoidWriterOptions {
+impl<T> WriteFromTreeAtomOptions for T
+    where UniversalWriteOptions: Into<T>,
+{
     #[inline]
     fn list_beginning() -> Self {
-        Self
+        UniversalWriteOptions::no_break_line().into()
     }
 
     #[inline]
     fn non_list_beginning() -> Self {
-        Self
-    }
-}
-
-impl WriteFromTreeAtomOptions for crate::SpacedStringWriterNodeOptions {
-    #[inline]
-    fn list_beginning() -> Self {
-        Self::no_break_line()
-    }
-
-    #[inline]
-    fn non_list_beginning() -> Self {
-        Self::break_line()
+        UniversalWriteOptions::break_line().into()
     }
 }
 
