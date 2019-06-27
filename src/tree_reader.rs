@@ -20,16 +20,16 @@ use crate::ReadItemKind;
 /// use sise::sise_expr;
 /// use sise::Reader as _;
 /// let root_node = sise_expr!(["test", ["1", "2", "3"]]);
-/// let mut parser = sise::TreeReader::new(&root_node);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("test"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("1"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("2"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("3"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
-/// parser.finish().unwrap();
+/// let mut reader = sise::TreeReader::new(&root_node);
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::Atom("test"));
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::Atom("1"));
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::Atom("2"));
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::Atom("3"));
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::ListEnding);
+/// assert_eq!(reader.read().unwrap().kind, sise::ReadItemKind::ListEnding);
+/// reader.finish().unwrap();
 /// ```
 pub struct TreeReader<'a> {
     state: State<'a>,
