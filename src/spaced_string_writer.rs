@@ -86,7 +86,7 @@ impl From<UniversalWriteOptions> for SpacedStringWriterNodeOptions {
 /// writer.write_atom("c", &sise::SpacedStringWriterNodeOptions::default()).unwrap();
 /// writer.end_list(&sise::VoidWriterOptions).unwrap();
 /// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.finish(&sise::VoidWriterOptions);
+/// writer.finish(&sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(\n example\n (\n  1\n  2\n  3\n )\n (\n  a\n  b\n  c\n )\n)";
 /// assert_eq!(result, expected_result);
@@ -121,7 +121,7 @@ impl From<UniversalWriteOptions> for SpacedStringWriterNodeOptions {
 /// writer.write_atom("c", &sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
 /// writer.end_list(&sise::VoidWriterOptions).unwrap();
 /// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.finish(&sise::VoidWriterOptions);
+/// writer.finish(&sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(example\n (1 2 3)\n (a b c)\n)";
 /// assert_eq!(result, expected_result);

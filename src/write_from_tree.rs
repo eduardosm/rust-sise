@@ -42,7 +42,7 @@ impl<T> WriteFromTreeAtomOptions for T
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
 ///
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(&sise::VoidWriterOptions);
+/// writer.finish(&sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(example (1 2 3) (a b c))";
 /// assert_eq!(result, expected_result);
@@ -66,7 +66,7 @@ impl<T> WriteFromTreeAtomOptions for T
 /// let mut writer = sise::SpacedStringWriter::new(style, &mut result);
 ///
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(&sise::VoidWriterOptions);
+/// writer.finish(&sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(example\n (1\n  2\n  3\n )\n (a\n  b\n  c\n )\n)";
 /// assert_eq!(result, expected_result);
@@ -94,7 +94,7 @@ impl<T> WriteFromTreeAtomOptions for T
 /// // Write the tail
 /// writer.write_atom("tail", &sise::VoidWriterOptions).unwrap();
 /// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.finish(&sise::VoidWriterOptions);
+/// writer.finish(&sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(head (1 2 3) tail)";
 /// assert_eq!(result, expected_result);
