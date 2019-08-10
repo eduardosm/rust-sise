@@ -5,6 +5,6 @@ authors = ["Eduardo Sánchez Muñoz <esm@eduardosm.net>"]
 edition = "2018"
 description = "SISE (Simple S-expression) parser, serializer and utilities library."
 repository = "https://github.com/eduardosm/rust-sise"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
