@@ -6,15 +6,15 @@
 // copied, modified, or distributed except according to those terms.
 
 use crate::sise_expr;
-use crate::Node;
-use crate::Writer as _;
+use crate::write_from_tree;
 use crate::CompactStringWriter;
+use crate::Node;
 use crate::SpacedStringWriter;
-use crate::SpacedStringWriterStyle;
 use crate::SpacedStringWriterNodeOptions;
+use crate::SpacedStringWriterStyle;
 use crate::TreeWriter;
 use crate::VoidWriterOptions;
-use crate::write_from_tree;
+use crate::Writer as _;
 
 const SPACED_STYLE: SpacedStringWriterStyle<'static> = SpacedStringWriterStyle {
     line_break: "\n",
@@ -57,7 +57,8 @@ fn test_empty_list() {
         root_node: sise_expr!([]),
         expected_compact: "()",
         expected_spaced: "()",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -66,7 +67,8 @@ fn test_single_atom() {
         root_node: sise_expr!("atom"),
         expected_compact: "atom",
         expected_spaced: "atom",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -75,7 +77,8 @@ fn test_list_with_one_atom() {
         root_node: sise_expr!(["1"]),
         expected_compact: "(1)",
         expected_spaced: "(1)",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -84,7 +87,8 @@ fn test_list_with_two_atoms() {
         root_node: sise_expr!(["1", "2"]),
         expected_compact: "(1 2)",
         expected_spaced: "(1\n\t2\n)",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -93,7 +97,8 @@ fn test_list_with_three_atoms() {
         root_node: sise_expr!(["1", "2", "3"]),
         expected_compact: "(1 2 3)",
         expected_spaced: "(1\n\t2\n\t3\n)",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -102,7 +107,8 @@ fn test_nested_list_1() {
         root_node: sise_expr!([[]]),
         expected_compact: "(())",
         expected_spaced: "(\n\t()\n)",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -111,16 +117,24 @@ fn test_nested_list_2() {
         root_node: sise_expr!([[], []]),
         expected_compact: "(() ())",
         expected_spaced: "(\n\t()\n\t()\n)",
-    }.run();
+    }
+    .run();
 }
 
 #[test]
 fn test_mixed() {
     StringWriterTest {
-        root_node: sise_expr!(["atom-1", ["atom-2"], ["atom-3", ["atom-4"], "atom-5"], "atom-6"]),
+        root_node: sise_expr!([
+            "atom-1",
+            ["atom-2"],
+            ["atom-3", ["atom-4"], "atom-5"],
+            "atom-6"
+        ]),
         expected_compact: "(atom-1 (atom-2) (atom-3 (atom-4) atom-5) atom-6)",
-        expected_spaced: "(atom-1\n\t(atom-2)\n\t(atom-3\n\t\t(atom-4)\n\t\tatom-5\n\t)\n\tatom-6\n)",
-    }.run();
+        expected_spaced:
+            "(atom-1\n\t(atom-2)\n\t(atom-3\n\t\t(atom-4)\n\t\tatom-5\n\t)\n\tatom-6\n)",
+    }
+    .run();
 }
 
 #[test]
@@ -133,9 +147,7 @@ fn test_spaced_with_keep_line_1() {
     let no_break_line_opts = SpacedStringWriterNodeOptions {
         break_line_len: usize::max_value(),
     };
-    let break_line_opts = SpacedStringWriterNodeOptions {
-        break_line_len: 0,
-    };
+    let break_line_opts = SpacedStringWriterNodeOptions { break_line_len: 0 };
 
     writer.begin_list(&no_break_line_opts).unwrap();
     writer.write_atom("atom", &no_break_line_opts).unwrap();
@@ -166,9 +178,7 @@ fn test_spaced_with_keep_line_2() {
     let no_break_line_opts = SpacedStringWriterNodeOptions {
         break_line_len: usize::max_value(),
     };
-    let break_line_opts = SpacedStringWriterNodeOptions {
-        break_line_len: 0,
-    };
+    let break_line_opts = SpacedStringWriterNodeOptions { break_line_len: 0 };
 
     writer.begin_list(&no_break_line_opts).unwrap();
     writer.write_atom("atom", &no_break_line_opts).unwrap();
@@ -199,9 +209,7 @@ fn test_spaced_with_keep_line_3() {
     let no_break_line_opts = SpacedStringWriterNodeOptions {
         break_line_len: usize::max_value(),
     };
-    let break_line_opts = SpacedStringWriterNodeOptions {
-        break_line_len: 0,
-    };
+    let break_line_opts = SpacedStringWriterNodeOptions { break_line_len: 0 };
 
     writer.begin_list(&no_break_line_opts).unwrap();
     writer.write_atom("atom", &no_break_line_opts).unwrap();

@@ -7,10 +7,10 @@
 
 use std::convert::Infallible;
 
-use crate::Writer;
-use crate::VoidWriterOptions;
-use crate::UniversalWriteOptions;
 use crate::check_atom;
+use crate::UniversalWriteOptions;
+use crate::VoidWriterOptions;
+use crate::Writer;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct SpacedStringWriterStyle<'a> {
@@ -26,9 +26,7 @@ pub struct SpacedStringWriterNodeOptions {
 impl SpacedStringWriterNodeOptions {
     #[inline]
     pub const fn break_line() -> Self {
-        Self {
-            break_line_len: 0,
-        }
+        Self { break_line_len: 0 }
     }
 
     #[inline]
@@ -160,7 +158,7 @@ impl<'a, 'b> SpacedStringWriter<'a, 'b> {
 
     fn write_indent(indentation: &str, n: usize, dst: &mut String) -> usize {
         let mut len = 0;
-        for _ in 0 .. n {
+        for _ in 0..n {
             dst.push_str(indentation);
             len += indentation.len();
         }
@@ -177,9 +175,11 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
     type EndListOptions = VoidWriterOptions;
     type FinishOptions = VoidWriterOptions;
 
-    fn write_atom(&mut self, atom: &str, opts: &SpacedStringWriterNodeOptions)
-        -> Result<(), Infallible>
-    {
+    fn write_atom(
+        &mut self,
+        atom: &str,
+        opts: &SpacedStringWriterNodeOptions,
+    ) -> Result<(), Infallible> {
         assert!(check_atom(atom), "invalid atom {:?}", atom);
 
         match self.state {
@@ -197,9 +197,8 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
                     state.line_len += atom.len();
                 } else {
                     self.dst.push_str(self.style.line_break);
-                    let indent_len = Self::write_indent(self.style.indentation,
-                                                        state.stack.len() + 1,
-                                                        self.dst);
+                    let indent_len =
+                        Self::write_indent(self.style.indentation, state.stack.len() + 1, self.dst);
                     self.dst.push_str(atom);
                     state.current_list_line_broken = true;
                     state.line_len = indent_len + atom.len();
@@ -233,9 +232,8 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
                     state.line_len += 1;
                 } else {
                     self.dst.push_str(self.style.line_break);
-                    state.line_len = Self::write_indent(self.style.indentation,
-                                                        state.stack.len() + 1,
-                                                        self.dst);
+                    state.line_len =
+                        Self::write_indent(self.style.indentation, state.stack.len() + 1, self.dst);
                     self.dst.push('(');
                     state.current_list_line_broken = true;
                     state.line_len += 1;
@@ -259,9 +257,8 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
             State::Writing(ref mut state) => {
                 if state.current_list_line_broken {
                     self.dst.push_str(self.style.line_break);
-                    state.line_len = Self::write_indent(self.style.indentation,
-                                                        state.stack.len(),
-                                                        self.dst);
+                    state.line_len =
+                        Self::write_indent(self.style.indentation, state.stack.len(), self.dst);
                 }
                 self.dst.push(')');
                 state.line_len += 1;

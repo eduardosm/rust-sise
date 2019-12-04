@@ -5,11 +5,11 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use crate::read_into_tree;
 use crate::sise_expr;
 use crate::Node;
-use crate::Reader;
 use crate::Parser;
-use crate::read_into_tree;
+use crate::Reader;
 
 struct ReadTreeTest<'a> {
     src_data: &'a [u8],
@@ -30,7 +30,8 @@ fn test_empty_list() {
     ReadTreeTest {
         src_data: b"()",
         expected_tree: sise_expr!([]),
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -38,7 +39,8 @@ fn test_single_atom() {
     ReadTreeTest {
         src_data: b"atom",
         expected_tree: sise_expr!("atom"),
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -46,7 +48,8 @@ fn test_simple_list_1() {
     ReadTreeTest {
         src_data: b"(atom-1)",
         expected_tree: sise_expr!(["atom-1"]),
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -54,7 +57,8 @@ fn test_simple_list_2() {
     ReadTreeTest {
         src_data: b"(atom-1 atom-2)",
         expected_tree: sise_expr!(["atom-1", "atom-2"]),
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -62,7 +66,8 @@ fn test_nested_list_1() {
     ReadTreeTest {
         src_data: b"(())",
         expected_tree: sise_expr!([[]]),
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -70,7 +75,8 @@ fn test_nested_list_2() {
     ReadTreeTest {
         src_data: b"(() ())",
         expected_tree: sise_expr!([[], []]),
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -78,5 +84,6 @@ fn test_nested_list_3() {
     ReadTreeTest {
         src_data: b"((atom-1) (atom-2 atom-3))",
         expected_tree: sise_expr!([["atom-1"], ["atom-2", "atom-3"]]),
-    }.run();
+    }
+    .run();
 }

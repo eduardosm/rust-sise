@@ -7,9 +7,9 @@
 
 use std::convert::Infallible;
 
-use crate::Writer;
-use crate::VoidWriterOptions;
 use crate::util::check_atom;
+use crate::VoidWriterOptions;
+use crate::Writer;
 
 /// Writer that writes everything into a single line string.
 ///
@@ -48,10 +48,7 @@ pub struct CompactStringWriter<'a> {
 
 enum State {
     Beginning,
-    Writing {
-        list_beginning: bool,
-        depth: usize,
-    },
+    Writing { list_beginning: bool, depth: usize },
     Finished,
 }
 
@@ -83,7 +80,10 @@ impl<'a> Writer for CompactStringWriter<'a> {
                 self.state = State::Finished;
                 Ok(())
             }
-            State::Writing { ref mut list_beginning, .. } => {
+            State::Writing {
+                ref mut list_beginning,
+                ..
+            } => {
                 if !*list_beginning {
                     self.dst.push(' ');
                 }
@@ -105,7 +105,10 @@ impl<'a> Writer for CompactStringWriter<'a> {
                 };
                 Ok(())
             }
-            State::Writing { ref mut list_beginning, ref mut depth } => {
+            State::Writing {
+                ref mut list_beginning,
+                ref mut depth,
+            } => {
                 if !*list_beginning {
                     self.dst.push_str(" (");
                 } else {
@@ -122,7 +125,10 @@ impl<'a> Writer for CompactStringWriter<'a> {
     fn end_list(&mut self, _opts: &Self::EndListOptions) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => panic!("no list to end"),
-            State::Writing { ref mut list_beginning, ref mut depth } => {
+            State::Writing {
+                ref mut list_beginning,
+                ref mut depth,
+            } => {
                 self.dst.push(')');
                 if *depth == 0 {
                     self.state = State::Finished;

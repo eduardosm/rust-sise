@@ -6,8 +6,8 @@
 // copied, modified, or distributed except according to those terms.
 
 use crate::Node;
-use crate::Writer;
 use crate::UniversalWriteOptions;
+use crate::Writer;
 
 pub trait WriteFromTreeAtomOptions {
     fn list_beginning() -> Self;
@@ -15,7 +15,8 @@ pub trait WriteFromTreeAtomOptions {
 }
 
 impl<T> WriteFromTreeAtomOptions for T
-    where UniversalWriteOptions: Into<T>,
+where
+    UniversalWriteOptions: Into<T>,
 {
     #[inline]
     fn list_beginning() -> Self {
@@ -100,9 +101,10 @@ impl<T> WriteFromTreeAtomOptions for T
 /// assert_eq!(result, expected_result);
 /// ```
 pub fn write_from_tree<W: Writer>(writer: &mut W, root_node: &Node) -> Result<(), W::Error>
-    where W::AtomOptions: Default + WriteFromTreeAtomOptions,
-          W::BeginListOptions: Default,
-          W::EndListOptions: Default,
+where
+    W::AtomOptions: Default + WriteFromTreeAtomOptions,
+    W::BeginListOptions: Default,
+    W::EndListOptions: Default,
 {
     let single_atom_options = W::AtomOptions::default();
     let list_beginning_atom_options = W::AtomOptions::list_beginning();
@@ -124,23 +126,25 @@ pub fn write_from_tree<W: Writer>(writer: &mut W, root_node: &Node) -> Result<()
 
     loop {
         match state {
-            State::Beginning(node) => {
-                match node {
-                    Node::Atom(atom) => {
-                        writer.write_atom(atom, &single_atom_options)?;
-                        state = State::Finished;
-                    }
-                    Node::List(list) => {
-                        writer.begin_list(&begin_list_options)?;
-                        state = State::Writing {
-                            stack: Vec::new(),
-                            current_list: list.iter(),
-                            list_beginning: true,
-                        };
-                    }
+            State::Beginning(node) => match node {
+                Node::Atom(atom) => {
+                    writer.write_atom(atom, &single_atom_options)?;
+                    state = State::Finished;
                 }
-            }
-            State::Writing { ref mut stack, ref mut current_list, ref mut list_beginning } => {
+                Node::List(list) => {
+                    writer.begin_list(&begin_list_options)?;
+                    state = State::Writing {
+                        stack: Vec::new(),
+                        current_list: list.iter(),
+                        list_beginning: true,
+                    };
+                }
+            },
+            State::Writing {
+                ref mut stack,
+                ref mut current_list,
+                ref mut list_beginning,
+            } => {
                 if let Some(node) = current_list.next() {
                     match node {
                         Node::Atom(atom) => {

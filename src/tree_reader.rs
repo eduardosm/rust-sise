@@ -8,9 +8,9 @@
 use std::convert::Infallible;
 
 use crate::Node;
-use crate::Reader;
 use crate::ReadItem;
 use crate::ReadItemKind;
+use crate::Reader;
 
 /// Reader that allows reading from a tree of `Node`.
 ///
@@ -47,7 +47,9 @@ enum State<'a> {
 impl<'a> TreeReader<'a> {
     #[inline]
     pub fn new(root_node: &'a Node) -> Self {
-        Self { state: State::Beginning(root_node) }
+        Self {
+            state: State::Beginning(root_node),
+        }
     }
 }
 
@@ -59,28 +61,29 @@ impl<'a> Reader for TreeReader<'a> {
 
     fn read(&mut self) -> Result<ReadItem<&'a str, ()>, Infallible> {
         match self.state {
-            State::Beginning(root_node) => {
-                match root_node {
-                    Node::Atom(atom) => {
-                        self.state = State::Finished;
-                        Ok(ReadItem {
-                            pos: (),
-                            kind: ReadItemKind::Atom(atom),
-                        })
-                    }
-                    Node::List(list) => {
-                        self.state = State::Reading {
-                            stack: Vec::new(),
-                            current_list: list.iter(),
-                        };
-                        Ok(ReadItem {
-                            pos: (),
-                            kind: ReadItemKind::ListBeginning,
-                        })
-                    }
+            State::Beginning(root_node) => match root_node {
+                Node::Atom(atom) => {
+                    self.state = State::Finished;
+                    Ok(ReadItem {
+                        pos: (),
+                        kind: ReadItemKind::Atom(atom),
+                    })
                 }
-            }
-            State::Reading { ref mut stack, ref mut current_list } => {
+                Node::List(list) => {
+                    self.state = State::Reading {
+                        stack: Vec::new(),
+                        current_list: list.iter(),
+                    };
+                    Ok(ReadItem {
+                        pos: (),
+                        kind: ReadItemKind::ListBeginning,
+                    })
+                }
+            },
+            State::Reading {
+                ref mut stack,
+                ref mut current_list,
+            } => {
                 if let Some(node) = current_list.next() {
                     match node {
                         Node::Atom(atom) => Ok(ReadItem {

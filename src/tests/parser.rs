@@ -8,9 +8,9 @@
 use crate::ParseError;
 use crate::Parser;
 use crate::Pos;
-use crate::Reader as _;
 use crate::ReadItem;
 use crate::ReadItemKind;
+use crate::Reader as _;
 use crate::TokenKind;
 
 struct ParserPassTest<'a> {
@@ -49,7 +49,6 @@ impl<'a> ParserFailTest<'a> {
     }
 }
 
-
 #[test]
 fn test_empty_list() {
     ParserPassTest {
@@ -64,20 +63,20 @@ fn test_empty_list() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
 fn test_single_atom() {
     ParserPassTest {
         src_data: b"atom",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(0, 0),
-                kind: ReadItemKind::Atom("atom"),
-            },
-        ],
-    }.run();
+        expected_items: &[ReadItem {
+            pos: Pos::new(0, 0),
+            kind: ReadItemKind::Atom("atom"),
+        }],
+    }
+    .run();
 }
 
 #[test]
@@ -98,7 +97,8 @@ fn test_simple_list_1() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -123,7 +123,8 @@ fn test_simple_list_2() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -148,7 +149,8 @@ fn test_nested_list_1() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -181,7 +183,8 @@ fn test_nested_list_2() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -226,7 +229,8 @@ fn test_nested_list_3() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -315,7 +319,8 @@ fn test_nested_lists() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -380,59 +385,56 @@ fn test_mixed() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
 fn test_atom_chars() {
     ParserPassTest {
         src_data: b"!#$%&*+-./:<=>?@_~",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(0, 0),
-                kind: ReadItemKind::Atom("!#$%&*+-./:<=>?@_~"),
-            },
-        ],
-    }.run();
+        expected_items: &[ReadItem {
+            pos: Pos::new(0, 0),
+            kind: ReadItemKind::Atom("!#$%&*+-./:<=>?@_~"),
+        }],
+    }
+    .run();
 }
 
 #[test]
 fn test_string_1() {
     ParserPassTest {
         src_data: b"\"atom-1\"",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(0, 0),
-                kind: ReadItemKind::Atom("\"atom-1\""),
-            },
-        ],
-    }.run();
+        expected_items: &[ReadItem {
+            pos: Pos::new(0, 0),
+            kind: ReadItemKind::Atom("\"atom-1\""),
+        }],
+    }
+    .run();
 }
 
 #[test]
 fn test_string_2() {
     ParserPassTest {
         src_data: b"prefix\"atom-1\"suffix",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(0, 0),
-                kind: ReadItemKind::Atom("prefix\"atom-1\"suffix"),
-            },
-        ],
-    }.run();
+        expected_items: &[ReadItem {
+            pos: Pos::new(0, 0),
+            kind: ReadItemKind::Atom("prefix\"atom-1\"suffix"),
+        }],
+    }
+    .run();
 }
 
 #[test]
 fn test_string_3() {
     ParserPassTest {
         src_data: b"\" \\\\ \\\" \"",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(0, 0),
-                kind: ReadItemKind::Atom("\" \\\\ \\\" \""),
-            },
-        ],
-    }.run();
+        expected_items: &[ReadItem {
+            pos: Pos::new(0, 0),
+            kind: ReadItemKind::Atom("\" \\\\ \\\" \""),
+        }],
+    }
+    .run();
 }
 
 #[test]
@@ -465,7 +467,8 @@ fn test_multiline_lf() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -498,7 +501,8 @@ fn test_multiline_crlf() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -531,7 +535,8 @@ fn test_multiline_cr() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -564,7 +569,8 @@ fn test_multiline_mixed() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -589,7 +595,8 @@ fn test_comment_1() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -614,7 +621,8 @@ fn test_comment_2() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -639,7 +647,8 @@ fn test_comment_3() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -652,7 +661,8 @@ fn test_fail_empty() {
             pos: Pos::new(0, 0),
             token: TokenKind::Eof,
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -673,7 +683,8 @@ fn test_fail_expected_eof() {
         expected_error: ParseError::ExpectedEof {
             pos: Pos::new(0, 3),
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -685,7 +696,8 @@ fn test_fail_unfinished_string() {
         expected_error: ParseError::UnfinishedString {
             pos: Pos::new(0, 7),
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -707,7 +719,8 @@ fn test_fail_unclosed_list() {
             pos: Pos::new(0, 7),
             token: TokenKind::Eof,
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -720,7 +733,8 @@ fn test_fail_unexpected_closing() {
             pos: Pos::new(0, 0),
             token: TokenKind::RightParen,
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -742,7 +756,8 @@ fn test_fail_unclosed_list_with_comment() {
             pos: Pos::new(0, 18),
             token: TokenKind::Eof,
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -755,7 +770,8 @@ fn test_fail_illegal_chr() {
             pos: Pos::new(0, 0),
             chr: 0xFF,
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -768,7 +784,8 @@ fn test_fail_illegal_chr_in_string() {
             pos: Pos::new(0, 1),
             chr: 0xFF,
         },
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -790,5 +807,6 @@ fn test_fail_illegal_chr_in_comment() {
             pos: Pos::new(0, 5),
             chr: 0xFF,
         },
-    }.run();
+    }
+    .run();
 }

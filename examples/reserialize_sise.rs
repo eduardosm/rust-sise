@@ -20,7 +20,10 @@ fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
 fn main() {
     let args: Vec<_> = std::env::args_os().collect();
     if args.len() != 3 {
-        eprintln!("Usage: {} [compact|spaced] [input-file]", args[0].to_string_lossy());
+        eprintln!(
+            "Usage: {} [compact|spaced] [input-file]",
+            args[0].to_string_lossy()
+        );
         std::process::exit(1);
     }
 

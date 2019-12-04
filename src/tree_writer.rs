@@ -7,10 +7,10 @@
 
 use std::convert::Infallible;
 
-use crate::Node;
-use crate::Writer;
-use crate::VoidWriterOptions;
 use crate::check_atom;
+use crate::Node;
+use crate::VoidWriterOptions;
+use crate::Writer;
 
 /// A writer that creates a tree of `Node`.
 ///
@@ -87,8 +87,11 @@ impl Writer for TreeWriter {
             State::Beginning => {
                 self.state = State::Finished(Node::Atom(atom.to_string()));
                 Ok(())
-            },
-            State::Writing { ref mut current_list, .. } => {
+            }
+            State::Writing {
+                ref mut current_list,
+                ..
+            } => {
                 current_list.push(Node::Atom(atom.to_string()));
                 Ok(())
             }
@@ -105,7 +108,10 @@ impl Writer for TreeWriter {
                 };
                 Ok(())
             }
-            State::Writing { ref mut stack, ref mut current_list } => {
+            State::Writing {
+                ref mut stack,
+                ref mut current_list,
+            } => {
                 stack.push(std::mem::replace(current_list, Vec::new()));
                 Ok(())
             }
@@ -116,7 +122,10 @@ impl Writer for TreeWriter {
     fn end_list(&mut self, _opts: &VoidWriterOptions) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => panic!("no list to end"),
-            State::Writing { ref mut stack, ref mut current_list } => {
+            State::Writing {
+                ref mut stack,
+                ref mut current_list,
+            } => {
                 if let Some(parent_list) = stack.pop() {
                     let child_list = std::mem::replace(current_list, parent_list);
                     current_list.push(Node::List(child_list));

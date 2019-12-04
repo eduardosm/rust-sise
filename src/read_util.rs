@@ -6,29 +6,18 @@
 // copied, modified, or distributed except according to those terms.
 
 use crate::Pos;
-use crate::ReprPosValue;
-use crate::Reader;
 use crate::ReadItemKind;
+use crate::Reader;
+use crate::ReprPosValue;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ReadUtilError<E, P> {
     ReaderError(E),
-    ExpectedAtom {
-        pos: P,
-    },
-    ExpectedListBeginning {
-        pos: P,
-    },
-    ExpectedListEnding {
-        pos: P,
-    },
-    ExpectedNodeInList {
-        pos: P,
-    },
-    InvalidValue {
-        value_type: String,
-        pos: P,
-    },
+    ExpectedAtom { pos: P },
+    ExpectedListBeginning { pos: P },
+    ExpectedListEnding { pos: P },
+    ExpectedNodeInList { pos: P },
+    InvalidValue { value_type: String, pos: P },
 }
 
 impl<E, P> From<E> for ReadUtilError<E, P> {
@@ -54,21 +43,11 @@ impl<E: std::error::Error, P> ReadUtilError<E, P> {
 impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadUtilError::ReaderError(e) => {
-                write!(f, "reader error: {}", e)
-            }
-            ReadUtilError::ExpectedAtom { .. } => {
-                f.write_str("expected atom")
-            }
-            ReadUtilError::ExpectedListBeginning { .. } => {
-                f.write_str("expected list beginning")
-            }
-            ReadUtilError::ExpectedListEnding { .. } => {
-                f.write_str("expected list ending")
-            }
-            ReadUtilError::ExpectedNodeInList { .. } => {
-                f.write_str("expected node in list")
-            }
+            ReadUtilError::ReaderError(e) => write!(f, "reader error: {}", e),
+            ReadUtilError::ExpectedAtom { .. } => f.write_str("expected atom"),
+            ReadUtilError::ExpectedListBeginning { .. } => f.write_str("expected list beginning"),
+            ReadUtilError::ExpectedListEnding { .. } => f.write_str("expected list ending"),
+            ReadUtilError::ExpectedNodeInList { .. } => f.write_str("expected node in list"),
             ReadUtilError::InvalidValue { value_type, .. } => {
                 write!(f, "invalid value of type {:?}", value_type)
             }
@@ -79,35 +58,38 @@ impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
 impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, Pos> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReadUtilError::ReaderError(e) => {
-                write!(f, "reader error: {}", e)
-            }
-            ReadUtilError::ExpectedAtom { pos } => {
-                write!(f, "expected atom at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
-            ReadUtilError::ExpectedListBeginning { pos } => {
-                write!(f, "expected list beginning at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
-            ReadUtilError::ExpectedListEnding { pos } => {
-                write!(f, "expected list ending at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
-            ReadUtilError::ExpectedNodeInList { pos } => {
-                write!(f, "expected node in list at {}:{}",
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
-            ReadUtilError::InvalidValue { value_type, pos } => {
-                write!(f, "invalid value of type {:?} at {}:{}",
-                       value_type,
-                       ReprPosValue(pos.line),
-                       ReprPosValue(pos.column))
-            }
+            ReadUtilError::ReaderError(e) => write!(f, "reader error: {}", e),
+            ReadUtilError::ExpectedAtom { pos } => write!(
+                f,
+                "expected atom at {}:{}",
+                ReprPosValue(pos.line),
+                ReprPosValue(pos.column)
+            ),
+            ReadUtilError::ExpectedListBeginning { pos } => write!(
+                f,
+                "expected list beginning at {}:{}",
+                ReprPosValue(pos.line),
+                ReprPosValue(pos.column)
+            ),
+            ReadUtilError::ExpectedListEnding { pos } => write!(
+                f,
+                "expected list ending at {}:{}",
+                ReprPosValue(pos.line),
+                ReprPosValue(pos.column)
+            ),
+            ReadUtilError::ExpectedNodeInList { pos } => write!(
+                f,
+                "expected node in list at {}:{}",
+                ReprPosValue(pos.line),
+                ReprPosValue(pos.column)
+            ),
+            ReadUtilError::InvalidValue { value_type, pos } => write!(
+                f,
+                "invalid value of type {:?} at {}:{}",
+                value_type,
+                ReprPosValue(pos.line),
+                ReprPosValue(pos.column)
+            ),
         }
     }
 }
@@ -138,7 +120,9 @@ impl<'a, R: Reader> NodeReadUtil<'a, R> {
         let read_item = reader.read()?;
         match read_item.kind {
             ReadItemKind::Atom(s) => Ok(NodeReadUtil::Atom(AtomReadUtil::new(read_item.pos, s))),
-            ReadItemKind::ListBeginning => Ok(NodeReadUtil::List(ListReadUtil::new(read_item.pos, reader))),
+            ReadItemKind::ListBeginning => {
+                Ok(NodeReadUtil::List(ListReadUtil::new(read_item.pos, reader)))
+            }
             ReadItemKind::ListEnding => panic!("unexpected ReadItemKind::ListEnding"),
         }
     }
@@ -159,7 +143,7 @@ impl<'a, R: Reader> NodeReadUtil<'a, R> {
         match self {
             NodeReadUtil::Atom(atom_read_util) => Ok(atom_read_util),
             NodeReadUtil::List(list_read_util) => Err(ReadUtilError::ExpectedAtom {
-                pos: list_read_util.into_beginning_pos()
+                pos: list_read_util.into_beginning_pos(),
             }),
         }
     }
@@ -246,9 +230,9 @@ impl<R: Reader> AtomReadUtil<R> {
     /// let decoded = atom_read_util.decode(|atom| Some(atom.len()), "decode_as_length").unwrap();
     /// assert_eq!(decoded, 7);
     /// ```
-    pub fn decode<T, F>(self, f: F, value_type: &str)
-        -> Result<T, ReadUtilError<R::Error, R::Pos>>
-        where F: FnOnce(&str) -> Option<T>
+    pub fn decode<T, F>(self, f: F, value_type: &str) -> Result<T, ReadUtilError<R::Error, R::Pos>>
+    where
+        F: FnOnce(&str) -> Option<T>,
     {
         if let Some(value) = f(self.atom.as_ref()) {
             Ok(value)
@@ -270,7 +254,10 @@ pub struct ListReadUtil<'a, R: Reader> {
 impl<'a, R: Reader> ListReadUtil<'a, R> {
     #[inline]
     pub fn new(beginning_pos: R::Pos, reader: &'a mut R) -> Self {
-        Self { beginning_pos, reader }
+        Self {
+            beginning_pos,
+            reader,
+        }
     }
 
     /// Returns a reference to the stored list beginning position.
@@ -301,7 +288,9 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
         let read_item = self.reader.read()?;
         match read_item.kind {
             ReadItemKind::Atom(_) => Err(ReadUtilError::ExpectedListEnding { pos: read_item.pos }),
-            ReadItemKind::ListBeginning => Err(ReadUtilError::ExpectedListEnding { pos: read_item.pos }),
+            ReadItemKind::ListBeginning => {
+                Err(ReadUtilError::ExpectedListEnding { pos: read_item.pos })
+            }
             ReadItemKind::ListEnding => Ok(read_item.pos),
         }
     }
@@ -324,8 +313,14 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     pub fn try_next_item(&mut self) -> Result<Option<NodeReadUtil<'_, R>>, R::Error> {
         let read_item = self.reader.read()?;
         match read_item.kind {
-            ReadItemKind::Atom(s) => Ok(Some(NodeReadUtil::Atom(AtomReadUtil::new(read_item.pos, s)))),
-            ReadItemKind::ListBeginning => Ok(Some(NodeReadUtil::List(ListReadUtil::new(read_item.pos, self.reader)))),
+            ReadItemKind::Atom(s) => Ok(Some(NodeReadUtil::Atom(AtomReadUtil::new(
+                read_item.pos,
+                s,
+            )))),
+            ReadItemKind::ListBeginning => Ok(Some(NodeReadUtil::List(ListReadUtil::new(
+                read_item.pos,
+                self.reader,
+            )))),
             ReadItemKind::ListEnding => Ok(None),
         }
     }
@@ -349,8 +344,13 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
         let read_item = self.reader.read()?;
         match read_item.kind {
             ReadItemKind::Atom(s) => Ok(NodeReadUtil::Atom(AtomReadUtil::new(read_item.pos, s))),
-            ReadItemKind::ListBeginning => Ok(NodeReadUtil::List(ListReadUtil::new(read_item.pos, self.reader))),
-            ReadItemKind::ListEnding => Err(ReadUtilError::ExpectedNodeInList { pos: read_item.pos }),
+            ReadItemKind::ListBeginning => Ok(NodeReadUtil::List(ListReadUtil::new(
+                read_item.pos,
+                self.reader,
+            ))),
+            ReadItemKind::ListEnding => {
+                Err(ReadUtilError::ExpectedNodeInList { pos: read_item.pos })
+            }
         }
     }
 
@@ -368,13 +368,22 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// let decoded = list_read_util.decode_atoms(|atom| Some(atom.len()), "decode_as_length", false).unwrap();
     /// assert_eq!(decoded, [1, 2, 3]);
     /// ```
-    pub fn decode_atoms<T, F>(mut self, mut f: F, value_type: &str, can_be_empty: bool)
-        -> Result<Vec<T>, ReadUtilError<R::Error, R::Pos>>
-        where F: FnMut(&str) -> Option<T>
+    pub fn decode_atoms<T, F>(
+        mut self,
+        mut f: F,
+        value_type: &str,
+        can_be_empty: bool,
+    ) -> Result<Vec<T>, ReadUtilError<R::Error, R::Pos>>
+    where
+        F: FnMut(&str) -> Option<T>,
     {
         let mut result = Vec::new();
         if !can_be_empty {
-            result.push(self.next_item()?.expect_atom()?.decode(|atom| f(atom), value_type)?);
+            result.push(
+                self.next_item()?
+                    .expect_atom()?
+                    .decode(|atom| f(atom), value_type)?,
+            );
         }
         while let Some(item) = self.try_next_item()? {
             result.push(item.expect_atom()?.decode(|atom| f(atom), value_type)?);

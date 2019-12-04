@@ -6,8 +6,8 @@
 // copied, modified, or distributed except according to those terms.
 
 use crate::Node;
-use crate::Reader;
 use crate::ReadItemKind;
+use crate::Reader;
 
 /// Reads from `reader` and builds a tree of `Node`. Unlike
 /// `read_tree`, it does not return a position tree.
@@ -84,7 +84,10 @@ pub fn read_into_tree<R: Reader>(reader: &mut R) -> Result<Node, R::Error> {
                     ReadItemKind::ListEnding => panic!("unexpected list ending"),
                 }
             }
-            State::Reading { ref mut stack, ref mut current } => {
+            State::Reading {
+                ref mut stack,
+                ref mut current,
+            } => {
                 let item = reader.read()?;
                 match item.kind {
                     ReadItemKind::Atom(atom) => {
@@ -101,7 +104,8 @@ pub fn read_into_tree<R: Reader>(reader: &mut R) -> Result<Node, R::Error> {
                             let old_current = std::mem::replace(current, previous);
                             current.list_items.push(Node::List(old_current.list_items));
                         } else {
-                            let root_node = Node::List(std::mem::replace(&mut current.list_items, Vec::new()));
+                            let root_node =
+                                Node::List(std::mem::replace(&mut current.list_items, Vec::new()));
                             state = State::Finished(root_node);
                         }
                     }

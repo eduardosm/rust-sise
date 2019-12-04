@@ -9,9 +9,8 @@
 /// string (i.e. one of `:atomchar:` documented at `Node::Atom`).
 pub fn is_atom_chr(chr: u8) -> bool {
     let chars = [
-        b'!', b'#', b'$', b'%', b'&', b'*', b'+', b'-',
-        b'.', b'/', b':', b'<', b'=', b'>', b'?', b'@',
-        b'_', b'~'
+        b'!', b'#', b'$', b'%', b'&', b'*', b'+', b'-', b'.', b'/', b':', b'<', b'=', b'>', b'?',
+        b'@', b'_', b'~',
     ];
     chr.is_ascii_alphanumeric() || chars.contains(&chr)
 }

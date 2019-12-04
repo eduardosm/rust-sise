@@ -12,11 +12,11 @@
 #[cfg(test)]
 mod tests {
     mod parser;
-    mod tree_reader;
     mod read_into_tree;
-    mod writer;
     mod read_util;
+    mod tree_reader;
     mod util;
+    mod writer;
 }
 
 mod pos;
@@ -27,9 +27,9 @@ mod node;
 pub use self::node::Node;
 
 mod reader;
-pub use self::reader::Reader;
 pub use self::reader::ReadItem;
 pub use self::reader::ReadItemKind;
+pub use self::reader::Reader;
 
 mod parser;
 pub use self::parser::ParseError;
@@ -43,35 +43,35 @@ mod read_into_tree;
 pub use self::read_into_tree::read_into_tree;
 
 mod writer;
-pub use self::writer::VoidWriterOptions;
 pub use self::writer::UniversalWriteOptions;
+pub use self::writer::VoidWriterOptions;
 pub use self::writer::Writer;
 
 mod compact_string_writer;
 pub use self::compact_string_writer::CompactStringWriter;
 
 mod spaced_string_writer;
-pub use self::spaced_string_writer::SpacedStringWriterStyle;
-pub use self::spaced_string_writer::SpacedStringWriterNodeOptions;
 pub use self::spaced_string_writer::SpacedStringWriter;
+pub use self::spaced_string_writer::SpacedStringWriterNodeOptions;
+pub use self::spaced_string_writer::SpacedStringWriterStyle;
 
 mod tree_writer;
 pub use self::tree_writer::TreeWriter;
 
 mod write_from_tree;
-pub use self::write_from_tree::WriteFromTreeAtomOptions;
 pub use self::write_from_tree::write_from_tree;
+pub use self::write_from_tree::WriteFromTreeAtomOptions;
 
 mod read_util;
-pub use self::read_util::ReadUtilError;
-pub use self::read_util::NodeReadUtil;
 pub use self::read_util::AtomReadUtil;
 pub use self::read_util::ListReadUtil;
+pub use self::read_util::NodeReadUtil;
+pub use self::read_util::ReadUtilError;
 
 mod util;
+pub use self::util::check_atom;
 pub use self::util::is_atom_chr;
 pub use self::util::is_atom_string_chr;
-pub use self::util::check_atom;
 
 /// Macro to define trees of nodes with a lighter syntax.
 ///

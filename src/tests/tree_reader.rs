@@ -7,10 +7,10 @@
 
 use crate::sise_expr;
 use crate::Node;
-use crate::Reader as _;
-use crate::TreeReader;
 use crate::ReadItem;
 use crate::ReadItemKind;
+use crate::Reader as _;
+use crate::TreeReader;
 
 struct TreeReaderTest<'a> {
     tree: Node,
@@ -41,20 +41,20 @@ fn test_empty_list() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
 fn test_single_atom() {
     TreeReaderTest {
         tree: sise_expr!("atom"),
-        expected_items: &[
-            ReadItem {
-                pos: (),
-                kind: ReadItemKind::Atom("atom"),
-            },
-        ],
-    }.run();
+        expected_items: &[ReadItem {
+            pos: (),
+            kind: ReadItemKind::Atom("atom"),
+        }],
+    }
+    .run();
 }
 
 #[test]
@@ -75,7 +75,8 @@ fn test_simple_list_1() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -100,7 +101,8 @@ fn test_simple_list_2() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -125,7 +127,8 @@ fn test_nested_list_1() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -158,7 +161,8 @@ fn test_nested_list_2() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -203,7 +207,8 @@ fn test_nested_list_3() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
@@ -292,13 +297,19 @@ fn test_nested_lists() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
 
 #[test]
 fn test_mixed() {
     TreeReaderTest {
-        tree: sise_expr!(["atom-1", ["atom-2"], ["atom-3", ["atom-4"], "atom-5"], "atom-6"]),
+        tree: sise_expr!([
+            "atom-1",
+            ["atom-2"],
+            ["atom-3", ["atom-4"], "atom-5"],
+            "atom-6"
+        ]),
         expected_items: &[
             ReadItem {
                 pos: (),
@@ -357,5 +368,6 @@ fn test_mixed() {
                 kind: ReadItemKind::ListEnding,
             },
         ],
-    }.run();
+    }
+    .run();
 }
