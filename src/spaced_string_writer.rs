@@ -9,7 +9,6 @@ use std::convert::Infallible;
 
 use crate::check_atom;
 use crate::MaybeMultilineOptions;
-use crate::VoidWriterOptions;
 use crate::Writer;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -88,15 +87,15 @@ impl MaybeMultilineOptions for SpacedStringWriterNodeOptions {
 /// writer.write_atom("1", sise::SpacedStringWriterNodeOptions::default()).unwrap();
 /// writer.write_atom("2", sise::SpacedStringWriterNodeOptions::default()).unwrap();
 /// writer.write_atom("3", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
+/// writer.end_list(()).unwrap();
 /// writer.begin_list(sise::SpacedStringWriterNodeOptions::default()).unwrap();
 /// // Write the three atoms in a single line.
 /// writer.write_atom("a", sise::SpacedStringWriterNodeOptions::default()).unwrap();
 /// writer.write_atom("b", sise::SpacedStringWriterNodeOptions::default()).unwrap();
 /// writer.write_atom("c", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.finish(sise::VoidWriterOptions).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.finish(()).unwrap();
 ///
 /// let expected_result = "(\n example\n (\n  1\n  2\n  3\n )\n (\n  a\n  b\n  c\n )\n)";
 /// assert_eq!(result, expected_result);
@@ -123,15 +122,15 @@ impl MaybeMultilineOptions for SpacedStringWriterNodeOptions {
 /// writer.write_atom("1", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
 /// writer.write_atom("2", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
 /// writer.write_atom("3", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
+/// writer.end_list(()).unwrap();
 /// writer.begin_list(sise::SpacedStringWriterNodeOptions::break_line()).unwrap();
 /// // Write the three atoms in a single line.
 /// writer.write_atom("a", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
 /// writer.write_atom("b", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
 /// writer.write_atom("c", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.finish(sise::VoidWriterOptions).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.finish(()).unwrap();
 ///
 /// let expected_result = "(example\n (1 2 3)\n (a b c)\n)";
 /// assert_eq!(result, expected_result);
@@ -184,8 +183,8 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
     type Error = Infallible;
     type AtomOptions = SpacedStringWriterNodeOptions;
     type BeginListOptions = SpacedStringWriterNodeOptions;
-    type EndListOptions = VoidWriterOptions;
-    type FinishOptions = VoidWriterOptions;
+    type EndListOptions = ();
+    type FinishOptions = ();
 
     fn write_atom(
         &mut self,
@@ -263,7 +262,7 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
         Ok(())
     }
 
-    fn end_list(&mut self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
+    fn end_list(&mut self, _opts: ()) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => panic!("no list to end"),
             State::Writing(ref mut state) => {
@@ -288,7 +287,7 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
         Ok(())
     }
 
-    fn finish(self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
+    fn finish(self, _opts: ()) -> Result<(), Infallible> {
         match self.state {
             State::Finished => Ok(()),
             _ => panic!("writing not finished yet"),

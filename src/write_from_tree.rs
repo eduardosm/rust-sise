@@ -40,7 +40,7 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
 ///
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(sise::VoidWriterOptions).unwrap();
+/// writer.finish(()).unwrap();
 ///
 /// let expected_result = "(example (1 2 3) (a b c))";
 /// assert_eq!(result, expected_result);
@@ -64,7 +64,7 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// let mut writer = sise::SpacedStringWriter::new(style, &mut result);
 ///
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(sise::VoidWriterOptions).unwrap();
+/// writer.finish(()).unwrap();
 ///
 /// let expected_result = "(example\n (1\n  2\n  3\n )\n (a\n  b\n  c\n )\n)";
 /// assert_eq!(result, expected_result);
@@ -83,16 +83,16 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
 ///
 /// // Write the head
-/// writer.begin_list(sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("head", sise::VoidWriterOptions).unwrap();
+/// writer.begin_list(()).unwrap();
+/// writer.write_atom("head", ()).unwrap();
 ///
 /// // Write the subtree
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
 ///
 /// // Write the tail
-/// writer.write_atom("tail", sise::VoidWriterOptions).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.finish(sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("tail", ()).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.finish(()).unwrap();
 ///
 /// let expected_result = "(head (1 2 3) tail)";
 /// assert_eq!(result, expected_result);

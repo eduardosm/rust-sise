@@ -9,7 +9,6 @@ use std::convert::Infallible;
 
 use crate::check_atom;
 use crate::Node;
-use crate::VoidWriterOptions;
 use crate::Writer;
 
 /// A writer that creates a tree of `Node`.
@@ -22,22 +21,20 @@ use crate::Writer;
 ///
 /// let mut writer = sise::TreeWriter::new();
 ///
-/// writer.begin_list(sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("example", sise::VoidWriterOptions).unwrap();
-/// writer.begin_list(sise::VoidWriterOptions).unwrap();
-/// // Write the three atoms in a single line.
-/// writer.write_atom("1", sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("2", sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("3", sise::VoidWriterOptions).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.begin_list(sise::VoidWriterOptions).unwrap();
-/// // Write the three atoms in a single line.
-/// writer.write_atom("a", sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("b", sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("c", sise::VoidWriterOptions).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// writer.end_list(sise::VoidWriterOptions).unwrap();
-/// let result = writer.finish(sise::VoidWriterOptions).unwrap();
+/// writer.begin_list(()).unwrap();
+/// writer.write_atom("example", ()).unwrap();
+/// writer.begin_list(()).unwrap();
+/// writer.write_atom("1", ()).unwrap();
+/// writer.write_atom("2", ()).unwrap();
+/// writer.write_atom("3", ()).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.begin_list(()).unwrap();
+/// writer.write_atom("a", ()).unwrap();
+/// writer.write_atom("b", ()).unwrap();
+/// writer.write_atom("c", ()).unwrap();
+/// writer.end_list(()).unwrap();
+/// writer.end_list(()).unwrap();
+/// let result = writer.finish(()).unwrap();
 ///
 /// let expected_result = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 /// assert_eq!(result, expected_result);
@@ -75,12 +72,12 @@ impl Writer for TreeWriter {
     type Result = Node;
     // To be replaced with `!` when stable.
     type Error = Infallible;
-    type AtomOptions = VoidWriterOptions;
-    type BeginListOptions = VoidWriterOptions;
-    type EndListOptions = VoidWriterOptions;
-    type FinishOptions = VoidWriterOptions;
+    type AtomOptions = ();
+    type BeginListOptions = ();
+    type EndListOptions = ();
+    type FinishOptions = ();
 
-    fn write_atom(&mut self, atom: &str, _opts: VoidWriterOptions) -> Result<(), Infallible> {
+    fn write_atom(&mut self, atom: &str, _opts: ()) -> Result<(), Infallible> {
         assert!(check_atom(atom), "invalid atom {:?}", atom);
 
         match self.state {
@@ -99,7 +96,7 @@ impl Writer for TreeWriter {
         }
     }
 
-    fn begin_list(&mut self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
+    fn begin_list(&mut self, _opts: ()) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => {
                 self.state = State::Writing {
@@ -119,7 +116,7 @@ impl Writer for TreeWriter {
         }
     }
 
-    fn end_list(&mut self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
+    fn end_list(&mut self, _opts: ()) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => panic!("no list to end"),
             State::Writing {
@@ -139,7 +136,7 @@ impl Writer for TreeWriter {
         }
     }
 
-    fn finish(self, _opts: VoidWriterOptions) -> Result<Node, Infallible> {
+    fn finish(self, _opts: ()) -> Result<Node, Infallible> {
         match self.state {
             State::Finished(node) => Ok(node),
             _ => panic!("writing already finished"),

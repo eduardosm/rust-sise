@@ -51,7 +51,7 @@ fn main() {
             let mut reserialized = String::new();
             let mut writer = sise::CompactStringWriter::new(&mut reserialized);
             sise::write_from_tree(&mut writer, &parsed).unwrap();
-            writer.finish(sise::VoidWriterOptions).unwrap();
+            writer.finish(()).unwrap();
             println!("{}", reserialized);
         }
         SerializeStyle::Spaced => {
@@ -62,7 +62,7 @@ fn main() {
             let mut reserialized = String::new();
             let mut writer = sise::SpacedStringWriter::new(spaced_style, &mut reserialized);
             sise::write_from_tree(&mut writer, &parsed).unwrap();
-            writer.finish(sise::VoidWriterOptions).unwrap();
+            writer.finish(()).unwrap();
             println!("{}", reserialized);
         }
     }

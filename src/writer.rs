@@ -5,25 +5,20 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-/// Type to be used as `AtomOpts`, `BeginListOpts`, `EndListOpts`
-/// or `FinishOpts` in `Writer` when there are no options.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
-pub struct VoidWriterOptions;
-
-impl MaybeMultilineOptions for VoidWriterOptions {
+impl MaybeMultilineOptions for () {
     #[inline]
     fn break_line() -> Self {
-        VoidWriterOptions
+        ()
     }
 
     #[inline]
     fn break_line_at(_len: usize) -> Self {
-        VoidWriterOptions
+        ()
     }
 
     #[inline]
     fn no_break_line() -> Self {
-        VoidWriterOptions
+        ()
     }
 }
 
