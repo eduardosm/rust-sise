@@ -33,20 +33,20 @@ impl<'a> StringWriterTest<'a> {
         let mut result = String::new();
         let mut writer = CompactStringWriter::new(&mut result);
         write_from_tree(&mut writer, &self.root_node).unwrap();
-        writer.finish(&VoidWriterOptions).unwrap();
+        writer.finish(VoidWriterOptions).unwrap();
         assert_eq!(result, self.expected_compact);
 
         // spaced
         let mut result = String::new();
         let mut writer = SpacedStringWriter::new(SPACED_STYLE, &mut result);
         write_from_tree(&mut writer, &self.root_node).unwrap();
-        writer.finish(&VoidWriterOptions).unwrap();
+        writer.finish(VoidWriterOptions).unwrap();
         assert_eq!(result, self.expected_spaced);
 
         // tree
         let mut writer = TreeWriter::new();
         write_from_tree(&mut writer, &self.root_node).unwrap();
-        let result = writer.finish(&VoidWriterOptions).unwrap();
+        let result = writer.finish(VoidWriterOptions).unwrap();
         assert_eq!(result, self.root_node);
     }
 }
@@ -149,20 +149,20 @@ fn test_spaced_with_keep_line_1() {
     };
     let break_line_opts = SpacedStringWriterNodeOptions { break_line_len: 0 };
 
-    writer.begin_list(&no_break_line_opts).unwrap();
-    writer.write_atom("atom", &no_break_line_opts).unwrap();
-    writer.begin_list(&break_line_opts).unwrap();
-    writer.write_atom("1", &no_break_line_opts).unwrap();
-    writer.write_atom("2", &no_break_line_opts).unwrap();
-    writer.write_atom("3", &no_break_line_opts).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.begin_list(&break_line_opts).unwrap();
-    writer.write_atom("a", &no_break_line_opts).unwrap();
-    writer.write_atom("b", &no_break_line_opts).unwrap();
-    writer.write_atom("c", &no_break_line_opts).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.finish(&VoidWriterOptions).unwrap();
+    writer.begin_list(no_break_line_opts).unwrap();
+    writer.write_atom("atom", no_break_line_opts).unwrap();
+    writer.begin_list(break_line_opts).unwrap();
+    writer.write_atom("1", no_break_line_opts).unwrap();
+    writer.write_atom("2", no_break_line_opts).unwrap();
+    writer.write_atom("3", no_break_line_opts).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.begin_list(break_line_opts).unwrap();
+    writer.write_atom("a", no_break_line_opts).unwrap();
+    writer.write_atom("b", no_break_line_opts).unwrap();
+    writer.write_atom("c", no_break_line_opts).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.finish(VoidWriterOptions).unwrap();
 
     let expected = "(atom\n\t(1 2 3)\n\t(a b c)\n)";
     assert_eq!(result, expected);
@@ -180,20 +180,20 @@ fn test_spaced_with_keep_line_2() {
     };
     let break_line_opts = SpacedStringWriterNodeOptions { break_line_len: 0 };
 
-    writer.begin_list(&no_break_line_opts).unwrap();
-    writer.write_atom("atom", &no_break_line_opts).unwrap();
-    writer.begin_list(&break_line_opts).unwrap();
-    writer.write_atom("1", &no_break_line_opts).unwrap();
-    writer.write_atom("2", &no_break_line_opts).unwrap();
-    writer.write_atom("3", &no_break_line_opts).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.begin_list(&no_break_line_opts).unwrap();
-    writer.write_atom("a", &no_break_line_opts).unwrap();
-    writer.write_atom("b", &no_break_line_opts).unwrap();
-    writer.write_atom("c", &no_break_line_opts).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.finish(&VoidWriterOptions).unwrap();
+    writer.begin_list(no_break_line_opts).unwrap();
+    writer.write_atom("atom", no_break_line_opts).unwrap();
+    writer.begin_list(break_line_opts).unwrap();
+    writer.write_atom("1", no_break_line_opts).unwrap();
+    writer.write_atom("2", no_break_line_opts).unwrap();
+    writer.write_atom("3", no_break_line_opts).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.begin_list(no_break_line_opts).unwrap();
+    writer.write_atom("a", no_break_line_opts).unwrap();
+    writer.write_atom("b", no_break_line_opts).unwrap();
+    writer.write_atom("c", no_break_line_opts).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.finish(VoidWriterOptions).unwrap();
 
     let expected = "(atom\n\t(1 2 3) (a b c)\n)";
     assert_eq!(result, expected);
@@ -211,20 +211,20 @@ fn test_spaced_with_keep_line_3() {
     };
     let break_line_opts = SpacedStringWriterNodeOptions { break_line_len: 0 };
 
-    writer.begin_list(&no_break_line_opts).unwrap();
-    writer.write_atom("atom", &no_break_line_opts).unwrap();
-    writer.begin_list(&break_line_opts).unwrap();
-    writer.write_atom("1", &no_break_line_opts).unwrap();
-    writer.write_atom("2", &no_break_line_opts).unwrap();
-    writer.write_atom("3", &break_line_opts).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.begin_list(&break_line_opts).unwrap();
-    writer.write_atom("a", &no_break_line_opts).unwrap();
-    writer.write_atom("b", &no_break_line_opts).unwrap();
-    writer.write_atom("c", &break_line_opts).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.end_list(&VoidWriterOptions).unwrap();
-    writer.finish(&VoidWriterOptions).unwrap();
+    writer.begin_list(no_break_line_opts).unwrap();
+    writer.write_atom("atom", no_break_line_opts).unwrap();
+    writer.begin_list(break_line_opts).unwrap();
+    writer.write_atom("1", no_break_line_opts).unwrap();
+    writer.write_atom("2", no_break_line_opts).unwrap();
+    writer.write_atom("3", break_line_opts).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.begin_list(break_line_opts).unwrap();
+    writer.write_atom("a", no_break_line_opts).unwrap();
+    writer.write_atom("b", no_break_line_opts).unwrap();
+    writer.write_atom("c", break_line_opts).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.end_list(VoidWriterOptions).unwrap();
+    writer.finish(VoidWriterOptions).unwrap();
 
     let expected = "(atom\n\t(1 2\n\t\t3\n\t)\n\t(a b\n\t\tc\n\t)\n)";
     assert_eq!(result, expected);

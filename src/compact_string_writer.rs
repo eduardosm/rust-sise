@@ -21,22 +21,22 @@ use crate::Writer;
 /// let mut result = String::new();
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
 ///
-/// writer.begin_list(&sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("example", &sise::VoidWriterOptions).unwrap();
-/// writer.begin_list(&sise::VoidWriterOptions).unwrap();
+/// writer.begin_list(sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("example", sise::VoidWriterOptions).unwrap();
+/// writer.begin_list(sise::VoidWriterOptions).unwrap();
 /// // Write the three atoms in a single line.
-/// writer.write_atom("1", &sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("2", &sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("3", &sise::VoidWriterOptions).unwrap();
-/// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.begin_list(&sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("1", sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("2", sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("3", sise::VoidWriterOptions).unwrap();
+/// writer.end_list(sise::VoidWriterOptions).unwrap();
+/// writer.begin_list(sise::VoidWriterOptions).unwrap();
 /// // Write the three atoms in a single line.
-/// writer.write_atom("a", &sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("b", &sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("c", &sise::VoidWriterOptions).unwrap();
-/// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.finish(&sise::VoidWriterOptions);
+/// writer.write_atom("a", sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("b", sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("c", sise::VoidWriterOptions).unwrap();
+/// writer.end_list(sise::VoidWriterOptions).unwrap();
+/// writer.end_list(sise::VoidWriterOptions).unwrap();
+/// writer.finish(sise::VoidWriterOptions);
 ///
 /// let expected_result = "(example (1 2 3) (a b c))";
 /// assert_eq!(result, expected_result);
@@ -71,7 +71,7 @@ impl<'a> Writer for CompactStringWriter<'a> {
     type EndListOptions = VoidWriterOptions;
     type FinishOptions = VoidWriterOptions;
 
-    fn write_atom(&mut self, atom: &str, _opts: &VoidWriterOptions) -> Result<(), Infallible> {
+    fn write_atom(&mut self, atom: &str, _opts: VoidWriterOptions) -> Result<(), Infallible> {
         assert!(check_atom(atom), "invalid atom {:?}", atom);
 
         match self.state {
@@ -95,7 +95,7 @@ impl<'a> Writer for CompactStringWriter<'a> {
         }
     }
 
-    fn begin_list(&mut self, _opts: &VoidWriterOptions) -> Result<(), Infallible> {
+    fn begin_list(&mut self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => {
                 self.dst.push('(');
@@ -122,7 +122,7 @@ impl<'a> Writer for CompactStringWriter<'a> {
         }
     }
 
-    fn end_list(&mut self, _opts: &Self::EndListOptions) -> Result<(), Infallible> {
+    fn end_list(&mut self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => panic!("no list to end"),
             State::Writing {
@@ -142,7 +142,7 @@ impl<'a> Writer for CompactStringWriter<'a> {
         }
     }
 
-    fn finish(self, _opts: &Self::FinishOptions) -> Result<(), Infallible> {
+    fn finish(self, _opts: VoidWriterOptions) -> Result<(), Infallible> {
         match self.state {
             State::Finished => Ok(()),
             _ => panic!("writing not finished yet"),

@@ -43,7 +43,7 @@ where
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
 ///
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(&sise::VoidWriterOptions).unwrap();
+/// writer.finish(sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(example (1 2 3) (a b c))";
 /// assert_eq!(result, expected_result);
@@ -67,7 +67,7 @@ where
 /// let mut writer = sise::SpacedStringWriter::new(style, &mut result);
 ///
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(&sise::VoidWriterOptions).unwrap();
+/// writer.finish(sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(example\n (1\n  2\n  3\n )\n (a\n  b\n  c\n )\n)";
 /// assert_eq!(result, expected_result);
@@ -86,16 +86,16 @@ where
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
 ///
 /// // Write the head
-/// writer.begin_list(&sise::VoidWriterOptions).unwrap();
-/// writer.write_atom("head", &sise::VoidWriterOptions).unwrap();
+/// writer.begin_list(sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("head", sise::VoidWriterOptions).unwrap();
 ///
 /// // Write the subtree
 /// sise::write_from_tree(&mut writer, &tree).unwrap();
 ///
 /// // Write the tail
-/// writer.write_atom("tail", &sise::VoidWriterOptions).unwrap();
-/// writer.end_list(&sise::VoidWriterOptions).unwrap();
-/// writer.finish(&sise::VoidWriterOptions).unwrap();
+/// writer.write_atom("tail", sise::VoidWriterOptions).unwrap();
+/// writer.end_list(sise::VoidWriterOptions).unwrap();
+/// writer.finish(sise::VoidWriterOptions).unwrap();
 ///
 /// let expected_result = "(head (1 2 3) tail)";
 /// assert_eq!(result, expected_result);
@@ -106,12 +106,6 @@ where
     W::BeginListOptions: Default,
     W::EndListOptions: Default,
 {
-    let single_atom_options = W::AtomOptions::default();
-    let list_beginning_atom_options = W::AtomOptions::list_beginning();
-    let non_list_beginning_atom_options = W::AtomOptions::non_list_beginning();
-    let begin_list_options = W::BeginListOptions::default();
-    let end_list_options = W::EndListOptions::default();
-
     enum State<'a> {
         Beginning(&'a Node),
         Writing {
@@ -128,11 +122,11 @@ where
         match state {
             State::Beginning(node) => match node {
                 Node::Atom(atom) => {
-                    writer.write_atom(atom, &single_atom_options)?;
+                    writer.write_atom(atom, W::AtomOptions::default())?;
                     state = State::Finished;
                 }
                 Node::List(list) => {
-                    writer.begin_list(&begin_list_options)?;
+                    writer.begin_list(W::BeginListOptions::default())?;
                     state = State::Writing {
                         stack: Vec::new(),
                         current_list: list.iter(),
@@ -149,20 +143,20 @@ where
                     match node {
                         Node::Atom(atom) => {
                             if *list_beginning {
-                                writer.write_atom(atom, &list_beginning_atom_options)?;
+                                writer.write_atom(atom, W::AtomOptions::list_beginning())?;
                             } else {
-                                writer.write_atom(atom, &non_list_beginning_atom_options)?;
+                                writer.write_atom(atom, W::AtomOptions::non_list_beginning())?;
                             }
                             *list_beginning = false;
                         }
                         Node::List(list) => {
-                            writer.begin_list(&begin_list_options)?;
+                            writer.begin_list(W::BeginListOptions::default())?;
                             stack.push(std::mem::replace(current_list, list.iter()));
                             *list_beginning = true;
                         }
                     }
                 } else {
-                    writer.end_list(&end_list_options)?;
+                    writer.end_list(W::EndListOptions::default())?;
                     if let Some(parent_list) = stack.pop() {
                         *current_list = parent_list;
                         *list_beginning = false;

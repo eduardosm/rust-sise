@@ -35,22 +35,22 @@ impl From<UniversalWriteOptions> for VoidWriterOptions {
 ///           W::EndListOptions: Default,
 ///           W::FinishOptions: Default,
 /// {
-///     writer.begin_list(&W::BeginListOptions::default())?;
-///     writer.write_atom("example", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.begin_list(&sise::UniversalWriteOptions::break_line().into())?;
+///     writer.begin_list(W::BeginListOptions::default())?;
+///     writer.write_atom("example", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.begin_list(sise::UniversalWriteOptions::break_line().into())?;
 ///     // Write the three atoms in a single line.
-///     writer.write_atom("1", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("2", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("3", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.end_list(&W::EndListOptions::default())?;
-///     writer.begin_list(&sise::UniversalWriteOptions::break_line().into())?;
+///     writer.write_atom("1", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.write_atom("2", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.write_atom("3", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.end_list(W::EndListOptions::default())?;
+///     writer.begin_list(sise::UniversalWriteOptions::break_line().into())?;
 ///     // Write the three atoms in a single line.
-///     writer.write_atom("a", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("b", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("c", &sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.end_list(&W::EndListOptions::default())?;
-///     writer.end_list(&W::EndListOptions::default())?;
-///     writer.finish(&W::FinishOptions::default())?;
+///     writer.write_atom("a", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.write_atom("b", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.write_atom("c", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.end_list(W::EndListOptions::default())?;
+///     writer.end_list(W::EndListOptions::default())?;
+///     writer.finish(W::FinishOptions::default())?;
 ///     Ok(())
 /// }
 ///
@@ -125,15 +125,15 @@ pub trait Writer {
     type FinishOptions;
 
     /// Writes an atom.
-    fn write_atom(&mut self, atom: &str, opts: &Self::AtomOptions) -> Result<(), Self::Error>;
+    fn write_atom(&mut self, atom: &str, opts: Self::AtomOptions) -> Result<(), Self::Error>;
 
     /// Begins a list.
-    fn begin_list(&mut self, opts: &Self::BeginListOptions) -> Result<(), Self::Error>;
+    fn begin_list(&mut self, opts: Self::BeginListOptions) -> Result<(), Self::Error>;
 
     /// Ends a list.
-    fn end_list(&mut self, opts: &Self::EndListOptions) -> Result<(), Self::Error>;
+    fn end_list(&mut self, opts: Self::EndListOptions) -> Result<(), Self::Error>;
 
     /// Consumes the writer and returns the result. It must be called
     /// only after the root node has been completely written.
-    fn finish(self, opts: &Self::FinishOptions) -> Result<Self::Result, Self::Error>;
+    fn finish(self, opts: Self::FinishOptions) -> Result<Self::Result, Self::Error>;
 }
