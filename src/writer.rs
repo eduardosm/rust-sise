@@ -10,44 +10,55 @@
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
 pub struct VoidWriterOptions;
 
-impl From<UniversalWriteOptions> for VoidWriterOptions {
+impl MaybeMultilineOptions for VoidWriterOptions {
     #[inline]
-    fn from(_: UniversalWriteOptions) -> Self {
+    fn break_line() -> Self {
+        VoidWriterOptions
+    }
+
+    #[inline]
+    fn break_line_at(_len: usize) -> Self {
+        VoidWriterOptions
+    }
+
+    #[inline]
+    fn no_break_line() -> Self {
         VoidWriterOptions
     }
 }
 
-/// Type to represent write options in a non-writer-specific
-/// way. The used for `Writer::AtomOptions`, `Writer::BeginListOptions`,
+/// Trait to represent multi-line write options, that may
+/// be honored or ignored depending on the writer. Types used for
+/// `Writer::AtomOptions`, `Writer::BeginListOptions`,
 /// `Writer::EndListOptions` and `Writer::FinishOptions` shall
-/// implement `From<UniversalWriteOptions>` and ignore unsupported
-/// fields.
+/// implement this trait and ignore unsupported options.
 ///
 /// # Example
 ///
 /// ```
+/// use sise::MaybeMultilineOptions as _;
+///
 /// // Function that writes some hardcoded nodes into `writer`.
 /// fn write<W: sise::Writer>(mut writer: W) -> Result<(), W::Error>
-///     where W::AtomOptions: Default,
-///           sise::UniversalWriteOptions: Into<W::AtomOptions>,
-///           W::BeginListOptions: Default,
-///           sise::UniversalWriteOptions: Into<W::BeginListOptions>,
-///           W::EndListOptions: Default,
-///           W::FinishOptions: Default,
+/// where
+///     W::AtomOptions: sise::MaybeMultilineOptions,
+///     W::BeginListOptions: sise::MaybeMultilineOptions,
+///     W::EndListOptions: Default,
+///     W::FinishOptions: Default,
 /// {
 ///     writer.begin_list(W::BeginListOptions::default())?;
-///     writer.write_atom("example", sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.begin_list(sise::UniversalWriteOptions::break_line().into())?;
+///     writer.write_atom("example", W::AtomOptions::no_break_line())?;
+///     writer.begin_list(W::BeginListOptions::break_line())?;
 ///     // Write the three atoms in a single line.
-///     writer.write_atom("1", sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("2", sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("3", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.write_atom("1", W::AtomOptions::no_break_line())?;
+///     writer.write_atom("2", W::AtomOptions::no_break_line())?;
+///     writer.write_atom("3", W::AtomOptions::no_break_line())?;
 ///     writer.end_list(W::EndListOptions::default())?;
-///     writer.begin_list(sise::UniversalWriteOptions::break_line().into())?;
+///     writer.begin_list(W::BeginListOptions::break_line())?;
 ///     // Write the three atoms in a single line.
-///     writer.write_atom("a", sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("b", sise::UniversalWriteOptions::no_break_line().into())?;
-///     writer.write_atom("c", sise::UniversalWriteOptions::no_break_line().into())?;
+///     writer.write_atom("a", W::AtomOptions::no_break_line())?;
+///     writer.write_atom("b", W::AtomOptions::no_break_line())?;
+///     writer.write_atom("c", W::AtomOptions::no_break_line())?;
 ///     writer.end_list(W::EndListOptions::default())?;
 ///     writer.end_list(W::EndListOptions::default())?;
 ///     writer.finish(W::FinishOptions::default())?;
@@ -74,34 +85,16 @@ impl From<UniversalWriteOptions> for VoidWriterOptions {
 /// let expected_result = "(example (1 2 3) (a b c))";
 /// assert_eq!(result, expected_result);
 /// ```
-#[derive(Clone, Debug, Default)]
-pub struct UniversalWriteOptions {
-    /// The length after which a line shall be broken.
-    /// Set to `None` for default.
-    pub break_line_len: Option<usize>,
-}
+pub trait MaybeMultilineOptions: Default {
+    /// If supported, the node shall be written in a new line.
+    fn break_line() -> Self;
 
-impl UniversalWriteOptions {
-    #[inline]
-    pub const fn break_line() -> Self {
-        Self {
-            break_line_len: Some(0),
-        }
-    }
+    /// If supported, the node shall be written in a new line if
+    /// the current line length exceeds `len`.
+    fn break_line_at(len: usize) -> Self;
 
-    #[inline]
-    pub const fn break_line_at(len: usize) -> Self {
-        Self {
-            break_line_len: Some(len),
-        }
-    }
-
-    #[inline]
-    pub const fn no_break_line() -> Self {
-        Self {
-            break_line_len: Some(usize::max_value()),
-        }
-    }
+    /// If supported, the node shall be written in the current line.
+    fn no_break_line() -> Self;
 }
 
 /// A trait to allow writing SISE nodes into a generic destination.

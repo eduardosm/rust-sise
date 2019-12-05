@@ -8,7 +8,7 @@
 use std::convert::Infallible;
 
 use crate::check_atom;
-use crate::UniversalWriteOptions;
+use crate::MaybeMultilineOptions;
 use crate::VoidWriterOptions;
 use crate::Writer;
 
@@ -45,11 +45,23 @@ impl Default for SpacedStringWriterNodeOptions {
     }
 }
 
-impl From<UniversalWriteOptions> for SpacedStringWriterNodeOptions {
+impl MaybeMultilineOptions for SpacedStringWriterNodeOptions {
     #[inline]
-    fn from(opts: UniversalWriteOptions) -> Self {
+    fn break_line() -> Self {
+        Self { break_line_len: 0 }
+    }
+
+    #[inline]
+    fn break_line_at(len: usize) -> Self {
         Self {
-            break_line_len: opts.break_line_len.unwrap_or(0),
+            break_line_len: len,
+        }
+    }
+
+    #[inline]
+    fn no_break_line() -> Self {
+        Self {
+            break_line_len: usize::max_value(),
         }
     }
 }

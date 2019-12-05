@@ -5,8 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use crate::MaybeMultilineOptions;
 use crate::Node;
-use crate::UniversalWriteOptions;
 use crate::Writer;
 
 pub trait WriteFromTreeAtomOptions {
@@ -14,18 +14,15 @@ pub trait WriteFromTreeAtomOptions {
     fn non_list_beginning() -> Self;
 }
 
-impl<T> WriteFromTreeAtomOptions for T
-where
-    UniversalWriteOptions: Into<T>,
-{
+impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
     #[inline]
     fn list_beginning() -> Self {
-        UniversalWriteOptions::no_break_line().into()
+        Self::no_break_line()
     }
 
     #[inline]
     fn non_list_beginning() -> Self {
-        UniversalWriteOptions::break_line().into()
+        Self::break_line()
     }
 }
 
