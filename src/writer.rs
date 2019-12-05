@@ -26,7 +26,7 @@ impl From<UniversalWriteOptions> for VoidWriterOptions {
 /// # Example
 ///
 /// ```
-/// // Function writes that some hardcoded nodes into `writer`.
+/// // Function that writes some hardcoded nodes into `writer`.
 /// fn write<W: sise::Writer>(mut writer: W) -> Result<(), W::Error>
 ///     where W::AtomOptions: Default,
 ///           sise::UniversalWriteOptions: Into<W::AtomOptions>,
