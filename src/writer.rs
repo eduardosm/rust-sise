@@ -7,19 +7,13 @@
 
 impl MaybeMultilineOptions for () {
     #[inline]
-    fn break_line() -> Self {
-        ()
-    }
+    fn break_line() -> Self {}
 
     #[inline]
-    fn break_line_at(_len: usize) -> Self {
-        ()
-    }
+    fn break_line_at(_len: usize) -> Self {}
 
     #[inline]
-    fn no_break_line() -> Self {
-        ()
-    }
+    fn no_break_line() -> Self {}
 }
 
 /// Trait to represent multi-line write options, that may
