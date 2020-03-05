@@ -29,21 +29,6 @@ pub enum Node {
 }
 
 impl Node {
-    /// Bitcasts the reference to `self` to `usize`. Useful
-    /// to insert it in a `HashSet<usize>`, which is used
-    /// by `sise::SpacedSerializeStyle`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let node = sise::Node::Atom(String::from("example"));
-    /// assert_eq!(node.ref_as_usize(), &node as *const sise::Node as usize);
-    /// ```
-    #[inline]
-    pub fn ref_as_usize(&self) -> usize {
-        self as *const Self as usize
-    }
-
     /// Return whether the node is an `Atom`.
     #[inline]
     pub fn is_atom(&self) -> bool {
