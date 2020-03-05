@@ -15,7 +15,7 @@ before_script:
   - rustup component add rustfmt
 
 script:
-  cargo build --verbose --all-targets -- -D warnings
-  cargo clippy --verbose --all-targets -- -D warnings
-  cargo test --verbose
-  cargo fmt -- --check
+  - cargo build --verbose --all-targets -- -D warnings
+  - cargo clippy --verbose --all-targets -- -D warnings
+  - cargo test --verbose
+  - cargo fmt -- --check
