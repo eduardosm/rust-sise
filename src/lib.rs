@@ -7,7 +7,7 @@
 
 //! SISE (Simple S-expression) is a file format based on S-expressions.
 
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, unreachable_pub)]
 
 #[cfg(test)]
 mod tests {

@@ -7,7 +7,7 @@
 
 #[allow(clippy::cognitive_complexity)]
 #[test]
-pub fn test_check_atom() {
+fn test_check_atom() {
     assert!(crate::check_atom("1234"));
     assert!(crate::check_atom("AbCd"));
     assert!(crate::check_atom("AbCd-1234"));
