@@ -92,20 +92,7 @@ impl std::fmt::Display for ParseError {
     }
 }
 
-impl std::error::Error for ParseError {
-    fn description(&self) -> &str {
-        match *self {
-            ParseError::IllegalChr { .. } => "illegal character",
-            ParseError::IllegalChrInString { .. } => "illegal character in string",
-            ParseError::IllegalChrInComment { .. } => "illegal character in comment",
-            ParseError::UnfinishedString { .. } => "unfinished string",
-            ParseError::UnexpectedToken { .. } => "unexpected token",
-            ParseError::ExpectedEof { .. } => "expected end-of-file",
-            ParseError::LineTooLong { .. } => "line too long",
-            ParseError::TooManyLines => "too many lines",
-        }
-    }
-}
+impl std::error::Error for ParseError {}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenKind {

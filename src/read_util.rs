@@ -27,19 +27,6 @@ impl<E, P> From<E> for ReadUtilError<E, P> {
     }
 }
 
-impl<E: std::error::Error, P> ReadUtilError<E, P> {
-    fn common_description(&self) -> &str {
-        match self {
-            ReadUtilError::ReaderError(e) => e.description(),
-            ReadUtilError::ExpectedAtom { .. } => "expected atom",
-            ReadUtilError::ExpectedListBeginning { .. } => "expected list beginning",
-            ReadUtilError::ExpectedListEnding { .. } => "expected list ending",
-            ReadUtilError::ExpectedNodeInList { .. } => "expected node in list",
-            ReadUtilError::InvalidValue { .. } => "invalid value",
-        }
-    }
-}
-
 impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -94,17 +81,9 @@ impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, Pos> {
     }
 }
 
-impl<E: std::error::Error> std::error::Error for ReadUtilError<E, ()> {
-    fn description(&self) -> &str {
-        self.common_description()
-    }
-}
+impl<E: std::error::Error> std::error::Error for ReadUtilError<E, ()> {}
 
-impl<E: std::error::Error> std::error::Error for ReadUtilError<E, Pos> {
-    fn description(&self) -> &str {
-        self.common_description()
-    }
-}
+impl<E: std::error::Error> std::error::Error for ReadUtilError<E, Pos> {}
 
 /// Utility to read nodes from a `Reader`.
 pub enum NodeReadUtil<'a, R: Reader> {
