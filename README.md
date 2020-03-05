@@ -1,5 +1,9 @@
 # SISE
 
+[![Crate](https://img.shields.io/crates/v/sise.svg)](https://crates.io/crates/sise)
+[![API](https://docs.rs/sise/badge.svg)](https://docs.rs/sise)
+[![License](https://img.shields.io/crates/l/sise.svg)](https://github.com/eduardosm/sise#license)
+
 SISE (Simple S-expression) is a file format based on S-expressions.
 
 # License
