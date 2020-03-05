@@ -9,6 +9,6 @@ keywords = ["s-expression", "sexp", "sexpr"]
 license = "MIT OR Apache-2.0"
 
 [badges]
-travis-ci = { repository = "eduardosm/sise" }
+travis-ci = { repository = "eduardosm/rust-sise" }
 
 [dependencies]
