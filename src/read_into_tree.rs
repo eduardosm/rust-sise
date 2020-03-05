@@ -9,8 +9,7 @@ use crate::Node;
 use crate::ReadItemKind;
 use crate::Reader;
 
-/// Reads from `reader` and builds a tree of `Node`. Unlike
-/// `read_tree`, it does not return a position tree.
+/// Reads from `reader` and builds a tree of `Node`.
 ///
 /// # Example
 ///
