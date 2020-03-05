@@ -11,7 +11,7 @@ pub trait Reader {
     /// The error type that may be produced while reading.
     type Error;
 
-    /// A type that can be either a borrowed as a `str` or converted
+    /// A type that can be either borrowed as a `str` or converted
     /// into an owned `String`.
     type String: Into<String> + AsRef<str>;
 
@@ -23,7 +23,7 @@ pub trait Reader {
     /// first `ListBeginning` has been read).
     fn read(&mut self) -> Result<ReadItem<Self::String, Self::Pos>, Self::Error>;
 
-    /// Finished the reader, consuming it. It must be called only after
+    /// Finishes the reader, consuming it. It must be called only after
     /// the root node has been completely read. It may return an error
     /// if an error is encountered after the root node (e.g., trailing
     /// tokens at the end of the file).
