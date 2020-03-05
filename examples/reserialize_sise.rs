@@ -5,6 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+#![deny(rust_2018_idioms, unreachable_pub)]
+
 use sise::Reader as _;
 use sise::Writer as _;
 
