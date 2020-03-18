@@ -11,7 +11,16 @@
 //!
 //! The minimum Rust version required by this crate is 1.36.
 
-#![deny(rust_2018_idioms, unreachable_pub)]
+#![deny(
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unsafe_code,
+    unused_import_braces,
+    unused_must_use,
+    unused_qualifications
+)]
 
 #[cfg(test)]
 mod tests {
