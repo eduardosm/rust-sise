@@ -35,7 +35,6 @@ mod tests {
 mod compact_string_writer;
 mod node;
 mod parser;
-mod pos;
 mod read_into_tree;
 mod read_util;
 mod reader;
@@ -48,8 +47,7 @@ mod writer;
 
 pub use compact_string_writer::CompactStringWriter;
 pub use node::Node;
-pub use parser::{ParseError, Parser, TokenKind};
-pub use pos::{Pos, ReprPosValue};
+pub use parser::{BytePos, ParseError, Parser, TokenKind};
 pub use read_into_tree::read_into_tree;
 pub use read_util::{AtomReadUtil, ListReadUtil, NodeReadUtil, ReadUtilError};
 pub use reader::{ReadItem, ReadItemKind, Reader};

@@ -5,9 +5,9 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use crate::BytePos;
 use crate::NodeReadUtil;
 use crate::Parser;
-use crate::Pos;
 use crate::ReadUtilError;
 
 #[test]
@@ -20,9 +20,7 @@ fn test_node_as_atom() {
     let src_data = b"()";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
-    let expected_err = ReadUtilError::ExpectedAtom {
-        pos: Pos::new(0, 0),
-    };
+    let expected_err = ReadUtilError::ExpectedAtom { pos: BytePos(0) };
     assert_eq!(node_read_util.expect_atom().err().unwrap(), expected_err);
 }
 
@@ -36,9 +34,7 @@ fn test_node_as_list() {
     let src_data = b"test";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
-    let expected_err = ReadUtilError::ExpectedListBeginning {
-        pos: Pos::new(0, 0),
-    };
+    let expected_err = ReadUtilError::ExpectedListBeginning { pos: BytePos(0) };
     assert_eq!(node_read_util.expect_list().err().unwrap(), expected_err);
 }
 
@@ -68,7 +64,7 @@ fn test_atom_decode() {
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let atom_read_util = node_read_util.expect_atom().unwrap();
     let expected_err = ReadUtilError::InvalidValue {
-        pos: Pos::new(0, 0),
+        pos: BytePos(0),
         value_type: "decode_as_length".to_string(),
     };
     assert_eq!(
@@ -92,9 +88,7 @@ fn test_list_expect_end() {
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
-    let expected_err = ReadUtilError::ExpectedListEnding {
-        pos: Pos::new(0, 1),
-    };
+    let expected_err = ReadUtilError::ExpectedListEnding { pos: BytePos(1) };
     assert_eq!(list_read_util.expect_ending().err().unwrap(), expected_err);
 }
 
@@ -151,9 +145,7 @@ fn test_list_next_item() {
             .into_atom(),
         "test-2"
     );
-    let expected_err = ReadUtilError::ExpectedNodeInList {
-        pos: Pos::new(0, 14),
-    };
+    let expected_err = ReadUtilError::ExpectedNodeInList { pos: BytePos(14) };
     assert_eq!(list_read_util.next_item().err().unwrap(), expected_err);
 }
 
@@ -181,9 +173,7 @@ fn test_list_decode_atoms() {
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
-    let expected_err = ReadUtilError::ExpectedNodeInList {
-        pos: Pos::new(0, 1),
-    };
+    let expected_err = ReadUtilError::ExpectedNodeInList { pos: BytePos(1) };
     let result = list_read_util.decode_atoms(decode_as_length, "decode_as_length", false);
     assert_eq!(result.err().unwrap(), expected_err);
 }

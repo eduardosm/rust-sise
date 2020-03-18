@@ -5,9 +5,9 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use crate::BytePos;
 use crate::ParseError;
 use crate::Parser;
-use crate::Pos;
 use crate::ReadItem;
 use crate::ReadItemKind;
 use crate::Reader as _;
@@ -15,7 +15,7 @@ use crate::TokenKind;
 
 struct ParserPassTest<'a> {
     src_data: &'a [u8],
-    expected_items: &'a [ReadItem<&'a str, Pos>],
+    expected_items: &'a [ReadItem<&'a str, BytePos>],
 }
 
 impl<'a> ParserPassTest<'a> {
@@ -30,7 +30,7 @@ impl<'a> ParserPassTest<'a> {
 
 struct ParserFailTest<'a> {
     src_data: &'a [u8],
-    expected_items: &'a [ReadItem<&'a str, Pos>],
+    expected_items: &'a [ReadItem<&'a str, BytePos>],
     error_at_finish: bool,
     expected_error: ParseError,
 }
@@ -55,11 +55,11 @@ fn test_empty_list() {
         src_data: b"()",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -72,7 +72,7 @@ fn test_single_atom() {
     ParserPassTest {
         src_data: b"atom",
         expected_items: &[ReadItem {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             kind: ReadItemKind::Atom("atom"),
         }],
     }
@@ -85,15 +85,15 @@ fn test_simple_list_1() {
         src_data: b"(atom-1)",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("atom-1"),
             },
             ReadItem {
-                pos: Pos::new(0, 7),
+                pos: BytePos(7),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -107,19 +107,19 @@ fn test_simple_list_2() {
         src_data: b"(atom-1 atom-2)",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("atom-1"),
             },
             ReadItem {
-                pos: Pos::new(0, 8),
+                pos: BytePos(8),
                 kind: ReadItemKind::Atom("atom-2"),
             },
             ReadItem {
-                pos: Pos::new(0, 14),
+                pos: BytePos(14),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -133,19 +133,19 @@ fn test_nested_list_1() {
         src_data: b"(())",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 2),
+                pos: BytePos(2),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 3),
+                pos: BytePos(3),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -159,27 +159,27 @@ fn test_nested_list_2() {
         src_data: b"(() ())",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 2),
+                pos: BytePos(2),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 4),
+                pos: BytePos(4),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 5),
+                pos: BytePos(5),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 6),
+                pos: BytePos(6),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -193,39 +193,39 @@ fn test_nested_list_3() {
         src_data: b"((atom-1) (atom-2 atom-3))",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 2),
+                pos: BytePos(2),
                 kind: ReadItemKind::Atom("atom-1"),
             },
             ReadItem {
-                pos: Pos::new(0, 8),
+                pos: BytePos(8),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 10),
+                pos: BytePos(10),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 11),
+                pos: BytePos(11),
                 kind: ReadItemKind::Atom("atom-2"),
             },
             ReadItem {
-                pos: Pos::new(0, 18),
+                pos: BytePos(18),
                 kind: ReadItemKind::Atom("atom-3"),
             },
             ReadItem {
-                pos: Pos::new(0, 24),
+                pos: BytePos(24),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 25),
+                pos: BytePos(25),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -239,83 +239,83 @@ fn test_nested_lists() {
         src_data: b"(((((((((())))))))))",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 2),
+                pos: BytePos(2),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 3),
+                pos: BytePos(3),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 4),
+                pos: BytePos(4),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 5),
+                pos: BytePos(5),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 6),
+                pos: BytePos(6),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 7),
+                pos: BytePos(7),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 8),
+                pos: BytePos(8),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 9),
+                pos: BytePos(9),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 10),
+                pos: BytePos(10),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 11),
+                pos: BytePos(11),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 12),
+                pos: BytePos(12),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 13),
+                pos: BytePos(13),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 14),
+                pos: BytePos(14),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 15),
+                pos: BytePos(15),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 16),
+                pos: BytePos(16),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 17),
+                pos: BytePos(17),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 18),
+                pos: BytePos(18),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 19),
+                pos: BytePos(19),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -329,59 +329,59 @@ fn test_mixed() {
         src_data: b"(atom-1 (atom-2) (atom-3 (atom-4) atom-5) atom-6)",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("atom-1"),
             },
             ReadItem {
-                pos: Pos::new(0, 8),
+                pos: BytePos(8),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 9),
+                pos: BytePos(9),
                 kind: ReadItemKind::Atom("atom-2"),
             },
             ReadItem {
-                pos: Pos::new(0, 15),
+                pos: BytePos(15),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 17),
+                pos: BytePos(17),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 18),
+                pos: BytePos(18),
                 kind: ReadItemKind::Atom("atom-3"),
             },
             ReadItem {
-                pos: Pos::new(0, 25),
+                pos: BytePos(25),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 26),
+                pos: BytePos(26),
                 kind: ReadItemKind::Atom("atom-4"),
             },
             ReadItem {
-                pos: Pos::new(0, 32),
+                pos: BytePos(32),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 34),
+                pos: BytePos(34),
                 kind: ReadItemKind::Atom("atom-5"),
             },
             ReadItem {
-                pos: Pos::new(0, 40),
+                pos: BytePos(40),
                 kind: ReadItemKind::ListEnding,
             },
             ReadItem {
-                pos: Pos::new(0, 42),
+                pos: BytePos(42),
                 kind: ReadItemKind::Atom("atom-6"),
             },
             ReadItem {
-                pos: Pos::new(0, 48),
+                pos: BytePos(48),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -394,7 +394,7 @@ fn test_atom_chars() {
     ParserPassTest {
         src_data: b"!#$%&*+-./:<=>?@_~",
         expected_items: &[ReadItem {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             kind: ReadItemKind::Atom("!#$%&*+-./:<=>?@_~"),
         }],
     }
@@ -406,7 +406,7 @@ fn test_string_1() {
     ParserPassTest {
         src_data: b"\"atom-1\"",
         expected_items: &[ReadItem {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             kind: ReadItemKind::Atom("\"atom-1\""),
         }],
     }
@@ -418,7 +418,7 @@ fn test_string_2() {
     ParserPassTest {
         src_data: b"prefix\"atom-1\"suffix",
         expected_items: &[ReadItem {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             kind: ReadItemKind::Atom("prefix\"atom-1\"suffix"),
         }],
     }
@@ -430,7 +430,7 @@ fn test_string_3() {
     ParserPassTest {
         src_data: b"\" \\\\ \\\" \"",
         expected_items: &[ReadItem {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             kind: ReadItemKind::Atom("\" \\\\ \\\" \""),
         }],
     }
@@ -438,32 +438,36 @@ fn test_string_3() {
 }
 
 #[test]
-fn test_multiline_lf() {
+fn test_multiline() {
     ParserPassTest {
-        src_data: b"\n(1 2\n3 4)\n",
+        src_data: b"\n(1 2\r3\r\n4 5)\n",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(1, 0),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(1, 1),
+                pos: BytePos(2),
                 kind: ReadItemKind::Atom("1"),
             },
             ReadItem {
-                pos: Pos::new(1, 3),
+                pos: BytePos(4),
                 kind: ReadItemKind::Atom("2"),
             },
             ReadItem {
-                pos: Pos::new(2, 0),
+                pos: BytePos(6),
                 kind: ReadItemKind::Atom("3"),
             },
             ReadItem {
-                pos: Pos::new(2, 2),
+                pos: BytePos(9),
                 kind: ReadItemKind::Atom("4"),
             },
             ReadItem {
-                pos: Pos::new(2, 3),
+                pos: BytePos(11),
+                kind: ReadItemKind::Atom("5"),
+            },
+            ReadItem {
+                pos: BytePos(12),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -472,126 +476,50 @@ fn test_multiline_lf() {
 }
 
 #[test]
-fn test_multiline_crlf() {
-    ParserPassTest {
-        src_data: b"\r\n(1 2\r\n3 4)\r\n",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(1, 0),
-                kind: ReadItemKind::ListBeginning,
-            },
-            ReadItem {
-                pos: Pos::new(1, 1),
-                kind: ReadItemKind::Atom("1"),
-            },
-            ReadItem {
-                pos: Pos::new(1, 3),
-                kind: ReadItemKind::Atom("2"),
-            },
-            ReadItem {
-                pos: Pos::new(2, 0),
-                kind: ReadItemKind::Atom("3"),
-            },
-            ReadItem {
-                pos: Pos::new(2, 2),
-                kind: ReadItemKind::Atom("4"),
-            },
-            ReadItem {
-                pos: Pos::new(2, 3),
-                kind: ReadItemKind::ListEnding,
-            },
-        ],
-    }
-    .run();
-}
-
-#[test]
-fn test_multiline_cr() {
-    ParserPassTest {
-        src_data: b"\r(1 2\r3 4)\r",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(1, 0),
-                kind: ReadItemKind::ListBeginning,
-            },
-            ReadItem {
-                pos: Pos::new(1, 1),
-                kind: ReadItemKind::Atom("1"),
-            },
-            ReadItem {
-                pos: Pos::new(1, 3),
-                kind: ReadItemKind::Atom("2"),
-            },
-            ReadItem {
-                pos: Pos::new(2, 0),
-                kind: ReadItemKind::Atom("3"),
-            },
-            ReadItem {
-                pos: Pos::new(2, 2),
-                kind: ReadItemKind::Atom("4"),
-            },
-            ReadItem {
-                pos: Pos::new(2, 3),
-                kind: ReadItemKind::ListEnding,
-            },
-        ],
-    }
-    .run();
-}
-
-#[test]
-fn test_multiline_mixed() {
-    ParserPassTest {
-        src_data: b"\n\r\r\n(1 2\n\r\r\n3 4)\n\r\r\n",
-        expected_items: &[
-            ReadItem {
-                pos: Pos::new(3, 0),
-                kind: ReadItemKind::ListBeginning,
-            },
-            ReadItem {
-                pos: Pos::new(3, 1),
-                kind: ReadItemKind::Atom("1"),
-            },
-            ReadItem {
-                pos: Pos::new(3, 3),
-                kind: ReadItemKind::Atom("2"),
-            },
-            ReadItem {
-                pos: Pos::new(6, 0),
-                kind: ReadItemKind::Atom("3"),
-            },
-            ReadItem {
-                pos: Pos::new(6, 2),
-                kind: ReadItemKind::Atom("4"),
-            },
-            ReadItem {
-                pos: Pos::new(6, 3),
-                kind: ReadItemKind::ListEnding,
-            },
-        ],
-    }
-    .run();
-}
-
-#[test]
-fn test_comment_1() {
+fn test_comment_1_lf() {
     ParserPassTest {
         src_data: b"; comment\n(1 2)",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(1, 0),
+                pos: BytePos(10),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(1, 1),
+                pos: BytePos(11),
                 kind: ReadItemKind::Atom("1"),
             },
             ReadItem {
-                pos: Pos::new(1, 3),
+                pos: BytePos(13),
                 kind: ReadItemKind::Atom("2"),
             },
             ReadItem {
-                pos: Pos::new(1, 4),
+                pos: BytePos(14),
+                kind: ReadItemKind::ListEnding,
+            },
+        ],
+    }
+    .run();
+}
+
+#[test]
+fn test_comment_1_cr() {
+    ParserPassTest {
+        src_data: b"; comment\r(1 2)",
+        expected_items: &[
+            ReadItem {
+                pos: BytePos(10),
+                kind: ReadItemKind::ListBeginning,
+            },
+            ReadItem {
+                pos: BytePos(11),
+                kind: ReadItemKind::Atom("1"),
+            },
+            ReadItem {
+                pos: BytePos(13),
+                kind: ReadItemKind::Atom("2"),
+            },
+            ReadItem {
+                pos: BytePos(14),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -605,19 +533,19 @@ fn test_comment_2() {
         src_data: b"(1 2); comment",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("1"),
             },
             ReadItem {
-                pos: Pos::new(0, 3),
+                pos: BytePos(3),
                 kind: ReadItemKind::Atom("2"),
             },
             ReadItem {
-                pos: Pos::new(0, 4),
+                pos: BytePos(4),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -631,19 +559,19 @@ fn test_comment_3() {
         src_data: b"(1; comment\n2)",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("1"),
             },
             ReadItem {
-                pos: Pos::new(1, 0),
+                pos: BytePos(12),
                 kind: ReadItemKind::Atom("2"),
             },
             ReadItem {
-                pos: Pos::new(1, 1),
+                pos: BytePos(13),
                 kind: ReadItemKind::ListEnding,
             },
         ],
@@ -658,7 +586,7 @@ fn test_fail_empty() {
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::UnexpectedToken {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             token: TokenKind::Eof,
         },
     }
@@ -671,18 +599,16 @@ fn test_fail_expected_eof() {
         src_data: b"() ()",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListEnding,
             },
         ],
         error_at_finish: true,
-        expected_error: ParseError::ExpectedEof {
-            pos: Pos::new(0, 3),
-        },
+        expected_error: ParseError::ExpectedEof { pos: BytePos(3) },
     }
     .run();
 }
@@ -693,9 +619,7 @@ fn test_fail_unfinished_string() {
         src_data: b"\"atom-1",
         expected_items: &[],
         error_at_finish: false,
-        expected_error: ParseError::UnfinishedString {
-            pos: Pos::new(0, 7),
-        },
+        expected_error: ParseError::UnfinishedString { pos: BytePos(7) },
     }
     .run();
 }
@@ -706,17 +630,17 @@ fn test_fail_unclosed_list() {
         src_data: b"(atom-1",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("atom-1"),
             },
         ],
         error_at_finish: false,
         expected_error: ParseError::UnexpectedToken {
-            pos: Pos::new(0, 7),
+            pos: BytePos(7),
             token: TokenKind::Eof,
         },
     }
@@ -730,7 +654,7 @@ fn test_fail_unexpected_closing() {
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::UnexpectedToken {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             token: TokenKind::RightParen,
         },
     }
@@ -743,17 +667,17 @@ fn test_fail_unclosed_list_with_comment() {
         src_data: b"(atom-1 ; comment)",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::Atom("atom-1"),
             },
         ],
         error_at_finish: false,
         expected_error: ParseError::UnexpectedToken {
-            pos: Pos::new(0, 18),
+            pos: BytePos(18),
             token: TokenKind::Eof,
         },
     }
@@ -767,7 +691,7 @@ fn test_fail_illegal_chr() {
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::IllegalChr {
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
             chr: 0xFF,
         },
     }
@@ -781,7 +705,7 @@ fn test_fail_illegal_chr_in_string() {
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::IllegalChrInString {
-            pos: Pos::new(0, 1),
+            pos: BytePos(1),
             chr: 0xFF,
         },
     }
@@ -794,17 +718,17 @@ fn test_fail_illegal_chr_in_comment() {
         src_data: b"() ; \xFF",
         expected_items: &[
             ReadItem {
-                pos: Pos::new(0, 0),
+                pos: BytePos(0),
                 kind: ReadItemKind::ListBeginning,
             },
             ReadItem {
-                pos: Pos::new(0, 1),
+                pos: BytePos(1),
                 kind: ReadItemKind::ListEnding,
             },
         ],
         error_at_finish: true,
         expected_error: ParseError::IllegalChrInComment {
-            pos: Pos::new(0, 5),
+            pos: BytePos(5),
             chr: 0xFF,
         },
     }

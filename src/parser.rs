@@ -5,89 +5,65 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use std::convert::TryFrom;
-
 use crate::is_atom_chr;
 use crate::is_atom_string_chr;
-use crate::Pos;
 use crate::ReadItem;
 use crate::ReadItemKind;
 use crate::Reader;
-use crate::ReprPosValue;
+
+/// Position of a byte in the source file.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BytePos(pub usize);
+
+impl std::fmt::Display for BytePos {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, f)
+    }
+}
 
 /// Represents a parse error.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// There is an invalid character.
-    IllegalChr { pos: Pos, chr: u8 },
+    IllegalChr { pos: BytePos, chr: u8 },
 
     /// There is an invalid character inside a string (enclosed with `"`).
-    IllegalChrInString { pos: Pos, chr: u8 },
+    IllegalChrInString { pos: BytePos, chr: u8 },
 
     /// There is an invalid character inside a comment.
-    IllegalChrInComment { pos: Pos, chr: u8 },
+    IllegalChrInComment { pos: BytePos, chr: u8 },
 
     /// End-of-file is reached before finding the closing `"`.
-    UnfinishedString { pos: Pos },
+    UnfinishedString { pos: BytePos },
 
     /// Unexpected token.
-    UnexpectedToken { pos: Pos, token: TokenKind },
+    UnexpectedToken { pos: BytePos, token: TokenKind },
 
     /// Found a token when expecting end-of-file.
-    ExpectedEof { pos: Pos },
-
-    /// A line is longer than `u32::max_value()`.
-    LineTooLong { line: u32 },
-
-    /// There are more than `u32::max_value()` lines.
-    TooManyLines,
+    ExpectedEof { pos: BytePos },
 }
 
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            ParseError::IllegalChr { pos, chr } => write!(
-                f,
-                "illegal character 0x{:02X} at {}:{}",
-                chr,
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
+            ParseError::IllegalChr { pos, chr } => {
+                write!(f, "illegal character 0x{:02X} at byte {}", chr, pos)
+            }
             ParseError::IllegalChrInString { pos, chr } => write!(
                 f,
-                "illegal character 0x{:02X} in string at {}:{}",
-                chr,
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
+                "illegal character 0x{:02X} in string at byte {}",
+                chr, pos,
             ),
             ParseError::IllegalChrInComment { pos, chr } => write!(
                 f,
-                "illegal character 0x{:02X} in comment at {}:{}",
-                chr,
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
+                "illegal character 0x{:02X} in comment at byte {}",
+                chr, pos,
             ),
-            ParseError::UnfinishedString { pos } => write!(
-                f,
-                "unfinished string at {}:{}",
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ParseError::UnexpectedToken { pos, ref token } => write!(
-                f,
-                "unexpected token {:?} at {}:{}",
-                token,
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ParseError::ExpectedEof { pos } => write!(
-                f,
-                "expected end-of-file at {}:{}",
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ParseError::LineTooLong { line } => write!(f, "line {} too long", ReprPosValue(line)),
-            ParseError::TooManyLines => write!(f, "too many lines"),
+            ParseError::UnfinishedString { pos } => write!(f, "unfinished string at byte {}", pos),
+            ParseError::UnexpectedToken { pos, ref token } => {
+                write!(f, "unexpected token {:?} at byte {}", token, pos)
+            }
+            ParseError::ExpectedEof { pos } => write!(f, "expected end-of-file at byte {}", pos),
         }
     }
 }
@@ -151,9 +127,9 @@ impl<'a> Parser<'a> {
 impl<'a> Reader for Parser<'a> {
     type Error = ParseError;
     type String = &'a str;
-    type Pos = Pos;
+    type Pos = BytePos;
 
-    fn read(&mut self) -> Result<ReadItem<&'a str, Pos>, ParseError> {
+    fn read(&mut self) -> Result<ReadItem<&'a str, BytePos>, ParseError> {
         match self.state {
             State::Beginning => {
                 let (pos, token) = self.lexer.get_token()?;
@@ -233,7 +209,7 @@ impl<'a> Reader for Parser<'a> {
 
 struct Lexer<'a> {
     data: &'a [u8],
-    pos: Pos,
+    pos: BytePos,
 }
 
 impl<'a> Lexer<'a> {
@@ -241,32 +217,8 @@ impl<'a> Lexer<'a> {
     fn new(data: &'a [u8]) -> Self {
         Lexer {
             data,
-            pos: Pos::new(0, 0),
+            pos: BytePos(0),
         }
-    }
-
-    fn increase_line(&mut self) -> Result<(), ParseError> {
-        self.pos.line = self
-            .pos
-            .line
-            .checked_add(1)
-            .ok_or(ParseError::TooManyLines)?;
-        self.pos.column = 0;
-        Ok(())
-    }
-
-    fn increase_column(&mut self, len: usize) -> Result<(), ParseError> {
-        let len = u32::try_from(len).map_err(|_| ParseError::LineTooLong {
-            line: self.pos.line,
-        })?;
-        self.pos.column =
-            self.pos
-                .column
-                .checked_add(len)
-                .ok_or_else(|| ParseError::LineTooLong {
-                    line: self.pos.line,
-                })?;
-        Ok(())
     }
 
     #[inline]
@@ -288,7 +240,7 @@ impl<'a> Lexer<'a> {
         std::str::from_utf8(atom).unwrap()
     }
 
-    fn get_token(&mut self) -> Result<(Pos, Token<'a>), ParseError> {
+    fn get_token(&mut self) -> Result<(BytePos, Token<'a>), ParseError> {
         loop {
             match self.peek_char(0) {
                 // end-of-file
@@ -296,58 +248,48 @@ impl<'a> Lexer<'a> {
                     return Ok((self.pos, Token::Eof));
                 }
                 // skip whitespace
-                Some(b' ') | Some(b'\t') => {
+                Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') => {
                     let mut len = 1;
                     for c in self.data_iter(len) {
-                        if c != b' ' && c != b'\t' {
+                        if c != b' ' && c != b'\t' && c != b'\n' && c != b'\r' {
                             break;
                         }
                         len += 1;
                     }
-                    self.increase_column(len)?;
+                    self.pos.0 += len;
                     self.skip_chars(len);
-                }
-                // skip line breaks
-                Some(b'\n') => {
-                    self.increase_line()?;
-                    self.skip_chars(1);
-                }
-                Some(b'\r') => {
-                    self.increase_line()?;
-                    if self.peek_char(1) == Some(b'\n') {
-                        self.skip_chars(2);
-                    } else {
-                        self.skip_chars(1);
-                    }
                 }
                 // skip comments
                 Some(b';') => {
                     let mut len = 1;
                     for c in self.data_iter(len) {
                         match c {
-                            b'\n' | b'\r' => break,
+                            b'\n' | b'\r' => {
+                                len += 1;
+                                break;
+                            }
                             b' '..=b'~' | b'\t' => {
                                 len += 1;
                             }
                             chr => {
-                                self.increase_column(len)?;
+                                self.pos.0 += len;
                                 return Err(ParseError::IllegalChrInComment { chr, pos: self.pos });
                             }
                         }
                     }
-                    self.increase_column(len)?;
+                    self.pos.0 += len;
                     self.skip_chars(len);
                 }
                 // delimiters
                 Some(b'(') => {
                     let pos = self.pos;
-                    self.increase_column(1)?;
+                    self.pos.0 += 1;
                     self.skip_chars(1);
                     return Ok((pos, Token::LeftParen));
                 }
                 Some(b')') => {
                     let pos = self.pos;
-                    self.increase_column(1)?;
+                    self.pos.0 += 1;
                     self.skip_chars(1);
                     return Ok((pos, Token::RightParen));
                 }
@@ -355,7 +297,7 @@ impl<'a> Lexer<'a> {
                 Some(chr) if is_atom_chr(chr) || chr == b'"' => {
                     let len = self.lex_atom(chr)?;
                     let pos = self.pos;
-                    self.increase_column(len)?;
+                    self.pos.0 += len;
                     let atom = self.take_atom(len);
                     return Ok((pos, Token::Atom(atom)));
                 }
@@ -413,14 +355,14 @@ impl<'a> Lexer<'a> {
                         state = State::String;
                     }
                     Some(c) => {
-                        self.increase_column(len)?;
+                        self.pos.0 += len;
                         return Err(ParseError::IllegalChrInString {
                             chr: c,
                             pos: self.pos,
                         });
                     }
                     None => {
-                        self.increase_column(len)?;
+                        self.pos.0 += len;
                         return Err(ParseError::UnfinishedString { pos: self.pos });
                     }
                 },
@@ -430,14 +372,14 @@ impl<'a> Lexer<'a> {
                         state = State::String;
                     }
                     Some(c) => {
-                        self.increase_column(len)?;
+                        self.pos.0 += len;
                         return Err(ParseError::IllegalChrInString {
                             chr: c,
                             pos: self.pos,
                         });
                     }
                     None => {
-                        self.increase_column(len)?;
+                        self.pos.0 += len;
                         return Err(ParseError::UnfinishedString { pos: self.pos });
                     }
                 },

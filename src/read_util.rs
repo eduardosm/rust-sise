@@ -5,10 +5,9 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use crate::Pos;
+use crate::BytePos;
 use crate::ReadItemKind;
 use crate::Reader;
-use crate::ReprPosValue;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ReadUtilError<E, P> {
@@ -42,48 +41,30 @@ impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
     }
 }
 
-impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, Pos> {
+impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, BytePos> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ReadUtilError::ReaderError(e) => write!(f, "reader error: {}", e),
-            ReadUtilError::ExpectedAtom { pos } => write!(
-                f,
-                "expected atom at {}:{}",
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ReadUtilError::ExpectedListBeginning { pos } => write!(
-                f,
-                "expected list beginning at {}:{}",
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ReadUtilError::ExpectedListEnding { pos } => write!(
-                f,
-                "expected list ending at {}:{}",
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ReadUtilError::ExpectedNodeInList { pos } => write!(
-                f,
-                "expected node in list at {}:{}",
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
-            ReadUtilError::InvalidValue { value_type, pos } => write!(
-                f,
-                "invalid value of type {:?} at {}:{}",
-                value_type,
-                ReprPosValue(pos.line),
-                ReprPosValue(pos.column)
-            ),
+            ReadUtilError::ExpectedAtom { pos } => write!(f, "expected atom at byte {}", pos),
+            ReadUtilError::ExpectedListBeginning { pos } => {
+                write!(f, "expected list beginning at byte {}", pos)
+            }
+            ReadUtilError::ExpectedListEnding { pos } => {
+                write!(f, "expected list ending at byte {}", pos)
+            }
+            ReadUtilError::ExpectedNodeInList { pos } => {
+                write!(f, "expected node in list at byte {}", pos)
+            }
+            ReadUtilError::InvalidValue { value_type, pos } => {
+                write!(f, "invalid value of type {:?} at byte {}", value_type, pos)
+            }
         }
     }
 }
 
 impl<E: std::error::Error> std::error::Error for ReadUtilError<E, ()> {}
 
-impl<E: std::error::Error> std::error::Error for ReadUtilError<E, Pos> {}
+impl<E: std::error::Error> std::error::Error for ReadUtilError<E, BytePos> {}
 
 /// Utility to read nodes from a `Reader`.
 pub enum NodeReadUtil<'a, R: Reader> {
