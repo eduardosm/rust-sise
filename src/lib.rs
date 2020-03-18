@@ -32,58 +32,35 @@ mod tests {
     mod writer;
 }
 
-mod pos;
-pub use self::pos::Pos;
-pub use self::pos::ReprPosValue;
-
-mod node;
-pub use self::node::Node;
-
-mod reader;
-pub use self::reader::ReadItem;
-pub use self::reader::ReadItemKind;
-pub use self::reader::Reader;
-
-mod parser;
-pub use self::parser::ParseError;
-pub use self::parser::Parser;
-pub use self::parser::TokenKind;
-
-mod tree_reader;
-pub use self::tree_reader::TreeReader;
-
-mod read_into_tree;
-pub use self::read_into_tree::read_into_tree;
-
-mod writer;
-pub use self::writer::MaybeMultilineOptions;
-pub use self::writer::Writer;
-
 mod compact_string_writer;
-pub use self::compact_string_writer::CompactStringWriter;
-
-mod spaced_string_writer;
-pub use self::spaced_string_writer::SpacedStringWriter;
-pub use self::spaced_string_writer::SpacedStringWriterNodeOptions;
-pub use self::spaced_string_writer::SpacedStringWriterStyle;
-
-mod tree_writer;
-pub use self::tree_writer::TreeWriter;
-
-mod write_from_tree;
-pub use self::write_from_tree::write_from_tree;
-pub use self::write_from_tree::WriteFromTreeAtomOptions;
-
+mod node;
+mod parser;
+mod pos;
+mod read_into_tree;
 mod read_util;
-pub use self::read_util::AtomReadUtil;
-pub use self::read_util::ListReadUtil;
-pub use self::read_util::NodeReadUtil;
-pub use self::read_util::ReadUtilError;
-
+mod reader;
+mod spaced_string_writer;
+mod tree_reader;
+mod tree_writer;
 mod util;
-pub use self::util::check_atom;
-pub use self::util::is_atom_chr;
-pub use self::util::is_atom_string_chr;
+mod write_from_tree;
+mod writer;
+
+pub use compact_string_writer::CompactStringWriter;
+pub use node::Node;
+pub use parser::{ParseError, Parser, TokenKind};
+pub use pos::{Pos, ReprPosValue};
+pub use read_into_tree::read_into_tree;
+pub use read_util::{AtomReadUtil, ListReadUtil, NodeReadUtil, ReadUtilError};
+pub use reader::{ReadItem, ReadItemKind, Reader};
+pub use spaced_string_writer::{
+    SpacedStringWriter, SpacedStringWriterNodeOptions, SpacedStringWriterStyle,
+};
+pub use tree_reader::TreeReader;
+pub use tree_writer::TreeWriter;
+pub use util::{check_atom, is_atom_chr, is_atom_string_chr};
+pub use write_from_tree::{write_from_tree, WriteFromTreeAtomOptions};
+pub use writer::{MaybeMultilineOptions, Writer};
 
 /// Macro to define trees of nodes with a lighter syntax.
 ///
