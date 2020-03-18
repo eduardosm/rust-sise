@@ -128,7 +128,7 @@ pub use self::util::is_atom_string_chr;
 /// ```
 #[macro_export]
 macro_rules! sise_expr {
-    ([$($item:tt),*]) => { $crate::Node::List(vec![$(sise_expr!($item)),*]) };
-    ([$($item:tt,)*]) => { $crate::Node::List(vec![$(sise_expr!($item)),*]) };
+    ([$($item:tt),*]) => { $crate::Node::List(vec![$($crate::sise_expr!($item)),*]) };
+    ([$($item:tt,)*]) => { $crate::Node::List(vec![$($crate::sise_expr!($item)),*]) };
     ($node:expr) => { $crate::Node::from($node) };
 }
