@@ -6,6 +6,10 @@
 // copied, modified, or distributed except according to those terms.
 
 //! SISE (Simple S-expression) is a file format based on S-expressions.
+//!
+//! # Minimum Rust version
+//!
+//! The minimum Rust version required by this crate is 1.36.
 
 #![deny(rust_2018_idioms, unreachable_pub)]
 

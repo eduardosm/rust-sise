@@ -2,6 +2,7 @@ os: linux
 language: rust
 cache: cargo
 rust:
+  - 1.36.0
   - stable
   - beta
   - nightly
