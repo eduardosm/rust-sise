@@ -38,26 +38,17 @@ fn test_node_as_list() {
     assert_eq!(node_read_util.expect_list().err().unwrap(), expected_err);
 }
 
-fn decode_as_length(atom: &str) -> Option<usize> {
-    if atom == "invalid" {
-        None
-    } else {
-        Some(atom.len())
-    }
+fn decode_u32(atom: &str) -> Option<u32> {
+    std::str::FromStr::from_str(atom).ok()
 }
 
 #[test]
 fn test_atom_decode() {
-    let src_data = "aa";
+    let src_data = "77";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let atom_read_util = node_read_util.expect_atom().unwrap();
-    assert_eq!(
-        atom_read_util
-            .decode(decode_as_length, "decode_as_length")
-            .unwrap(),
-        2
-    );
+    assert_eq!(atom_read_util.decode(decode_u32, "u32").unwrap(), 77);
 
     let src_data = "invalid";
     let mut parser = Parser::new(src_data);
@@ -65,13 +56,10 @@ fn test_atom_decode() {
     let atom_read_util = node_read_util.expect_atom().unwrap();
     let expected_err = ReadUtilError::InvalidValue {
         pos: BytePos(0),
-        value_type: "decode_as_length".to_string(),
+        value_type: "u32".into(),
     };
     assert_eq!(
-        atom_read_util
-            .decode(decode_as_length, "decode_as_length")
-            .err()
-            .unwrap(),
+        atom_read_util.decode(decode_u32, "u32").err().unwrap(),
         expected_err
     );
 }
@@ -151,12 +139,12 @@ fn test_list_next_item() {
 
 #[test]
 fn test_list_decode_atoms() {
-    let src_data = "(a aa)";
+    let src_data = "(1 2)";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
     let decoded = list_read_util
-        .decode_atoms(decode_as_length, "decode_as_length", false)
+        .decode_atoms(decode_u32, "u32", false)
         .unwrap();
     assert_eq!(decoded, [1, 2]);
 
@@ -165,7 +153,7 @@ fn test_list_decode_atoms() {
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
     let decoded = list_read_util
-        .decode_atoms(decode_as_length, "decode_as_length", true)
+        .decode_atoms(decode_u32, "u32", true)
         .unwrap();
     assert_eq!(decoded, []);
 
@@ -174,6 +162,6 @@ fn test_list_decode_atoms() {
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
     let expected_err = ReadUtilError::ExpectedNodeInList { pos: BytePos(1) };
-    let result = list_read_util.decode_atoms(decode_as_length, "decode_as_length", false);
+    let result = list_read_util.decode_atoms(decode_u32, "u32", false);
     assert_eq!(result.err().unwrap(), expected_err);
 }

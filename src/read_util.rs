@@ -183,12 +183,14 @@ impl<R: Reader> AtomReadUtil<R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = "example";
+    /// use std::str::FromStr as _;
+    ///
+    /// let src_data = "7777";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let atom_read_util = node_read_util.expect_atom().unwrap();
-    /// let decoded = atom_read_util.decode(|atom| Some(atom.len()), "decode_as_length").unwrap();
-    /// assert_eq!(decoded, 7);
+    /// let decoded = atom_read_util.decode(|atom| u32::from_str(atom).ok(), "u32").unwrap();
+    /// assert_eq!(decoded, 7777);
     /// ```
     pub fn decode<T, F>(self, f: F, value_type: &str) -> Result<T, ReadUtilError<R::Error, R::Pos>>
     where
@@ -321,12 +323,14 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = "(1 12 123)";
+    /// use std::str::FromStr as _;
+    ///
+    /// let src_data = "(7 77 777)";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
-    /// let decoded = list_read_util.decode_atoms(|atom| Some(atom.len()), "decode_as_length", false).unwrap();
-    /// assert_eq!(decoded, [1, 2, 3]);
+    /// let decoded = list_read_util.decode_atoms(|atom| u32::from_str(atom).ok(), "u32", false).unwrap();
+    /// assert_eq!(decoded, [7, 77, 777]);
     /// ```
     pub fn decode_atoms<T, F>(
         mut self,
