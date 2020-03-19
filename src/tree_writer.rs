@@ -139,7 +139,7 @@ impl Writer for TreeWriter {
     fn finish(self, _opts: ()) -> Result<Node, Infallible> {
         match self.state {
             State::Finished(node) => Ok(node),
-            _ => panic!("writing already finished"),
+            _ => panic!("writing not finished yet"),
         }
     }
 }
