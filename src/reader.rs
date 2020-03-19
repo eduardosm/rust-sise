@@ -5,8 +5,14 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-/// A trait to allow reading SISE nodes from a generic source. See
-/// example from `Parser`.
+/// A trait to allow reading SISE nodes from a generic source.
+///
+/// Readers that implement this trait produces a sequence of `ReadItem`,
+/// that compose a S-expression document.
+///
+/// # Example
+///
+/// See the example from `Parser`.
 pub trait Reader {
     /// The error type that may be produced while reading.
     type Error;
@@ -18,21 +24,44 @@ pub trait Reader {
     /// A type that represent the position of a node.
     type Pos;
 
-    /// Reads from the source. It shall panic if the root node has
-    /// been completely read (e.g., the `ListEnding` that matches the
-    /// first `ListBeginning` has been read).
+    /// Reads from the source and returns a `ReadItem`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the root node has been completely read. If the root
+    /// node is a list, this means the `ListEnding` that matches the
+    /// first `ListBeginning` has already been read. If the root node
+    /// is an atom, this means that such atom has already been read.
     fn read(&mut self) -> Result<ReadItem<Self::String, Self::Pos>, Self::Error>;
 
     /// Finishes the reader, consuming it. It must be called only after
     /// the root node has been completely read. It may return an error
     /// if an error is encountered after the root node (e.g., trailing
     /// tokens at the end of the file).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the root node has not been completely read.
     fn finish(self) -> Result<(), Self::Error>;
 }
 
+/// Items produced by readers that implement `Reader`.
+///
+/// The `S` type parameter is depends on the reader and is used to
+/// represent strings with the atom values. For example, `S` can be
+/// `String` or `Box<str>` to hold owned strings or `&str` to hold
+/// borrowed strings. It must implement `Into<String>` and `AsRef<str>`,
+/// so an owned or borrowed string can be easily obtained from `S`.
+///
+/// The `P` type parameter is used to represent the position of the
+/// read items and also depends on the reader. For example, it can
+/// be a scalar to specify the byte index in a file, or a `()` if position
+/// information is not available.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ReadItem<S: Into<String> + AsRef<str>, P> {
+    /// Position of the read item.
     pub pos: P,
+    /// The kind of item, including its value if it is an atom.
     pub kind: ReadItemKind<S>,
 }
 
@@ -47,6 +76,7 @@ pub enum ReadItemKind<S: Into<String> + AsRef<str>> {
 }
 
 impl<S: Into<String> + AsRef<str>> ReadItemKind<S> {
+    /// Returns whether `self` is an `Atom`.
     #[inline]
     pub fn is_atom(&self) -> bool {
         match self {
@@ -55,6 +85,8 @@ impl<S: Into<String> + AsRef<str>> ReadItemKind<S> {
         }
     }
 
+    /// If `self` is an atom, returns it value, otherwise
+    /// returns `None`.
     #[inline]
     pub fn as_atom(&self) -> Option<&S> {
         match self {
@@ -63,11 +95,31 @@ impl<S: Into<String> + AsRef<str>> ReadItemKind<S> {
         }
     }
 
+    /// Consumes `self` and returns its value if it is an atom,
+    /// otherwise returns `None`.
     #[inline]
     pub fn into_atom(self) -> Option<S> {
         match self {
             ReadItemKind::Atom(atom) => Some(atom),
             _ => None,
+        }
+    }
+
+    /// Returns whether `self` is a `ListBeginning`.
+    #[inline]
+    pub fn is_list_beginning(&self) -> bool {
+        match self {
+            ReadItemKind::ListBeginning => true,
+            _ => false,
+        }
+    }
+
+    /// Returns whether `self` is a `ListEnding`.
+    #[inline]
+    pub fn is_list_ending(&self) -> bool {
+        match self {
+            ReadItemKind::ListEnding => true,
+            _ => false,
         }
     }
 }
