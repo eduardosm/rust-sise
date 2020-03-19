@@ -126,14 +126,8 @@ impl Node {
         let mut current_node = self;
         for &index in path {
             match current_node {
-                Node::List(ref list) => {
-                    if let Some(next_node) = list.get(index) {
-                        current_node = next_node;
-                    } else {
-                        return None;
-                    }
-                }
-                _ => return None,
+                Node::Atom(_) => return None,
+                Node::List(ref list) => current_node = list.get(index)?,
             }
         }
         Some(current_node)
