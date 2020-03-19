@@ -16,9 +16,11 @@ use crate::Reader;
 /// ```
 /// use sise::sise_expr;
 /// use sise::Reader as _;
+///
 /// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
 /// let root_node = sise::read_into_tree(&mut parser).unwrap();
+/// // Do not forget calling `finish` on the reader.
 /// parser.finish().unwrap();
 /// let expected_result = sise_expr!(["test", ["1", "2", "3"]]);
 /// assert_eq!(root_node, expected_result);
@@ -30,6 +32,7 @@ use crate::Reader;
 /// ```
 /// use sise::sise_expr;
 /// use sise::Reader as _;
+///
 /// let data = "(head (1 2 3) tail)";
 /// let mut parser = sise::Parser::new(data);
 ///
