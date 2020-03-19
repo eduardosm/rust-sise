@@ -5,17 +5,6 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-impl MaybeMultilineOptions for () {
-    #[inline]
-    fn break_line() -> Self {}
-
-    #[inline]
-    fn break_line_at(_len: usize) -> Self {}
-
-    #[inline]
-    fn no_break_line() -> Self {}
-}
-
 /// Trait to represent multi-line write options, that may
 /// be honored or ignored depending on the writer. Types used for
 /// `Writer::AtomOptions`, `Writer::BeginListOptions`,
@@ -84,6 +73,17 @@ pub trait MaybeMultilineOptions: Default {
 
     /// If supported, the node shall be written in the current line.
     fn no_break_line() -> Self;
+}
+
+impl MaybeMultilineOptions for () {
+    #[inline]
+    fn break_line() -> Self {}
+
+    #[inline]
+    fn break_line_at(_len: usize) -> Self {}
+
+    #[inline]
+    fn no_break_line() -> Self {}
 }
 
 /// A trait to allow writing SISE nodes into a generic destination.
