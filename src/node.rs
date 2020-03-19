@@ -114,7 +114,9 @@ impl Node {
     /// ```
     /// use sise::sise_expr;
     ///
+    /// // (example (1 2 3) (a b c))
     /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+    /// assert_eq!(*tree.index_path(&[]).unwrap(), tree);
     /// assert_eq!(*tree.index_path(&[0]).unwrap(), "example");
     /// assert_eq!(*tree.index_path(&[1]).unwrap(), sise_expr!(["1", "2", "3"]));
     /// assert_eq!(tree.index_path(&[1, 0]).unwrap(), "1");
