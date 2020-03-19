@@ -25,13 +25,13 @@ impl std::fmt::Display for BytePos {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// There is an invalid character.
-    IllegalChr { pos: BytePos, chr: u8 },
+    IllegalChr { pos: BytePos, chr: char },
 
     /// There is an invalid character inside a string (enclosed with `"`).
-    IllegalChrInString { pos: BytePos, chr: u8 },
+    IllegalChrInString { pos: BytePos, chr: char },
 
     /// There is an invalid character inside a comment.
-    IllegalChrInComment { pos: BytePos, chr: u8 },
+    IllegalChrInComment { pos: BytePos, chr: char },
 
     /// End-of-file is reached before finding the closing `"`.
     UnfinishedString { pos: BytePos },
@@ -47,18 +47,14 @@ impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             ParseError::IllegalChr { pos, chr } => {
-                write!(f, "illegal character 0x{:02X} at byte {}", chr, pos)
+                write!(f, "illegal character {:?} at byte {}", chr, pos)
             }
-            ParseError::IllegalChrInString { pos, chr } => write!(
-                f,
-                "illegal character 0x{:02X} in string at byte {}",
-                chr, pos,
-            ),
-            ParseError::IllegalChrInComment { pos, chr } => write!(
-                f,
-                "illegal character 0x{:02X} in comment at byte {}",
-                chr, pos,
-            ),
+            ParseError::IllegalChrInString { pos, chr } => {
+                write!(f, "illegal character {:?} in string at byte {}", chr, pos)
+            }
+            ParseError::IllegalChrInComment { pos, chr } => {
+                write!(f, "illegal character {:?} in comment at byte {}", chr, pos)
+            }
             ParseError::UnfinishedString { pos } => write!(f, "unfinished string at byte {}", pos),
             ParseError::UnexpectedToken { pos, ref token } => {
                 write!(f, "unexpected token {:?} at byte {}", token, pos)
@@ -92,7 +88,7 @@ enum Token<'a> {
 ///
 /// ```
 /// use sise::Reader as _;
-/// let data = b"(test (1 2 3))";
+/// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
 /// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
 /// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("test"));
@@ -116,7 +112,7 @@ enum State {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(data: &'a [u8]) -> Self {
+    pub fn new(data: &'a str) -> Self {
         Self {
             lexer: Lexer::new(data),
             state: State::Beginning,
@@ -208,179 +204,167 @@ impl<'a> Reader for Parser<'a> {
 }
 
 struct Lexer<'a> {
-    data: &'a [u8],
-    pos: BytePos,
+    input_str: &'a str,
+    input_iter: std::str::CharIndices<'a>,
+    current_chr: Option<char>,
+    current_pos: usize,
 }
 
 impl<'a> Lexer<'a> {
-    #[inline]
-    fn new(data: &'a [u8]) -> Self {
+    fn new(input: &'a str) -> Self {
+        let mut input_iter = input.char_indices();
+        let first_chr = input_iter.next();
         Lexer {
-            data,
-            pos: BytePos(0),
+            input_str: input,
+            input_iter,
+            current_chr: first_chr.map(|(_, chr)| chr),
+            current_pos: 0,
         }
     }
 
-    #[inline]
-    fn peek_char(&self, i: usize) -> Option<u8> {
-        self.data.get(i).cloned()
-    }
-
-    fn skip_chars(&mut self, len: usize) {
-        self.data = &self.data[len..];
-    }
-
-    fn data_iter(&self, i: usize) -> std::iter::Cloned<std::slice::Iter<'a, u8>> {
-        self.data[i..].iter().cloned()
-    }
-
-    fn take_atom(&mut self, len: usize) -> &'a str {
-        let (atom, remaining) = self.data.split_at(len);
-        self.data = remaining;
-        std::str::from_utf8(atom).unwrap()
+    fn next_char(&mut self) {
+        match self.input_iter.next() {
+            None => {
+                self.current_pos = self.input_str.len();
+                self.current_chr = None;
+            }
+            Some((byte_index, chr)) => {
+                self.current_chr = Some(chr);
+                self.current_pos = byte_index;
+            }
+        }
     }
 
     fn get_token(&mut self) -> Result<(BytePos, Token<'a>), ParseError> {
         loop {
-            match self.peek_char(0) {
+            match self.current_chr {
                 // end-of-file
                 None => {
-                    return Ok((self.pos, Token::Eof));
+                    return Ok((BytePos(self.current_pos), Token::Eof));
                 }
                 // skip whitespace
-                Some(b' ') | Some(b'\t') | Some(b'\n') | Some(b'\r') => {
-                    let mut len = 1;
-                    for c in self.data_iter(len) {
-                        if c != b' ' && c != b'\t' && c != b'\n' && c != b'\r' {
-                            break;
-                        }
-                        len += 1;
-                    }
-                    self.pos.0 += len;
-                    self.skip_chars(len);
+                Some(' ') | Some('\t') | Some('\n') | Some('\r') => {
+                    self.next_char();
                 }
                 // skip comments
-                Some(b';') => {
-                    let mut len = 1;
-                    for c in self.data_iter(len) {
-                        match c {
-                            b'\n' | b'\r' => {
-                                len += 1;
+                Some(';') => {
+                    self.next_char();
+                    while let Some(chr) = self.current_chr {
+                        match chr {
+                            '\n' | '\r' => {
+                                self.next_char();
                                 break;
                             }
-                            b' '..=b'~' | b'\t' => {
-                                len += 1;
-                            }
+                            '\t' | ' '..='~' => self.next_char(),
                             chr => {
-                                self.pos.0 += len;
-                                return Err(ParseError::IllegalChrInComment { chr, pos: self.pos });
+                                return Err(ParseError::IllegalChrInComment {
+                                    chr,
+                                    pos: BytePos(self.current_pos),
+                                });
                             }
                         }
                     }
-                    self.pos.0 += len;
-                    self.skip_chars(len);
                 }
                 // delimiters
-                Some(b'(') => {
-                    let pos = self.pos;
-                    self.pos.0 += 1;
-                    self.skip_chars(1);
+                Some('(') => {
+                    let pos = BytePos(self.current_pos);
+                    self.next_char();
                     return Ok((pos, Token::LeftParen));
                 }
-                Some(b')') => {
-                    let pos = self.pos;
-                    self.pos.0 += 1;
-                    self.skip_chars(1);
+                Some(')') => {
+                    let pos = BytePos(self.current_pos);
+                    self.next_char();
                     return Ok((pos, Token::RightParen));
                 }
                 // atom
-                Some(chr) if is_atom_chr(chr) || chr == b'"' => {
-                    let len = self.lex_atom(chr)?;
-                    let pos = self.pos;
-                    self.pos.0 += len;
-                    let atom = self.take_atom(len);
-                    return Ok((pos, Token::Atom(atom)));
+                Some(chr) if is_atom_chr(chr) || chr == '"' => {
+                    let begin_pos = self.current_pos;
+                    self.next_char();
+                    self.lex_atom(chr)?;
+                    let end_pos = self.current_pos;
+                    let atom = &self.input_str[begin_pos..end_pos];
+                    return Ok((BytePos(begin_pos), Token::Atom(atom)));
                 }
                 // invalid character
                 Some(chr) => {
-                    return Err(ParseError::IllegalChr { chr, pos: self.pos });
+                    return Err(ParseError::IllegalChr {
+                        chr,
+                        pos: BytePos(self.current_pos),
+                    });
                 }
             }
         }
     }
 
-    fn lex_atom(&mut self, first_chr: u8) -> Result<usize, ParseError> {
+    fn lex_atom(&mut self, first_chr: char) -> Result<(), ParseError> {
         enum State {
             Normal,
             String,
             StringBackslash,
         }
 
-        let mut state = if first_chr == b'"' {
+        let mut state = if first_chr == '"' {
             State::String
         } else {
             State::Normal
         };
-        let mut len = 1;
-        let mut iter = self.data_iter(len);
         loop {
-            let chr = iter.next();
             match state {
-                State::Normal => match chr {
-                    Some(b'"') => {
-                        len += 1;
+                State::Normal => match self.current_chr {
+                    Some('"') => {
+                        self.next_char();
                         state = State::String;
                     }
-                    Some(c) if is_atom_chr(c) => {
-                        len += 1;
+                    Some(chr) if is_atom_chr(chr) => {
+                        self.next_char();
                     }
                     Some(_) => {
-                        return Ok(len);
+                        return Ok(());
                     }
                     None => {
-                        return Ok(len);
+                        return Ok(());
                     }
                 },
-                State::String => match chr {
-                    Some(b'"') => {
-                        len += 1;
+                State::String => match self.current_chr {
+                    Some('"') => {
+                        self.next_char();
                         state = State::Normal;
                     }
-                    Some(b'\\') => {
-                        len += 1;
+                    Some('\\') => {
+                        self.next_char();
                         state = State::StringBackslash;
                     }
-                    Some(c) if is_atom_string_chr(c) => {
-                        len += 1;
+                    Some(chr) if is_atom_string_chr(chr) => {
+                        self.next_char();
                         state = State::String;
                     }
-                    Some(c) => {
-                        self.pos.0 += len;
+                    Some(chr) => {
                         return Err(ParseError::IllegalChrInString {
-                            chr: c,
-                            pos: self.pos,
+                            chr,
+                            pos: BytePos(self.current_pos),
                         });
                     }
                     None => {
-                        self.pos.0 += len;
-                        return Err(ParseError::UnfinishedString { pos: self.pos });
+                        return Err(ParseError::UnfinishedString {
+                            pos: BytePos(self.current_pos),
+                        });
                     }
                 },
-                State::StringBackslash => match chr {
-                    Some(c) if is_atom_string_chr(c) || c == b'"' || c == b'\\' => {
-                        len += 1;
+                State::StringBackslash => match self.current_chr {
+                    Some(chr) if is_atom_string_chr(chr) || chr == '"' || chr == '\\' => {
+                        self.next_char();
                         state = State::String;
                     }
-                    Some(c) => {
-                        self.pos.0 += len;
+                    Some(chr) => {
                         return Err(ParseError::IllegalChrInString {
-                            chr: c,
-                            pos: self.pos,
+                            chr,
+                            pos: BytePos(self.current_pos),
                         });
                     }
                     None => {
-                        self.pos.0 += len;
-                        return Err(ParseError::UnfinishedString { pos: self.pos });
+                        return Err(ParseError::UnfinishedString {
+                            pos: BytePos(self.current_pos),
+                        });
                     }
                 },
             }

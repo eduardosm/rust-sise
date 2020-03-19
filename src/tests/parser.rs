@@ -14,7 +14,7 @@ use crate::Reader as _;
 use crate::TokenKind;
 
 struct ParserPassTest<'a> {
-    src_data: &'a [u8],
+    src_data: &'a str,
     expected_items: &'a [ReadItem<&'a str, BytePos>],
 }
 
@@ -29,7 +29,7 @@ impl<'a> ParserPassTest<'a> {
 }
 
 struct ParserFailTest<'a> {
-    src_data: &'a [u8],
+    src_data: &'a str,
     expected_items: &'a [ReadItem<&'a str, BytePos>],
     error_at_finish: bool,
     expected_error: ParseError,
@@ -52,7 +52,7 @@ impl<'a> ParserFailTest<'a> {
 #[test]
 fn test_empty_list() {
     ParserPassTest {
-        src_data: b"()",
+        src_data: "()",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -70,7 +70,7 @@ fn test_empty_list() {
 #[test]
 fn test_single_atom() {
     ParserPassTest {
-        src_data: b"atom",
+        src_data: "atom",
         expected_items: &[ReadItem {
             pos: BytePos(0),
             kind: ReadItemKind::Atom("atom"),
@@ -82,7 +82,7 @@ fn test_single_atom() {
 #[test]
 fn test_simple_list_1() {
     ParserPassTest {
-        src_data: b"(atom-1)",
+        src_data: "(atom-1)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -104,7 +104,7 @@ fn test_simple_list_1() {
 #[test]
 fn test_simple_list_2() {
     ParserPassTest {
-        src_data: b"(atom-1 atom-2)",
+        src_data: "(atom-1 atom-2)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -130,7 +130,7 @@ fn test_simple_list_2() {
 #[test]
 fn test_nested_list_1() {
     ParserPassTest {
-        src_data: b"(())",
+        src_data: "(())",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -156,7 +156,7 @@ fn test_nested_list_1() {
 #[test]
 fn test_nested_list_2() {
     ParserPassTest {
-        src_data: b"(() ())",
+        src_data: "(() ())",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -190,7 +190,7 @@ fn test_nested_list_2() {
 #[test]
 fn test_nested_list_3() {
     ParserPassTest {
-        src_data: b"((atom-1) (atom-2 atom-3))",
+        src_data: "((atom-1) (atom-2 atom-3))",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -236,7 +236,7 @@ fn test_nested_list_3() {
 #[test]
 fn test_nested_lists() {
     ParserPassTest {
-        src_data: b"(((((((((())))))))))",
+        src_data: "(((((((((())))))))))",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -326,7 +326,7 @@ fn test_nested_lists() {
 #[test]
 fn test_mixed() {
     ParserPassTest {
-        src_data: b"(atom-1 (atom-2) (atom-3 (atom-4) atom-5) atom-6)",
+        src_data: "(atom-1 (atom-2) (atom-3 (atom-4) atom-5) atom-6)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -392,7 +392,7 @@ fn test_mixed() {
 #[test]
 fn test_atom_chars() {
     ParserPassTest {
-        src_data: b"!#$%&*+-./:<=>?@_~",
+        src_data: "!#$%&*+-./:<=>?@_~",
         expected_items: &[ReadItem {
             pos: BytePos(0),
             kind: ReadItemKind::Atom("!#$%&*+-./:<=>?@_~"),
@@ -404,7 +404,7 @@ fn test_atom_chars() {
 #[test]
 fn test_string_1() {
     ParserPassTest {
-        src_data: b"\"atom-1\"",
+        src_data: "\"atom-1\"",
         expected_items: &[ReadItem {
             pos: BytePos(0),
             kind: ReadItemKind::Atom("\"atom-1\""),
@@ -416,7 +416,7 @@ fn test_string_1() {
 #[test]
 fn test_string_2() {
     ParserPassTest {
-        src_data: b"prefix\"atom-1\"suffix",
+        src_data: "prefix\"atom-1\"suffix",
         expected_items: &[ReadItem {
             pos: BytePos(0),
             kind: ReadItemKind::Atom("prefix\"atom-1\"suffix"),
@@ -428,7 +428,7 @@ fn test_string_2() {
 #[test]
 fn test_string_3() {
     ParserPassTest {
-        src_data: b"\" \\\\ \\\" \"",
+        src_data: "\" \\\\ \\\" \"",
         expected_items: &[ReadItem {
             pos: BytePos(0),
             kind: ReadItemKind::Atom("\" \\\\ \\\" \""),
@@ -440,7 +440,7 @@ fn test_string_3() {
 #[test]
 fn test_multiline() {
     ParserPassTest {
-        src_data: b"\n(1 2\r3\r\n4 5)\n",
+        src_data: "\n(1 2\r3\r\n4 5)\n",
         expected_items: &[
             ReadItem {
                 pos: BytePos(1),
@@ -478,7 +478,7 @@ fn test_multiline() {
 #[test]
 fn test_comment_1_lf() {
     ParserPassTest {
-        src_data: b"; comment\n(1 2)",
+        src_data: "; comment\n(1 2)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(10),
@@ -504,7 +504,7 @@ fn test_comment_1_lf() {
 #[test]
 fn test_comment_1_cr() {
     ParserPassTest {
-        src_data: b"; comment\r(1 2)",
+        src_data: "; comment\r(1 2)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(10),
@@ -530,7 +530,7 @@ fn test_comment_1_cr() {
 #[test]
 fn test_comment_2() {
     ParserPassTest {
-        src_data: b"(1 2); comment",
+        src_data: "(1 2); comment",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -556,7 +556,7 @@ fn test_comment_2() {
 #[test]
 fn test_comment_3() {
     ParserPassTest {
-        src_data: b"(1; comment\n2)",
+        src_data: "(1; comment\n2)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -582,7 +582,7 @@ fn test_comment_3() {
 #[test]
 fn test_fail_empty() {
     ParserFailTest {
-        src_data: b"",
+        src_data: "",
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::UnexpectedToken {
@@ -596,7 +596,7 @@ fn test_fail_empty() {
 #[test]
 fn test_fail_expected_eof() {
     ParserFailTest {
-        src_data: b"() ()",
+        src_data: "() ()",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -616,7 +616,7 @@ fn test_fail_expected_eof() {
 #[test]
 fn test_fail_unfinished_string() {
     ParserFailTest {
-        src_data: b"\"atom-1",
+        src_data: "\"atom-1",
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::UnfinishedString { pos: BytePos(7) },
@@ -627,7 +627,7 @@ fn test_fail_unfinished_string() {
 #[test]
 fn test_fail_unclosed_list() {
     ParserFailTest {
-        src_data: b"(atom-1",
+        src_data: "(atom-1",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -650,7 +650,7 @@ fn test_fail_unclosed_list() {
 #[test]
 fn test_fail_unexpected_closing() {
     ParserFailTest {
-        src_data: b")",
+        src_data: ")",
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::UnexpectedToken {
@@ -664,7 +664,7 @@ fn test_fail_unexpected_closing() {
 #[test]
 fn test_fail_unclosed_list_with_comment() {
     ParserFailTest {
-        src_data: b"(atom-1 ; comment)",
+        src_data: "(atom-1 ; comment)",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -687,12 +687,12 @@ fn test_fail_unclosed_list_with_comment() {
 #[test]
 fn test_fail_illegal_chr() {
     ParserFailTest {
-        src_data: b"\xFF",
+        src_data: "\0",
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::IllegalChr {
             pos: BytePos(0),
-            chr: 0xFF,
+            chr: '\0',
         },
     }
     .run();
@@ -701,12 +701,12 @@ fn test_fail_illegal_chr() {
 #[test]
 fn test_fail_illegal_chr_in_string() {
     ParserFailTest {
-        src_data: b"\"\xFF",
+        src_data: "\"\0",
         expected_items: &[],
         error_at_finish: false,
         expected_error: ParseError::IllegalChrInString {
             pos: BytePos(1),
-            chr: 0xFF,
+            chr: '\0',
         },
     }
     .run();
@@ -715,7 +715,7 @@ fn test_fail_illegal_chr_in_string() {
 #[test]
 fn test_fail_illegal_chr_in_comment() {
     ParserFailTest {
-        src_data: b"() ; \xFF",
+        src_data: "() ; \0",
         expected_items: &[
             ReadItem {
                 pos: BytePos(0),
@@ -729,7 +729,7 @@ fn test_fail_illegal_chr_in_comment() {
         error_at_finish: true,
         expected_error: ParseError::IllegalChrInComment {
             pos: BytePos(5),
-            chr: 0xFF,
+            chr: '\0',
         },
     }
     .run();

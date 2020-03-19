@@ -93,7 +93,7 @@ impl<'a, R: Reader> NodeReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"example";
+    /// let src_data = "example";
     /// let mut parser = sise::Parser::new(src_data);
     /// let mut node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let atom_read_util = node_read_util.expect_atom().unwrap();
@@ -114,7 +114,7 @@ impl<'a, R: Reader> NodeReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"()";
+    /// let src_data = "()";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
@@ -183,7 +183,7 @@ impl<R: Reader> AtomReadUtil<R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"example";
+    /// let src_data = "example";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let atom_read_util = node_read_util.expect_atom().unwrap();
@@ -238,7 +238,7 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"()";
+    /// let src_data = "()";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let list_read_util = node_read_util.expect_list().unwrap();
@@ -261,7 +261,7 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"(a b c)";
+    /// let src_data = "(a b c)";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
@@ -291,7 +291,7 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"(a b c)";
+    /// let src_data = "(a b c)";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
@@ -321,7 +321,7 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// # Example
     ///
     /// ```
-    /// let src_data = b"(1 12 123)";
+    /// let src_data = "(1 12 123)";
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();

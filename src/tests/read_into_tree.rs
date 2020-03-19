@@ -12,7 +12,7 @@ use crate::Parser;
 use crate::Reader;
 
 struct ReadTreeTest<'a> {
-    src_data: &'a [u8],
+    src_data: &'a str,
     expected_tree: Node,
 }
 
@@ -28,7 +28,7 @@ impl<'a> ReadTreeTest<'a> {
 #[test]
 fn test_empty_list() {
     ReadTreeTest {
-        src_data: b"()",
+        src_data: "()",
         expected_tree: sise_expr!([]),
     }
     .run();
@@ -37,7 +37,7 @@ fn test_empty_list() {
 #[test]
 fn test_single_atom() {
     ReadTreeTest {
-        src_data: b"atom",
+        src_data: "atom",
         expected_tree: sise_expr!("atom"),
     }
     .run();
@@ -46,7 +46,7 @@ fn test_single_atom() {
 #[test]
 fn test_simple_list_1() {
     ReadTreeTest {
-        src_data: b"(atom-1)",
+        src_data: "(atom-1)",
         expected_tree: sise_expr!(["atom-1"]),
     }
     .run();
@@ -55,7 +55,7 @@ fn test_simple_list_1() {
 #[test]
 fn test_simple_list_2() {
     ReadTreeTest {
-        src_data: b"(atom-1 atom-2)",
+        src_data: "(atom-1 atom-2)",
         expected_tree: sise_expr!(["atom-1", "atom-2"]),
     }
     .run();
@@ -64,7 +64,7 @@ fn test_simple_list_2() {
 #[test]
 fn test_nested_list_1() {
     ReadTreeTest {
-        src_data: b"(())",
+        src_data: "(())",
         expected_tree: sise_expr!([[]]),
     }
     .run();
@@ -73,7 +73,7 @@ fn test_nested_list_1() {
 #[test]
 fn test_nested_list_2() {
     ReadTreeTest {
-        src_data: b"(() ())",
+        src_data: "(() ())",
         expected_tree: sise_expr!([[], []]),
     }
     .run();
@@ -82,7 +82,7 @@ fn test_nested_list_2() {
 #[test]
 fn test_nested_list_3() {
     ReadTreeTest {
-        src_data: b"((atom-1) (atom-2 atom-3))",
+        src_data: "((atom-1) (atom-2 atom-3))",
         expected_tree: sise_expr!([["atom-1"], ["atom-2", "atom-3"]]),
     }
     .run();

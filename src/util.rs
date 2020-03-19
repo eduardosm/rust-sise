@@ -7,10 +7,9 @@
 
 /// Returns whether `chr` is a valid atom character outside a
 /// string (i.e. one of `:atomchar:` documented at `Node::Atom`).
-pub fn is_atom_chr(chr: u8) -> bool {
+pub fn is_atom_chr(chr: char) -> bool {
     let chars = [
-        b'!', b'#', b'$', b'%', b'&', b'*', b'+', b'-', b'.', b'/', b':', b'<', b'=', b'>', b'?',
-        b'@', b'_', b'~',
+        '!', '#', '$', '%', '&', '*', '+', '-', '.', '/', ':', '<', '=', '>', '?', '@', '_', '~',
     ];
     chr.is_ascii_alphanumeric() || chars.contains(&chr)
 }
@@ -18,8 +17,8 @@ pub fn is_atom_chr(chr: u8) -> bool {
 /// Returns whether `chr` is a valid atom character inside a
 /// string, excluding `"` and `\` (i.e. one of `:stringchar:`
 /// documented at `Node::Atom`).
-pub fn is_atom_string_chr(chr: u8) -> bool {
-    (chr.is_ascii_graphic() && chr != b'"' && chr != b'\\') || chr == b' '
+pub fn is_atom_string_chr(chr: char) -> bool {
+    (chr.is_ascii_graphic() && chr != '"' && chr != '\\') || chr == ' '
 }
 
 /// Checks whether `atom` is a valid atom (i.e. matches the regular
@@ -33,16 +32,16 @@ pub fn check_atom(atom: &str) -> bool {
     }
 
     let mut state = State::Beginning;
-    let mut iter = atom.as_bytes().iter().cloned();
+    let mut iter = atom.chars();
     loop {
         let chr = iter.next();
         match state {
             State::Beginning => {
                 match chr {
-                    Some(b'"') => {
+                    Some('"') => {
                         state = State::String;
                     }
-                    Some(c) if is_atom_chr(c) => {
+                    Some(chr) if is_atom_chr(chr) => {
                         state = State::Normal;
                     }
                     Some(_) => {
@@ -57,10 +56,10 @@ pub fn check_atom(atom: &str) -> bool {
             }
             State::Normal => {
                 match chr {
-                    Some(b'"') => {
+                    Some('"') => {
                         state = State::String;
                     }
-                    Some(c) if is_atom_chr(c) => {
+                    Some(chr) if is_atom_chr(chr) => {
                         state = State::Normal;
                     }
                     Some(_) => {
@@ -75,13 +74,13 @@ pub fn check_atom(atom: &str) -> bool {
             }
             State::String => {
                 match chr {
-                    Some(b'"') => {
+                    Some('"') => {
                         state = State::Normal;
                     }
-                    Some(b'\\') => {
+                    Some('\\') => {
                         state = State::StringBackslash;
                     }
-                    Some(c) if is_atom_string_chr(c) => {
+                    Some(chr) if is_atom_string_chr(chr) => {
                         state = State::String;
                     }
                     Some(_) => {
@@ -96,7 +95,7 @@ pub fn check_atom(atom: &str) -> bool {
             }
             State::StringBackslash => {
                 match chr {
-                    Some(c) if is_atom_string_chr(c) || c == b'"' || c == b'\\' => {
+                    Some(chr) if is_atom_string_chr(chr) || chr == '"' || chr == '\\' => {
                         state = State::String;
                     }
                     Some(_) => {

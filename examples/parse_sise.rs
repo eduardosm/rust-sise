@@ -26,6 +26,7 @@ fn main() {
     }
 
     let file_data = read_file(std::path::Path::new(&args[1])).unwrap();
+    let file_data = String::from_utf8(file_data).unwrap();
     let mut parser = sise::Parser::new(&file_data);
     let parsed = sise::read_into_tree(&mut parser).unwrap();
     parser.finish().unwrap();

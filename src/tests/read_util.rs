@@ -12,12 +12,12 @@ use crate::ReadUtilError;
 
 #[test]
 fn test_node_as_atom() {
-    let src_data = b"test";
+    let src_data = "test";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     assert_eq!(node_read_util.expect_atom().unwrap().into_atom(), "test");
 
-    let src_data = b"()";
+    let src_data = "()";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let expected_err = ReadUtilError::ExpectedAtom { pos: BytePos(0) };
@@ -26,12 +26,12 @@ fn test_node_as_atom() {
 
 #[test]
 fn test_node_as_list() {
-    let src_data = b"()";
+    let src_data = "()";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     assert!(node_read_util.expect_list().is_ok());
 
-    let src_data = b"test";
+    let src_data = "test";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let expected_err = ReadUtilError::ExpectedListBeginning { pos: BytePos(0) };
@@ -48,7 +48,7 @@ fn decode_as_length(atom: &str) -> Option<usize> {
 
 #[test]
 fn test_atom_decode() {
-    let src_data = b"aa";
+    let src_data = "aa";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let atom_read_util = node_read_util.expect_atom().unwrap();
@@ -59,7 +59,7 @@ fn test_atom_decode() {
         2
     );
 
-    let src_data = b"invalid";
+    let src_data = "invalid";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let atom_read_util = node_read_util.expect_atom().unwrap();
@@ -78,13 +78,13 @@ fn test_atom_decode() {
 
 #[test]
 fn test_list_expect_end() {
-    let src_data = b"()";
+    let src_data = "()";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
     assert!(list_read_util.expect_ending().is_ok());
 
-    let src_data = b"(test)";
+    let src_data = "(test)";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
@@ -94,7 +94,7 @@ fn test_list_expect_end() {
 
 #[test]
 fn test_list_try_next_item() {
-    let src_data = b"(test-1 test-2)";
+    let src_data = "(test-1 test-2)";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let mut list_read_util = node_read_util.expect_list().unwrap();
@@ -123,7 +123,7 @@ fn test_list_try_next_item() {
 
 #[test]
 fn test_list_next_item() {
-    let src_data = b"(test-1 test-2)";
+    let src_data = "(test-1 test-2)";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let mut list_read_util = node_read_util.expect_list().unwrap();
@@ -151,7 +151,7 @@ fn test_list_next_item() {
 
 #[test]
 fn test_list_decode_atoms() {
-    let src_data = b"(a aa)";
+    let src_data = "(a aa)";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
@@ -160,7 +160,7 @@ fn test_list_decode_atoms() {
         .unwrap();
     assert_eq!(decoded, [1, 2]);
 
-    let src_data = b"()";
+    let src_data = "()";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();
@@ -169,7 +169,7 @@ fn test_list_decode_atoms() {
         .unwrap();
     assert_eq!(decoded, []);
 
-    let src_data = b"()";
+    let src_data = "()";
     let mut parser = Parser::new(src_data);
     let node_read_util = NodeReadUtil::new(&mut parser).unwrap();
     let list_read_util = node_read_util.expect_list().unwrap();

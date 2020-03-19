@@ -16,7 +16,7 @@ use crate::Reader;
 /// ```
 /// use sise::sise_expr;
 /// use sise::Reader as _;
-/// let data = b"(test (1 2 3))";
+/// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
 /// let root_node = sise::read_into_tree(&mut parser).unwrap();
 /// parser.finish().unwrap();
@@ -30,7 +30,7 @@ use crate::Reader;
 /// ```
 /// use sise::sise_expr;
 /// use sise::Reader as _;
-/// let data = b"(head (1 2 3) tail)";
+/// let data = "(head (1 2 3) tail)";
 /// let mut parser = sise::Parser::new(data);
 ///
 /// // Read the head
