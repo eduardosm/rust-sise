@@ -16,7 +16,6 @@
     trivial_casts,
     trivial_numeric_casts,
     unreachable_pub,
-    unused_import_braces,
     unused_must_use,
     unused_qualifications
 )]
