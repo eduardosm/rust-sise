@@ -1,6 +1,5 @@
 os: linux
 language: rust
-cache: cargo
 rust:
   - 1.36.0
   - stable
@@ -14,7 +13,6 @@ jobs:
 before_script:
   - rustup component add clippy
   - rustup component add rustfmt
-
 script:
   - cargo build --verbose --all-targets
   - cargo clippy --verbose --all-targets -- -D warnings
