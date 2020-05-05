@@ -46,8 +46,8 @@
 /// // Write with spaced writer, break line options shall
 /// // be honored.
 /// let style = sise::SpacedStringWriterStyle {
-///    line_break: "\n",
-///    indentation: " ",
+///     line_break: "\n",
+///     indentation: " ",
 /// };
 ///
 /// let mut result = String::new();

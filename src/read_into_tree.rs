@@ -37,8 +37,14 @@ use crate::Reader;
 /// let mut parser = sise::Parser::new(data);
 ///
 /// // Read the head
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("head"));
+/// assert_eq!(
+///     parser.read().unwrap().kind,
+///     sise::ReadItemKind::ListBeginning,
+/// );
+/// assert_eq!(
+///     parser.read().unwrap().kind,
+///     sise::ReadItemKind::Atom("head"),
+/// );
 ///
 /// // Read the subtree
 /// let root_node = sise::read_into_tree(&mut parser).unwrap();
@@ -46,7 +52,10 @@ use crate::Reader;
 /// assert_eq!(root_node, expected_result);
 ///
 /// // Read the tail
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("tail"));
+/// assert_eq!(
+///     parser.read().unwrap().kind,
+///     sise::ReadItemKind::Atom("tail")
+/// );
 /// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
 /// parser.finish().unwrap();
 /// ```

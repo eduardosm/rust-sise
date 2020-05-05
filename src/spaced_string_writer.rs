@@ -73,26 +73,46 @@ impl MaybeMultilineOptions for SpacedStringWriterNodeOptions {
 /// use sise::Writer as _;
 ///
 /// let style = sise::SpacedStringWriterStyle {
-///    line_break: "\n",
-///    indentation: " ",
+///     line_break: "\n",
+///     indentation: " ",
 /// };
 ///
 /// let mut result = String::new();
 /// let mut writer = sise::SpacedStringWriter::new(style, &mut result);
 ///
-/// writer.begin_list(sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.write_atom("example", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.begin_list(sise::SpacedStringWriterNodeOptions::default()).unwrap();
+/// writer
+///     .begin_list(sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .write_atom("example", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .begin_list(sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
 /// // Write the three atoms in a single line.
-/// writer.write_atom("1", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.write_atom("2", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.write_atom("3", sise::SpacedStringWriterNodeOptions::default()).unwrap();
+/// writer
+///     .write_atom("1", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .write_atom("2", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .write_atom("3", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
 /// writer.end_list(()).unwrap();
-/// writer.begin_list(sise::SpacedStringWriterNodeOptions::default()).unwrap();
+/// writer
+///     .begin_list(sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
 /// // Write the three atoms in a single line.
-/// writer.write_atom("a", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.write_atom("b", sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.write_atom("c", sise::SpacedStringWriterNodeOptions::default()).unwrap();
+/// writer
+///     .write_atom("a", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .write_atom("b", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .write_atom("c", sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
 /// writer.end_list(()).unwrap();
 /// writer.end_list(()).unwrap();
 /// writer.finish(()).unwrap();
@@ -108,26 +128,49 @@ impl MaybeMultilineOptions for SpacedStringWriterNodeOptions {
 /// use sise::Writer as _;
 ///
 /// let style = sise::SpacedStringWriterStyle {
-///    line_break: "\n",
-///    indentation: " ",
+///     line_break: "\n",
+///     indentation: " ",
 /// };
 ///
 /// let mut result = String::new();
 /// let mut writer = sise::SpacedStringWriter::new(style, &mut result);
 ///
-/// writer.begin_list(sise::SpacedStringWriterNodeOptions::default()).unwrap();
-/// writer.write_atom("example", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.begin_list(sise::SpacedStringWriterNodeOptions::break_line()).unwrap();
+/// writer
+///     .begin_list(sise::SpacedStringWriterNodeOptions::default())
+///     .unwrap();
+/// writer
+///     .write_atom(
+///         "example",
+///         sise::SpacedStringWriterNodeOptions::no_break_line(),
+///     )
+///     .unwrap();
+/// writer
+///     .begin_list(sise::SpacedStringWriterNodeOptions::break_line())
+///     .unwrap();
 /// // Write the three atoms in a single line.
-/// writer.write_atom("1", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.write_atom("2", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.write_atom("3", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
+/// writer
+///     .write_atom("1", sise::SpacedStringWriterNodeOptions::no_break_line())
+///     .unwrap();
+/// writer
+///     .write_atom("2", sise::SpacedStringWriterNodeOptions::no_break_line())
+///     .unwrap();
+/// writer
+///     .write_atom("3", sise::SpacedStringWriterNodeOptions::no_break_line())
+///     .unwrap();
 /// writer.end_list(()).unwrap();
-/// writer.begin_list(sise::SpacedStringWriterNodeOptions::break_line()).unwrap();
+/// writer
+///     .begin_list(sise::SpacedStringWriterNodeOptions::break_line())
+///     .unwrap();
 /// // Write the three atoms in a single line.
-/// writer.write_atom("a", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.write_atom("b", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
-/// writer.write_atom("c", sise::SpacedStringWriterNodeOptions::no_break_line()).unwrap();
+/// writer
+///     .write_atom("a", sise::SpacedStringWriterNodeOptions::no_break_line())
+///     .unwrap();
+/// writer
+///     .write_atom("b", sise::SpacedStringWriterNodeOptions::no_break_line())
+///     .unwrap();
+/// writer
+///     .write_atom("c", sise::SpacedStringWriterNodeOptions::no_break_line())
+///     .unwrap();
 /// writer.end_list(()).unwrap();
 /// writer.end_list(()).unwrap();
 /// writer.finish(()).unwrap();

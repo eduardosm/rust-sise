@@ -189,7 +189,9 @@ impl<R: Reader> AtomReadUtil<R> {
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let atom_read_util = node_read_util.expect_atom().unwrap();
-    /// let decoded = atom_read_util.decode(|atom| u32::from_str(atom).ok(), "u32").unwrap();
+    /// let decoded = atom_read_util
+    ///     .decode(|atom| u32::from_str(atom).ok(), "u32")
+    ///     .unwrap();
     /// assert_eq!(decoded, 7777);
     /// ```
     pub fn decode<T, F>(self, f: F, value_type: &str) -> Result<T, ReadUtilError<R::Error, R::Pos>>
@@ -267,9 +269,36 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
-    /// assert_eq!(list_read_util.try_next_item().unwrap().unwrap().expect_atom().unwrap().into_atom(), "a");
-    /// assert_eq!(list_read_util.try_next_item().unwrap().unwrap().expect_atom().unwrap().into_atom(), "b");
-    /// assert_eq!(list_read_util.try_next_item().unwrap().unwrap().expect_atom().unwrap().into_atom(), "c");
+    /// assert_eq!(
+    ///     list_read_util
+    ///         .try_next_item()
+    ///         .unwrap()
+    ///         .unwrap()
+    ///         .expect_atom()
+    ///         .unwrap()
+    ///         .into_atom(),
+    ///     "a",
+    /// );
+    /// assert_eq!(
+    ///     list_read_util
+    ///         .try_next_item()
+    ///         .unwrap()
+    ///         .unwrap()
+    ///         .expect_atom()
+    ///         .unwrap()
+    ///         .into_atom(),
+    ///     "b",
+    /// );
+    /// assert_eq!(
+    ///     list_read_util
+    ///         .try_next_item()
+    ///         .unwrap()
+    ///         .unwrap()
+    ///         .expect_atom()
+    ///         .unwrap()
+    ///         .into_atom(),
+    ///     "c",
+    /// );
     /// assert!(list_read_util.try_next_item().unwrap().is_none());
     /// ```
     pub fn try_next_item(&mut self) -> Result<Option<NodeReadUtil<'_, R>>, R::Error> {
@@ -297,9 +326,33 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
-    /// assert_eq!(list_read_util.next_item().unwrap().expect_atom().unwrap().into_atom(), "a");
-    /// assert_eq!(list_read_util.next_item().unwrap().expect_atom().unwrap().into_atom(), "b");
-    /// assert_eq!(list_read_util.next_item().unwrap().expect_atom().unwrap().into_atom(), "c");
+    /// assert_eq!(
+    ///     list_read_util
+    ///         .next_item()
+    ///         .unwrap()
+    ///         .expect_atom()
+    ///         .unwrap()
+    ///         .into_atom(),
+    ///     "a"
+    /// );
+    /// assert_eq!(
+    ///     list_read_util
+    ///         .next_item()
+    ///         .unwrap()
+    ///         .expect_atom()
+    ///         .unwrap()
+    ///         .into_atom(),
+    ///     "b"
+    /// );
+    /// assert_eq!(
+    ///     list_read_util
+    ///         .next_item()
+    ///         .unwrap()
+    ///         .expect_atom()
+    ///         .unwrap()
+    ///         .into_atom(),
+    ///     "c"
+    /// );
     /// assert!(list_read_util.next_item().is_err());
     /// ```
     pub fn next_item(&mut self) -> Result<NodeReadUtil<'_, R>, ReadUtilError<R::Error, R::Pos>> {
@@ -329,7 +382,9 @@ impl<'a, R: Reader> ListReadUtil<'a, R> {
     /// let mut parser = sise::Parser::new(src_data);
     /// let node_read_util = sise::NodeReadUtil::new(&mut parser).unwrap();
     /// let mut list_read_util = node_read_util.expect_list().unwrap();
-    /// let decoded = list_read_util.decode_atoms(|atom| u32::from_str(atom).ok(), "u32", false).unwrap();
+    /// let decoded = list_read_util
+    ///     .decode_atoms(|atom| u32::from_str(atom).ok(), "u32", false)
+    ///     .unwrap();
     /// assert_eq!(decoded, [7, 77, 777]);
     /// ```
     pub fn decode_atoms<T, F>(

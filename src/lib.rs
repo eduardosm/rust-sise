@@ -77,9 +77,7 @@ pub use writer::{MaybeMultilineOptions, Writer};
 /// assert_eq!(value1, value2);
 ///
 /// // (atom)
-/// let value1 = sise::Node::List(vec![
-///     sise::Node::Atom(String::from("atom"))
-/// ]);
+/// let value1 = sise::Node::List(vec![sise::Node::Atom(String::from("atom"))]);
 /// let value2 = sise_expr!(["atom"]);
 /// assert_eq!(value1, value2);
 ///

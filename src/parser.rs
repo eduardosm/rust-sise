@@ -90,9 +90,18 @@ enum Token<'a> {
 /// use sise::Reader as _;
 /// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("test"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListBeginning);
+/// assert_eq!(
+///     parser.read().unwrap().kind,
+///     sise::ReadItemKind::ListBeginning,
+/// );
+/// assert_eq!(
+///     parser.read().unwrap().kind,
+///     sise::ReadItemKind::Atom("test"),
+/// );
+/// assert_eq!(
+///     parser.read().unwrap().kind,
+///     sise::ReadItemKind::ListBeginning,
+/// );
 /// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("1"));
 /// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("2"));
 /// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("3"));

@@ -56,8 +56,8 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 ///
 /// let style = sise::SpacedStringWriterStyle {
-///    line_break: "\n",
-///    indentation: " ",
+///     line_break: "\n",
+///     indentation: " ",
 /// };
 ///
 /// let mut result = String::new();
