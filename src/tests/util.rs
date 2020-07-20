@@ -5,7 +5,6 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-#[allow(clippy::cognitive_complexity)]
 #[test]
 fn test_check_atom() {
     assert!(crate::check_atom("1234"));
