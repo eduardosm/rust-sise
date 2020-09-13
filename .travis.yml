@@ -11,7 +11,7 @@ jobs:
     - rust: nightly
   fast_finish: true
   include:
-    - rust: 1.45.0
+    - rust: 1.46.0
       before_script:
         - rustup component add clippy
         - rustup component add rustfmt
