@@ -5,6 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use alloc::vec::Vec;
+
 use crate::Node;
 use crate::ReadItemKind;
 use crate::Reader;
@@ -108,15 +110,15 @@ pub fn read_into_tree<R: Reader>(reader: &mut R) -> Result<Node, R::Error> {
                         let new_current = StackItem {
                             list_items: Vec::new(),
                         };
-                        stack.push(std::mem::replace(current, new_current));
+                        stack.push(core::mem::replace(current, new_current));
                     }
                     ReadItemKind::ListEnding => {
                         if let Some(previous) = stack.pop() {
-                            let old_current = std::mem::replace(current, previous);
+                            let old_current = core::mem::replace(current, previous);
                             current.list_items.push(Node::List(old_current.list_items));
                         } else {
                             let root_node =
-                                Node::List(std::mem::replace(&mut current.list_items, Vec::new()));
+                                Node::List(core::mem::replace(&mut current.list_items, Vec::new()));
                             state = State::Finished(root_node);
                         }
                     }

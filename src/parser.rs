@@ -15,9 +15,9 @@ use crate::Reader;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BytePos(pub usize);
 
-impl std::fmt::Display for BytePos {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self.0, f)
+impl core::fmt::Display for BytePos {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        core::fmt::Display::fmt(&self.0, f)
     }
 }
 
@@ -43,8 +43,8 @@ pub enum ParseError {
     ExpectedEof { pos: BytePos },
 }
 
-impl std::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match *self {
             ParseError::IllegalChr { pos, chr } => {
                 write!(f, "illegal character {:?} at byte {}", chr, pos)
@@ -64,6 +64,7 @@ impl std::fmt::Display for ParseError {
     }
 }
 
+#[cfg(feature = "std")]
 impl std::error::Error for ParseError {}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -214,7 +215,7 @@ impl<'a> Reader for Parser<'a> {
 
 struct Lexer<'a> {
     input_str: &'a str,
-    input_iter: std::str::CharIndices<'a>,
+    input_iter: core::str::CharIndices<'a>,
     current_chr: Option<char>,
     current_pos: usize,
 }

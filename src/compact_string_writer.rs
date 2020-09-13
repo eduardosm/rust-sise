@@ -5,7 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use std::convert::Infallible;
+use alloc::string::String;
+use core::convert::Infallible;
 
 use crate::util::check_atom;
 use crate::Writer;

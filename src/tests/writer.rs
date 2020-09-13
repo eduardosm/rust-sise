@@ -5,6 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use alloc::string::String;
+
 use crate::sise_expr;
 use crate::write_from_tree;
 use crate::CompactStringWriter;

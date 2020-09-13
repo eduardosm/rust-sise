@@ -39,7 +39,7 @@ fn test_node_as_list() {
 }
 
 fn decode_u32(atom: &str) -> Option<u32> {
-    std::str::FromStr::from_str(atom).ok()
+    core::str::FromStr::from_str(atom).ok()
 }
 
 #[test]

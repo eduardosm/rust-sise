@@ -5,6 +5,9 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::BytePos;
 use crate::ReadItemKind;
 use crate::Reader;
@@ -26,8 +29,8 @@ impl<E, P> From<E> for ReadUtilError<E, P> {
     }
 }
 
-impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<E: core::fmt::Display> core::fmt::Display for ReadUtilError<E, ()> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             ReadUtilError::ReaderError(e) => write!(f, "reader error: {}", e),
             ReadUtilError::ExpectedAtom { .. } => f.write_str("expected atom"),
@@ -41,8 +44,8 @@ impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, ()> {
     }
 }
 
-impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, BytePos> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<E: core::fmt::Display> core::fmt::Display for ReadUtilError<E, BytePos> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             ReadUtilError::ReaderError(e) => write!(f, "reader error: {}", e),
             ReadUtilError::ExpectedAtom { pos } => write!(f, "expected atom at byte {}", pos),
@@ -62,8 +65,10 @@ impl<E: std::fmt::Display> std::fmt::Display for ReadUtilError<E, BytePos> {
     }
 }
 
+#[cfg(feature = "std")]
 impl<E: std::error::Error> std::error::Error for ReadUtilError<E, ()> {}
 
+#[cfg(feature = "std")]
 impl<E: std::error::Error> std::error::Error for ReadUtilError<E, BytePos> {}
 
 /// Utility to read nodes from a `Reader`.
@@ -202,7 +207,7 @@ impl<R: Reader> AtomReadUtil<R> {
             Ok(value)
         } else {
             Err(ReadUtilError::InvalidValue {
-                value_type: value_type.to_string(),
+                value_type: value_type.into(),
                 pos: self.pos,
             })
         }

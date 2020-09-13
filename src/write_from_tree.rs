@@ -5,6 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use alloc::vec::Vec;
+
 use crate::MaybeMultilineOptions;
 use crate::Node;
 use crate::Writer;
@@ -106,8 +108,8 @@ where
     enum State<'a> {
         Beginning(&'a Node),
         Writing {
-            stack: Vec<std::slice::Iter<'a, Node>>,
-            current_list: std::slice::Iter<'a, Node>,
+            stack: Vec<core::slice::Iter<'a, Node>>,
+            current_list: core::slice::Iter<'a, Node>,
             list_beginning: bool,
         },
         Finished,
@@ -148,7 +150,7 @@ where
                         }
                         Node::List(list) => {
                             writer.begin_list(W::BeginListOptions::default())?;
-                            stack.push(std::mem::replace(current_list, list.iter()));
+                            stack.push(core::mem::replace(current_list, list.iter()));
                             *list_beginning = true;
                         }
                     }

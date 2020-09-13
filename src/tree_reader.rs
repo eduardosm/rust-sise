@@ -5,7 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use std::convert::Infallible;
+use alloc::vec::Vec;
+use core::convert::Infallible;
 
 use crate::Node;
 use crate::ReadItem;
@@ -47,8 +48,8 @@ pub struct TreeReader<'a> {
 enum State<'a> {
     Beginning(&'a Node),
     Reading {
-        stack: Vec<std::slice::Iter<'a, Node>>,
-        current_list: std::slice::Iter<'a, Node>,
+        stack: Vec<core::slice::Iter<'a, Node>>,
+        current_list: core::slice::Iter<'a, Node>,
     },
     Finished,
 }
@@ -100,7 +101,7 @@ impl<'a> Reader for TreeReader<'a> {
                             kind: ReadItemKind::Atom(atom),
                         }),
                         Node::List(list) => {
-                            stack.push(std::mem::replace(current_list, list.iter()));
+                            stack.push(core::mem::replace(current_list, list.iter()));
                             Ok(ReadItem {
                                 pos: (),
                                 kind: ReadItemKind::ListBeginning,

@@ -11,4 +11,8 @@ license = "MIT OR Apache-2.0"
 [badges]
 travis-ci = { repository = "eduardosm/rust-sise" }
 
+[features]
+default = ["std"]
+std = []
+
 [dependencies]

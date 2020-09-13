@@ -20,6 +20,11 @@
     unused_qualifications
 )]
 #![forbid(unsafe_code)]
+#![no_std]
+
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(test)]
 mod tests {
@@ -100,7 +105,10 @@ pub use writer::{MaybeMultilineOptions, Writer};
 /// ```
 #[macro_export]
 macro_rules! sise_expr {
-    ([$($item:tt),*]) => { $crate::Node::List(vec![$($crate::sise_expr!($item)),*]) };
-    ([$($item:tt,)*]) => { $crate::Node::List(vec![$($crate::sise_expr!($item)),*]) };
+    ([$($item:tt),*]) => { $crate::Node::List($crate::__vec![$($crate::sise_expr!($item)),*]) };
+    ([$($item:tt,)*]) => { $crate::Node::List($crate::__vec![$($crate::sise_expr!($item)),*]) };
     ($node:expr) => { $crate::Node::from($node) };
 }
+
+#[doc(hidden)]
+pub use alloc::vec as __vec;

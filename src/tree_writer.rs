@@ -5,7 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use std::convert::Infallible;
+use alloc::vec::Vec;
+use core::convert::Infallible;
 
 use crate::check_atom;
 use crate::Node;
@@ -82,14 +83,14 @@ impl Writer for TreeWriter {
 
         match self.state {
             State::Beginning => {
-                self.state = State::Finished(Node::Atom(atom.to_string()));
+                self.state = State::Finished(Node::Atom(atom.into()));
                 Ok(())
             }
             State::Writing {
                 ref mut current_list,
                 ..
             } => {
-                current_list.push(Node::Atom(atom.to_string()));
+                current_list.push(Node::Atom(atom.into()));
                 Ok(())
             }
             State::Finished(_) => panic!("writing already finished"),
@@ -109,7 +110,7 @@ impl Writer for TreeWriter {
                 ref mut stack,
                 ref mut current_list,
             } => {
-                stack.push(std::mem::replace(current_list, Vec::new()));
+                stack.push(core::mem::replace(current_list, Vec::new()));
                 Ok(())
             }
             State::Finished(_) => panic!("writing already finished"),
@@ -124,10 +125,10 @@ impl Writer for TreeWriter {
                 ref mut current_list,
             } => {
                 if let Some(parent_list) = stack.pop() {
-                    let child_list = std::mem::replace(current_list, parent_list);
+                    let child_list = core::mem::replace(current_list, parent_list);
                     current_list.push(Node::List(child_list));
                 } else {
-                    let list = std::mem::replace(current_list, Vec::new());
+                    let list = core::mem::replace(current_list, Vec::new());
                     self.state = State::Finished(Node::List(list));
                 }
                 Ok(())

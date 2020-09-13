@@ -5,6 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use alloc::string::String;
+
 /// A trait to allow reading SISE nodes from a generic source.
 ///
 /// Readers that implement this trait produces a sequence of `ReadItem`,

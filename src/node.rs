@@ -5,6 +5,9 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 /// A SISE node.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Node {
