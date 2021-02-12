@@ -3,7 +3,7 @@
 [![Crate](https://img.shields.io/crates/v/sise.svg)](https://crates.io/crates/sise)
 [![API](https://docs.rs/sise/badge.svg)](https://docs.rs/sise)
 [![License](https://img.shields.io/crates/l/sise.svg)](https://github.com/eduardosm/rust-sise#license)
-[![TravisCI Build Status](https://travis-ci.org/eduardosm/rust-sise.svg?branch=master)](https://travis-ci.org/eduardosm/rust-sise)
+[![GitHub Actions Status](https://github.com/eduardosm/rust-sise/workflows/CI/badge.svg)](https://github.com/eduardosm/rust-sise/actions)
 
 SISE (Simple S-expression) is a file format based on S-expressions.
 
