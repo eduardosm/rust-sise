@@ -35,19 +35,13 @@ impl Node {
     /// Return whether the node is an `Atom`.
     #[inline]
     pub fn is_atom(&self) -> bool {
-        match *self {
-            Node::Atom(_) => true,
-            _ => false,
-        }
+        matches!(self, Node::Atom(_))
     }
 
     /// Return whether the node is a `List`.
     #[inline]
     pub fn is_list(&self) -> bool {
-        match *self {
-            Node::List(_) => true,
-            _ => false,
-        }
+        matches!(self, Node::List(_))
     }
 
     /// Consumes the node and returns the atom value if it is an

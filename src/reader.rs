@@ -81,10 +81,7 @@ impl<S: Into<String> + AsRef<str>> ReadItemKind<S> {
     /// Returns whether `self` is an `Atom`.
     #[inline]
     pub fn is_atom(&self) -> bool {
-        match self {
-            ReadItemKind::Atom(_) => true,
-            _ => false,
-        }
+        matches!(self, ReadItemKind::Atom(_))
     }
 
     /// If `self` is an atom, returns it value, otherwise
@@ -110,18 +107,12 @@ impl<S: Into<String> + AsRef<str>> ReadItemKind<S> {
     /// Returns whether `self` is a `ListBeginning`.
     #[inline]
     pub fn is_list_beginning(&self) -> bool {
-        match self {
-            ReadItemKind::ListBeginning => true,
-            _ => false,
-        }
+        matches!(self, ReadItemKind::ListBeginning)
     }
 
     /// Returns whether `self` is a `ListEnding`.
     #[inline]
     pub fn is_list_ending(&self) -> bool {
-        match self {
-            ReadItemKind::ListEnding => true,
-            _ => false,
-        }
+        matches!(self, ReadItemKind::ListEnding)
     }
 }
