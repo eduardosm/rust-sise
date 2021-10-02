@@ -110,7 +110,7 @@ impl Writer for TreeWriter {
                 ref mut stack,
                 ref mut current_list,
             } => {
-                stack.push(core::mem::replace(current_list, Vec::new()));
+                stack.push(core::mem::take(current_list));
                 Ok(())
             }
             State::Finished(_) => panic!("writing already finished"),
@@ -128,7 +128,7 @@ impl Writer for TreeWriter {
                     let child_list = core::mem::replace(current_list, parent_list);
                     current_list.push(Node::List(child_list));
                 } else {
-                    let list = core::mem::replace(current_list, Vec::new());
+                    let list = core::mem::take(current_list);
                     self.state = State::Finished(Node::List(list));
                 }
                 Ok(())

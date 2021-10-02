@@ -267,6 +267,7 @@ impl<'a, 'b> Writer for SpacedStringWriter<'a, 'b> {
         Ok(())
     }
 
+    #[allow(clippy::branches_sharing_code)]
     fn begin_list(&mut self, opts: SpacedStringWriterNodeOptions) -> Result<(), Infallible> {
         match self.state {
             State::Beginning => {
