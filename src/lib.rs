@@ -29,25 +29,19 @@ extern crate std;
 #[cfg(test)]
 mod tests;
 
-mod compact_string_writer;
 mod parse_tree;
 mod parser;
-mod spaced_string_writer;
+mod serialize_tree;
+mod serializer;
 mod tree;
 mod util;
-mod write_from_tree;
-mod writer;
 
-pub use compact_string_writer::CompactStringWriter;
 pub use parse_tree::parse_tree;
 pub use parser::{ParseError, ParsedItem, Parser};
-pub use spaced_string_writer::{
-    SpacedStringWriter, SpacedStringWriterNodeOptions, SpacedStringWriterStyle,
-};
+pub use serialize_tree::serialize_tree;
+pub use serializer::{Serializer, SerializerStyle};
 pub use tree::TreeNode;
 pub use util::{check_atom, is_atom_chr, is_atom_string_chr};
-pub use write_from_tree::{write_from_tree, WriteFromTreeAtomOptions};
-pub use writer::{MaybeMultilineOptions, Writer};
 
 /// Macro to define trees of nodes with a lighter syntax.
 ///

@@ -7,104 +7,93 @@
 
 use alloc::vec::Vec;
 
-use crate::MaybeMultilineOptions;
-use crate::TreeNode;
-use crate::Writer;
+use crate::{Serializer, TreeNode};
 
-pub trait WriteFromTreeAtomOptions {
-    fn list_beginning() -> Self;
-    fn non_list_beginning() -> Self;
-}
-
-impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
-    #[inline]
-    fn list_beginning() -> Self {
-        Self::no_break_line()
-    }
-
-    #[inline]
-    fn non_list_beginning() -> Self {
-        Self::break_line()
-    }
-}
-
-/// Write the tree of nodes `root_node` into `writer`.
+/// Serializes a tree of nodes into `serializer`.
 ///
 /// # Example
 ///
 /// ```
 /// use sise::sise_tree;
-/// use sise::Writer as _;
 ///
 /// let tree = sise_tree!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 ///
-/// let mut result = String::new();
-/// let mut writer = sise::CompactStringWriter::new(&mut result);
-///
-/// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(()).unwrap();
-///
-/// let expected_result = "(example (1 2 3) (a b c))";
-/// assert_eq!(result, expected_result);
-/// ```
-///
-/// If you use `SpacedStringWriter`, atoms at the beginning of a list
-/// will be placed in the same line as the openning `(`:
-///
-/// ```
-/// use sise::sise_tree;
-/// use sise::Writer as _;
-///
-/// let tree = sise_tree!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
-///
-/// let style = sise::SpacedStringWriterStyle {
+/// let style = sise::SerializerStyle {
 ///     line_break: "\n",
 ///     indentation: " ",
 /// };
 ///
 /// let mut result = String::new();
-/// let mut writer = sise::SpacedStringWriter::new(style, &mut result);
+/// let mut serializer = sise::Serializer::new(style, &mut result);
 ///
-/// sise::write_from_tree(&mut writer, &tree).unwrap();
-/// writer.finish(()).unwrap();
+/// sise::serialize_tree(&mut serializer, &tree, usize::MAX);
+/// // Don't forget to finish the serializer
+/// serializer.finish(false);
 ///
-/// let expected_result = "(example\n (1\n  2\n  3\n )\n (a\n  b\n  c\n )\n)";
+/// let expected_result = "(example (1 2 3) (a b c))";
 /// assert_eq!(result, expected_result);
 /// ```
 ///
-/// It does not consume the writer, so it can also be used to write
+/// If you use multi-line style, atoms at the beginning of a list
+/// will be placed in the same line as the openning `(`:
+///
+/// ```
+/// use sise::sise_tree;
+///
+/// let tree = sise_tree!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+///
+/// let style = sise::SerializerStyle {
+///     line_break: "\n",
+///     indentation: " ",
+/// };
+///
+/// let mut result = String::new();
+/// let mut serializer = sise::Serializer::new(style, &mut result);
+///
+/// sise::serialize_tree(&mut serializer, &tree, 0);
+/// // Don't forget to finish the serializer
+/// serializer.finish(true);
+///
+/// let expected_result = "(example\n (1\n  2\n  3\n )\n (a\n  b\n  c\n )\n)\n";
+/// assert_eq!(result, expected_result);
+/// ```
+///
+/// It does not consume the serializer, so it can also be used to serialize
 /// a sub-tree:
 ///
 /// ```
 /// use sise::sise_tree;
-/// use sise::Writer as _;
 ///
 /// let tree = sise_tree!(["1", "2", "3"]);
 ///
+/// let style = sise::SerializerStyle {
+///     line_break: "\n",
+///     indentation: " ",
+/// };
+///
 /// let mut result = String::new();
-/// let mut writer = sise::CompactStringWriter::new(&mut result);
+/// let mut serializer = sise::Serializer::new(style, &mut result);
 ///
-/// // Write the head
-/// writer.begin_list(()).unwrap();
-/// writer.write_atom("head", ()).unwrap();
+/// // Serialize the head
+/// serializer.begin_list(usize::MAX);
+/// serializer.put_atom("head", usize::MAX);
 ///
-/// // Write the subtree
-/// sise::write_from_tree(&mut writer, &tree).unwrap();
+/// // Serialize the subtree
+/// sise::serialize_tree(&mut serializer, &tree, usize::MAX);
 ///
-/// // Write the tail
-/// writer.write_atom("tail", ()).unwrap();
-/// writer.end_list(()).unwrap();
-/// writer.finish(()).unwrap();
+/// // Serialize the tail
+/// serializer.put_atom("tail", usize::MAX);
+/// serializer.end_list();
+/// serializer.finish(false);
 ///
 /// let expected_result = "(head (1 2 3) tail)";
 /// assert_eq!(result, expected_result);
 /// ```
-pub fn write_from_tree<W: Writer>(writer: &mut W, root_node: &TreeNode) -> Result<(), W::Error>
-where
-    W::AtomOptions: Default + WriteFromTreeAtomOptions,
-    W::BeginListOptions: Default,
-    W::EndListOptions: Default,
-{
+pub fn serialize_tree(
+    serializer: &mut Serializer<'_, '_>,
+    root_node: &TreeNode,
+    break_line_at: usize,
+) {
     enum State<'a> {
         Beginning(&'a TreeNode),
         Writing {
@@ -121,11 +110,11 @@ where
         match state {
             State::Beginning(node) => match node {
                 TreeNode::Atom(atom) => {
-                    writer.write_atom(atom, W::AtomOptions::default())?;
+                    serializer.put_atom(atom, break_line_at);
                     state = State::Finished;
                 }
                 TreeNode::List(list) => {
-                    writer.begin_list(W::BeginListOptions::default())?;
+                    serializer.begin_list(break_line_at);
                     state = State::Writing {
                         stack: Vec::new(),
                         current_list: list.iter(),
@@ -142,20 +131,20 @@ where
                     match node {
                         TreeNode::Atom(atom) => {
                             if *list_beginning {
-                                writer.write_atom(atom, W::AtomOptions::list_beginning())?;
+                                serializer.put_atom(atom, usize::MAX);
                             } else {
-                                writer.write_atom(atom, W::AtomOptions::non_list_beginning())?;
+                                serializer.put_atom(atom, break_line_at);
                             }
                             *list_beginning = false;
                         }
                         TreeNode::List(list) => {
-                            writer.begin_list(W::BeginListOptions::default())?;
+                            serializer.begin_list(break_line_at);
                             stack.push(core::mem::replace(current_list, list.iter()));
                             *list_beginning = true;
                         }
                     }
                 } else {
-                    writer.end_list(W::EndListOptions::default())?;
+                    serializer.end_list();
                     if let Some(parent_list) = stack.pop() {
                         *current_list = parent_list;
                         *list_beginning = false;
@@ -164,7 +153,7 @@ where
                     }
                 }
             }
-            State::Finished => return Ok(()),
+            State::Finished => return,
         }
     }
 }

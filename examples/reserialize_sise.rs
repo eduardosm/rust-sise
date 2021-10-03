@@ -17,8 +17,6 @@
 
 use std::io::Read as _;
 
-use sise::Writer as _;
-
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
     let mut file = std::fs::OpenOptions::new().read(true).open(path)?;
     let mut data = Vec::new();
@@ -56,24 +54,19 @@ fn main() {
     let parsed = sise::parse_tree(&mut parser).unwrap();
     parser.finish().unwrap();
 
-    match serialize_style {
-        SerializeStyle::Compact => {
-            let mut reserialized = String::new();
-            let mut writer = sise::CompactStringWriter::new(&mut reserialized);
-            sise::write_from_tree(&mut writer, &parsed).unwrap();
-            writer.finish(()).unwrap();
-            println!("{}", reserialized);
-        }
-        SerializeStyle::Spaced => {
-            let spaced_style = sise::SpacedStringWriterStyle {
-                line_break: "\n",
-                indentation: "  ",
-            };
-            let mut reserialized = String::new();
-            let mut writer = sise::SpacedStringWriter::new(spaced_style, &mut reserialized);
-            sise::write_from_tree(&mut writer, &parsed).unwrap();
-            writer.finish(()).unwrap();
-            println!("{}", reserialized);
-        }
-    }
+    let break_line_at = match serialize_style {
+        SerializeStyle::Compact => usize::MAX,
+        SerializeStyle::Spaced => 0,
+    };
+    let mut reserialized = String::new();
+    let mut serializer = sise::Serializer::new(
+        sise::SerializerStyle {
+            line_break: "\n",
+            indentation: "  ",
+        },
+        &mut reserialized,
+    );
+    sise::serialize_tree(&mut serializer, &parsed, break_line_at);
+    serializer.finish(false);
+    println!("{}", reserialized);
 }
