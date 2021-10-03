@@ -1,7 +1,7 @@
 /// Returns whether `chr` is a valid atom character outside a
 /// string (i.e. one of `:atomchar:` documented at `TreeNode::Atom`).
 #[inline]
-pub fn is_atom_chr(chr: char) -> bool {
+pub const fn is_atom_chr(chr: char) -> bool {
     matches!(
         chr,
         '!' | '#'
@@ -31,7 +31,7 @@ pub fn is_atom_chr(chr: char) -> bool {
 /// string, excluding `"` and `\` (i.e. one of `:stringchar:`
 /// documented at `TreeNode::Atom`).
 #[inline]
-pub fn is_atom_string_chr(chr: char) -> bool {
+pub const fn is_atom_string_chr(chr: char) -> bool {
     matches!(chr, ' '..='~' if chr != '"' && chr != '\\')
 }
 
