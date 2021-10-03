@@ -18,7 +18,7 @@ use crate::{ParseError, ParsedItem, Parser, TreeNode};
 ///
 /// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
-/// let root_node = sise::parse_into_tree(&mut parser).unwrap();
+/// let root_node = sise::parse_tree(&mut parser).unwrap();
 /// // Do not forget calling `finish` on the parser.
 /// parser.finish().unwrap();
 /// let expected_result = sise_tree!(["test", ["1", "2", "3"]]);
@@ -42,7 +42,7 @@ use crate::{ParseError, ParsedItem, Parser, TreeNode};
 /// );
 ///
 /// // Parse the subtree
-/// let root_node = sise::parse_into_tree(&mut parser).unwrap();
+/// let root_node = sise::parse_tree(&mut parser).unwrap();
 /// let expected_result = sise_tree!(["1", "2", "3"]);
 /// assert_eq!(root_node, expected_result);
 ///
@@ -54,7 +54,7 @@ use crate::{ParseError, ParsedItem, Parser, TreeNode};
 /// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::ListEnd(18));
 /// parser.finish().unwrap();
 /// ```
-pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<TreeNode, ParseError> {
+pub fn parse_tree(parser: &mut Parser<'_>) -> Result<TreeNode, ParseError> {
     struct StackItem {
         list_items: Vec<TreeNode>,
     }

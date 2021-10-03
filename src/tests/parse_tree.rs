@@ -5,7 +5,7 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use crate::parse_into_tree;
+use crate::parse_tree;
 use crate::sise_tree;
 use crate::Parser;
 use crate::TreeNode;
@@ -18,7 +18,7 @@ struct ParseTreeTest<'a> {
 impl<'a> ParseTreeTest<'a> {
     fn run(&self) {
         let mut parser = Parser::new(self.src_data);
-        let root_node = parse_into_tree(&mut parser).unwrap();
+        let root_node = parse_tree(&mut parser).unwrap();
         parser.finish().unwrap();
         assert_eq!(root_node, self.expected_tree);
     }

@@ -30,7 +30,7 @@ extern crate std;
 mod tests;
 
 mod compact_string_writer;
-mod parse_into_tree;
+mod parse_tree;
 mod parser;
 mod spaced_string_writer;
 mod tree;
@@ -39,7 +39,7 @@ mod write_from_tree;
 mod writer;
 
 pub use compact_string_writer::CompactStringWriter;
-pub use parse_into_tree::parse_into_tree;
+pub use parse_tree::parse_tree;
 pub use parser::{ParseError, ParsedItem, Parser};
 pub use spaced_string_writer::{
     SpacedStringWriter, SpacedStringWriterNodeOptions, SpacedStringWriterStyle,

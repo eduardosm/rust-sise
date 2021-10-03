@@ -1,4 +1,4 @@
-mod parse_into_tree;
+mod parse_tree;
 mod parser;
 mod util;
 mod writer;
