@@ -1,17 +1,38 @@
 /// Returns whether `chr` is a valid atom character outside a
 /// string (i.e. one of `:atomchar:` documented at `TreeNode::Atom`).
+#[inline]
 pub fn is_atom_chr(chr: char) -> bool {
-    let chars = [
-        '!', '#', '$', '%', '&', '*', '+', '-', '.', '/', ':', '<', '=', '>', '?', '@', '_', '~',
-    ];
-    chr.is_ascii_alphanumeric() || chars.contains(&chr)
+    matches!(
+        chr,
+        '!' | '#'
+            | '$'
+            | '%'
+            | '&'
+            | '*'
+            | '+'
+            | '-'
+            | '.'
+            | '/'
+            | '0'..='9'
+            | ':'
+            | '<'
+            | '='
+            | '>'
+            | '?'
+            | '@'
+            | 'A'..='Z'
+            | '_'
+            | 'a'..='z'
+            | '~'
+    )
 }
 
 /// Returns whether `chr` is a valid atom character inside a
 /// string, excluding `"` and `\` (i.e. one of `:stringchar:`
 /// documented at `TreeNode::Atom`).
+#[inline]
 pub fn is_atom_string_chr(chr: char) -> bool {
-    (chr.is_ascii_graphic() && chr != '"' && chr != '\\') || chr == ' '
+    matches!(chr, ' '..='~' if chr != '"' && chr != '\\')
 }
 
 /// Checks whether `atom` is a valid atom (i.e. matches the regular
