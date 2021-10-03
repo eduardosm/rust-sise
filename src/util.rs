@@ -38,89 +38,36 @@ pub fn is_atom_string_chr(chr: char) -> bool {
 /// Checks whether `atom` is a valid atom (i.e. matches the regular
 /// expression documented at `TreeNode::Atom`).
 pub fn check_atom(atom: &str) -> bool {
-    enum State {
-        Beginning,
-        Normal,
-        String,
-        StringBackslash,
+    if atom.is_empty() {
+        // Empty atom
+        return false;
     }
 
-    let mut state = State::Beginning;
     let mut iter = atom.chars();
+    let mut in_string = false;
     loop {
-        let chr = iter.next();
-        match state {
-            State::Beginning => {
-                match chr {
-                    Some('"') => {
-                        state = State::String;
-                    }
-                    Some(chr) if is_atom_chr(chr) => {
-                        state = State::Normal;
-                    }
-                    Some(_) => {
-                        // Illegal character
-                        return false;
-                    }
-                    None => {
-                        // Empty atom
-                        return false;
-                    }
-                }
+        if !in_string {
+            match iter.next() {
+                None => return true,
+                Some('"') => in_string = true,
+                Some(chr) if is_atom_chr(chr) => {}
+                // Invalid character
+                Some(_) => return false,
             }
-            State::Normal => {
-                match chr {
-                    Some('"') => {
-                        state = State::String;
-                    }
-                    Some(chr) if is_atom_chr(chr) => {
-                        state = State::Normal;
-                    }
-                    Some(_) => {
-                        // Illegal character
-                        return false;
-                    }
-                    None => {
-                        // Valid atom
-                        return true;
-                    }
-                }
-            }
-            State::String => {
-                match chr {
-                    Some('"') => {
-                        state = State::Normal;
-                    }
-                    Some('\\') => {
-                        state = State::StringBackslash;
-                    }
-                    Some(chr) if is_atom_string_chr(chr) => {
-                        state = State::String;
-                    }
-                    Some(_) => {
-                        // Illegal character
-                        return false;
-                    }
-                    None => {
-                        // Incomplete string
-                        return false;
-                    }
-                }
-            }
-            State::StringBackslash => {
-                match chr {
-                    Some(chr) if is_atom_string_chr(chr) || chr == '"' || chr == '\\' => {
-                        state = State::String;
-                    }
-                    Some(_) => {
-                        // Illegal character
-                        return false;
-                    }
-                    None => {
-                        // Incomplete string
-                        return false;
-                    }
-                }
+        } else {
+            match iter.next() {
+                // Unfinished string
+                None => return false,
+                Some('"') => in_string = false,
+                Some('\\') => match iter.next() {
+                    Some('"') | Some('\\') => {}
+                    Some(chr) if is_atom_string_chr(chr) => {}
+                    // Invalid character or unfinished string
+                    Some(_) | None => return false,
+                },
+                Some(chr) if is_atom_string_chr(chr) => {}
+                // Invalid character
+                Some(_) => return false,
             }
         }
     }
