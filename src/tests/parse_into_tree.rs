@@ -5,21 +5,20 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use crate::read_into_tree;
+use crate::parse_into_tree;
 use crate::sise_expr;
 use crate::Node;
 use crate::Parser;
-use crate::Reader;
 
-struct ReadTreeTest<'a> {
+struct ParseTreeTest<'a> {
     src_data: &'a str,
     expected_tree: Node,
 }
 
-impl<'a> ReadTreeTest<'a> {
+impl<'a> ParseTreeTest<'a> {
     fn run(&self) {
         let mut parser = Parser::new(self.src_data);
-        let root_node = read_into_tree(&mut parser).unwrap();
+        let root_node = parse_into_tree(&mut parser).unwrap();
         parser.finish().unwrap();
         assert_eq!(root_node, self.expected_tree);
     }
@@ -27,7 +26,7 @@ impl<'a> ReadTreeTest<'a> {
 
 #[test]
 fn test_empty_list() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "()",
         expected_tree: sise_expr!([]),
     }
@@ -36,7 +35,7 @@ fn test_empty_list() {
 
 #[test]
 fn test_single_atom() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "atom",
         expected_tree: sise_expr!("atom"),
     }
@@ -45,7 +44,7 @@ fn test_single_atom() {
 
 #[test]
 fn test_simple_list_1() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "(atom-1)",
         expected_tree: sise_expr!(["atom-1"]),
     }
@@ -54,7 +53,7 @@ fn test_simple_list_1() {
 
 #[test]
 fn test_simple_list_2() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "(atom-1 atom-2)",
         expected_tree: sise_expr!(["atom-1", "atom-2"]),
     }
@@ -63,7 +62,7 @@ fn test_simple_list_2() {
 
 #[test]
 fn test_nested_list_1() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "(())",
         expected_tree: sise_expr!([[]]),
     }
@@ -72,7 +71,7 @@ fn test_nested_list_1() {
 
 #[test]
 fn test_nested_list_2() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "(() ())",
         expected_tree: sise_expr!([[], []]),
     }
@@ -81,7 +80,7 @@ fn test_nested_list_2() {
 
 #[test]
 fn test_nested_list_3() {
-    ReadTreeTest {
+    ParseTreeTest {
         src_data: "((atom-1) (atom-2 atom-3))",
         expected_tree: sise_expr!([["atom-1"], ["atom-2", "atom-3"]]),
     }

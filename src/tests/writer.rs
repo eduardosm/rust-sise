@@ -14,7 +14,6 @@ use crate::Node;
 use crate::SpacedStringWriter;
 use crate::SpacedStringWriterNodeOptions;
 use crate::SpacedStringWriterStyle;
-use crate::TreeWriter;
 use crate::Writer as _;
 
 const SPACED_STYLE: SpacedStringWriterStyle<'static> = SpacedStringWriterStyle {
@@ -43,12 +42,6 @@ impl<'a> StringWriterTest<'a> {
         write_from_tree(&mut writer, &self.root_node).unwrap();
         writer.finish(()).unwrap();
         assert_eq!(result, self.expected_spaced);
-
-        // tree
-        let mut writer = TreeWriter::new();
-        write_from_tree(&mut writer, &self.root_node).unwrap();
-        let result = writer.finish(()).unwrap();
-        assert_eq!(result, self.root_node);
     }
 }
 

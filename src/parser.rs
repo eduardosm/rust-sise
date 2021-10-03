@@ -7,40 +7,46 @@
 
 use crate::is_atom_chr;
 use crate::is_atom_string_chr;
-use crate::ReadItem;
-use crate::ReadItemKind;
-use crate::Reader;
 
-/// Position of a byte in the source file.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BytePos(pub usize);
-
-impl core::fmt::Display for BytePos {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        core::fmt::Display::fmt(&self.0, f)
-    }
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum ParsedItem<'a> {
+    /// An atom
+    ///
+    /// The `usize` specifies its byte offset in the input file
+    Atom(&'a str, usize),
+    /// The start of a list (`(`)
+    ///
+    /// The `usize` specifies its byte offset in the input file
+    ListStart(usize),
+    /// The end of a list (`)`)
+    ///
+    /// The `usize` specifies its byte offset in the input file
+    ListEnd(usize),
 }
 
 /// Represents a parse error.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParseError {
-    /// There is an invalid character.
-    IllegalChr { pos: BytePos, chr: char },
+    /// There is an invalid character
+    IllegalChr { pos: usize, chr: char },
 
-    /// There is an invalid character inside a string (enclosed with `"`).
-    IllegalChrInString { pos: BytePos, chr: char },
+    /// There is an invalid character inside a string (enclosed with `"`)
+    IllegalChrInString { pos: usize, chr: char },
 
-    /// There is an invalid character inside a comment.
-    IllegalChrInComment { pos: BytePos, chr: char },
+    /// There is an invalid character inside a comment
+    IllegalChrInComment { pos: usize, chr: char },
 
-    /// End-of-file is reached before finding the closing `"`.
-    UnfinishedString { pos: BytePos },
+    /// End-of-file is reached before finding the closing `"`
+    UnfinishedString { pos: usize },
 
-    /// Unexpected token.
-    UnexpectedToken { pos: BytePos, token: TokenKind },
+    /// Unexpected end-of-file
+    UnexpectedEof { pos: usize },
 
-    /// Found a token when expecting end-of-file.
-    ExpectedEof { pos: BytePos },
+    /// Unexpected `)`
+    UnexpectedRightParen { pos: usize },
+
+    /// Found a token when expecting end-of-file
+    ExpectedEof { pos: usize },
 }
 
 impl core::fmt::Display for ParseError {
@@ -56,8 +62,11 @@ impl core::fmt::Display for ParseError {
                 write!(f, "illegal character {:?} in comment at byte {}", chr, pos)
             }
             ParseError::UnfinishedString { pos } => write!(f, "unfinished string at byte {}", pos),
-            ParseError::UnexpectedToken { pos, ref token } => {
-                write!(f, "unexpected token {:?} at byte {}", token, pos)
+            ParseError::UnexpectedEof { pos } => {
+                write!(f, "unexpected end-of-file at byte {}", pos)
+            }
+            ParseError::UnexpectedRightParen { pos } => {
+                write!(f, "unexpected `)` at byte {}", pos)
             }
             ParseError::ExpectedEof { pos } => write!(f, "expected end-of-file at byte {}", pos),
         }
@@ -67,47 +76,24 @@ impl core::fmt::Display for ParseError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {}
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum TokenKind {
-    Eof,
-    LeftParen,
-    RightParen,
-    Atom,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-enum Token<'a> {
-    Eof,
-    LeftParen,
-    RightParen,
-    Atom(&'a str),
-}
-
 /// Parser that decodes a SISE file from memory.
 ///
 /// # Example
 ///
 /// ```
-/// use sise::Reader as _;
 /// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::ListStart(0));
 /// assert_eq!(
-///     parser.read().unwrap().kind,
-///     sise::ReadItemKind::ListBeginning,
+///     parser.next_item().unwrap(),
+///     sise::ParsedItem::Atom("test", 1),
 /// );
-/// assert_eq!(
-///     parser.read().unwrap().kind,
-///     sise::ReadItemKind::Atom("test"),
-/// );
-/// assert_eq!(
-///     parser.read().unwrap().kind,
-///     sise::ReadItemKind::ListBeginning,
-/// );
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("1"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("2"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::Atom("3"));
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
-/// assert_eq!(parser.read().unwrap().kind, sise::ReadItemKind::ListEnding);
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::ListStart(6));
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::Atom("1", 7));
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::Atom("2", 9));
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::Atom("3", 11));
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::ListEnd(12));
+/// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::ListEnd(13));
 /// parser.finish().unwrap();
 /// ```
 pub struct Parser<'a> {
@@ -128,55 +114,31 @@ impl<'a> Parser<'a> {
             state: State::Beginning,
         }
     }
-}
 
-impl<'a> Reader for Parser<'a> {
-    type Error = ParseError;
-    type String = &'a str;
-    type Pos = BytePos;
-
-    fn read(&mut self) -> Result<ReadItem<&'a str, BytePos>, ParseError> {
+    pub fn next_item(&mut self) -> Result<ParsedItem<'a>, ParseError> {
         match self.state {
             State::Beginning => {
                 let (pos, token) = self.lexer.get_token()?;
                 match token {
-                    Token::Eof => Err(ParseError::UnexpectedToken {
-                        pos,
-                        token: TokenKind::Eof,
-                    }),
+                    Token::Eof => Err(ParseError::UnexpectedEof { pos }),
                     Token::LeftParen => {
                         self.state = State::Parsing { depth: 0 };
-                        Ok(ReadItem {
-                            pos,
-                            kind: ReadItemKind::ListBeginning,
-                        })
+                        Ok(ParsedItem::ListStart(pos))
                     }
-                    Token::RightParen => Err(ParseError::UnexpectedToken {
-                        pos,
-                        token: TokenKind::RightParen,
-                    }),
+                    Token::RightParen => Err(ParseError::UnexpectedRightParen { pos }),
                     Token::Atom(atom) => {
                         self.state = State::Finishing;
-                        Ok(ReadItem {
-                            pos,
-                            kind: ReadItemKind::Atom(atom),
-                        })
+                        Ok(ParsedItem::Atom(atom, pos))
                     }
                 }
             }
             State::Parsing { ref mut depth } => {
                 let (pos, token) = self.lexer.get_token()?;
                 match token {
-                    Token::Eof => Err(ParseError::UnexpectedToken {
-                        pos,
-                        token: TokenKind::Eof,
-                    }),
+                    Token::Eof => Err(ParseError::UnexpectedEof { pos }),
                     Token::LeftParen => {
                         *depth += 1;
-                        Ok(ReadItem {
-                            pos,
-                            kind: ReadItemKind::ListBeginning,
-                        })
+                        Ok(ParsedItem::ListStart(pos))
                     }
                     Token::RightParen => {
                         if *depth == 0 {
@@ -184,22 +146,16 @@ impl<'a> Reader for Parser<'a> {
                         } else {
                             *depth -= 1;
                         }
-                        Ok(ReadItem {
-                            pos,
-                            kind: ReadItemKind::ListEnding,
-                        })
+                        Ok(ParsedItem::ListEnd(pos))
                     }
-                    Token::Atom(atom) => Ok(ReadItem {
-                        pos,
-                        kind: ReadItemKind::Atom(atom),
-                    }),
+                    Token::Atom(atom) => Ok(ParsedItem::Atom(atom, pos)),
                 }
             }
             State::Finishing => panic!("parsing finished"),
         }
     }
 
-    fn finish(mut self) -> Result<(), ParseError> {
+    pub fn finish(mut self) -> Result<(), ParseError> {
         match self.state {
             State::Finishing => {
                 let (pos, token) = self.lexer.get_token()?;
@@ -211,6 +167,14 @@ impl<'a> Reader for Parser<'a> {
             _ => panic!("parsing not finished yet"),
         }
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Token<'a> {
+    Eof,
+    LeftParen,
+    RightParen,
+    Atom(&'a str),
 }
 
 struct Lexer<'a> {
@@ -226,12 +190,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn get_token(&mut self) -> Result<(BytePos, Token<'a>), ParseError> {
+    fn get_token(&mut self) -> Result<(usize, Token<'a>), ParseError> {
         loop {
             match self.char_iter.next() {
                 None => {
                     // end-of-file
-                    return Ok((BytePos(self.input_str.len()), Token::Eof));
+                    return Ok((self.input_str.len(), Token::Eof));
                 }
                 Some((chr_pos, chr)) => match chr {
                     // skip whitespace
@@ -245,28 +209,25 @@ impl<'a> Lexer<'a> {
                                 chr => {
                                     return Err(ParseError::IllegalChrInComment {
                                         chr,
-                                        pos: BytePos(chr_pos),
+                                        pos: chr_pos,
                                     })
                                 }
                             }
                         }
                     }
                     // delimiters
-                    '(' => return Ok((BytePos(chr_pos), Token::LeftParen)),
-                    ')' => return Ok((BytePos(chr_pos), Token::RightParen)),
+                    '(' => return Ok((chr_pos, Token::LeftParen)),
+                    ')' => return Ok((chr_pos, Token::RightParen)),
                     // atom
                     chr if is_atom_chr(chr) || chr == '"' => {
                         let begin_pos = chr_pos;
                         let end_pos = self.lex_atom(chr)?;
                         let atom = &self.input_str[begin_pos..end_pos];
-                        return Ok((BytePos(begin_pos), Token::Atom(atom)));
+                        return Ok((begin_pos, Token::Atom(atom)));
                     }
                     // invalid character
                     chr => {
-                        return Err(ParseError::IllegalChr {
-                            chr,
-                            pos: BytePos(chr_pos),
-                        });
+                        return Err(ParseError::IllegalChr { chr, pos: chr_pos });
                     }
                 },
             }
@@ -302,37 +263,27 @@ impl<'a> Lexer<'a> {
                 State::String => match self.char_iter.next() {
                     None => {
                         return Err(ParseError::UnfinishedString {
-                            pos: BytePos(self.input_str.len()),
+                            pos: self.input_str.len(),
                         })
                     }
                     Some((chr_pos, chr)) => match chr {
                         '"' => state = State::Normal,
                         '\\' => state = State::StringBackslash,
                         chr if is_atom_string_chr(chr) => {}
-                        chr => {
-                            return Err(ParseError::IllegalChrInString {
-                                chr,
-                                pos: BytePos(chr_pos),
-                            })
-                        }
+                        chr => return Err(ParseError::IllegalChrInString { chr, pos: chr_pos }),
                     },
                 },
                 State::StringBackslash => match self.char_iter.next() {
                     None => {
                         return Err(ParseError::UnfinishedString {
-                            pos: BytePos(self.input_str.len()),
+                            pos: self.input_str.len(),
                         })
                     }
                     Some((chr_pos, chr)) => match chr {
                         chr if is_atom_string_chr(chr) || chr == '"' || chr == '\\' => {
                             state = State::String
                         }
-                        chr => {
-                            return Err(ParseError::IllegalChrInString {
-                                chr,
-                                pos: BytePos(chr_pos),
-                            })
-                        }
+                        chr => return Err(ParseError::IllegalChrInString { chr, pos: chr_pos }),
                     },
                 },
             }

@@ -5,14 +5,21 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-#![deny(rust_2018_idioms, unreachable_pub)]
+#![deny(
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unused_must_use,
+    unused_qualifications
+)]
+#![forbid(unsafe_code)]
 
-use sise::Reader as _;
+use std::io::Read as _;
+
 use sise::Writer as _;
 
 fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
-    use std::io::Read;
-
     let mut file = std::fs::OpenOptions::new().read(true).open(path)?;
     let mut data = Vec::new();
     file.read_to_end(&mut data)?;
@@ -46,7 +53,7 @@ fn main() {
     let file_data = read_file(std::path::Path::new(&args[2])).unwrap();
     let file_data = String::from_utf8(file_data).unwrap();
     let mut parser = sise::Parser::new(&file_data);
-    let parsed = sise::read_into_tree(&mut parser).unwrap();
+    let parsed = sise::parse_into_tree(&mut parser).unwrap();
     parser.finish().unwrap();
 
     match serialize_style {
