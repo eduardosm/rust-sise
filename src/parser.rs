@@ -203,7 +203,7 @@ impl<'a> Lexer<'a> {
                                     return Err(ParseError::IllegalChrInComment {
                                         chr,
                                         pos: chr_pos,
-                                    })
+                                    });
                                 }
                             }
                         }
@@ -228,57 +228,44 @@ impl<'a> Lexer<'a> {
     }
 
     fn lex_atom(&mut self, first_chr: char) -> Result<usize, ParseError> {
-        enum State {
-            Normal,
-            String,
-            StringBackslash,
-        }
-
-        let mut state = if first_chr == '"' {
-            State::String
-        } else {
-            State::Normal
-        };
+        let mut in_string = first_chr == '"';
         loop {
-            let saved_iter = self.char_iter.clone();
-            match state {
-                State::Normal => match self.char_iter.next() {
+            if !in_string {
+                let saved_iter = self.char_iter.clone();
+                match self.char_iter.next() {
                     None => return Ok(self.input_str.len()),
-                    Some((chr_pos, chr)) => match chr {
-                        '"' => state = State::String,
-                        chr if is_atom_chr(chr) => {}
-                        _ => {
-                            self.char_iter = saved_iter;
-                            return Ok(chr_pos);
-                        }
-                    },
-                },
-                State::String => match self.char_iter.next() {
+                    Some((_, '"')) => in_string = true,
+                    Some((_, chr)) if is_atom_chr(chr) => {}
+                    Some((chr_pos, _)) => {
+                        self.char_iter = saved_iter;
+                        return Ok(chr_pos);
+                    }
+                }
+            } else {
+                match self.char_iter.next() {
                     None => {
                         return Err(ParseError::UnfinishedString {
                             pos: self.input_str.len(),
-                        })
+                        });
                     }
-                    Some((chr_pos, chr)) => match chr {
-                        '"' => state = State::Normal,
-                        '\\' => state = State::StringBackslash,
-                        chr if is_atom_string_chr(chr) => {}
-                        chr => return Err(ParseError::IllegalChrInString { chr, pos: chr_pos }),
-                    },
-                },
-                State::StringBackslash => match self.char_iter.next() {
-                    None => {
-                        return Err(ParseError::UnfinishedString {
-                            pos: self.input_str.len(),
-                        })
-                    }
-                    Some((chr_pos, chr)) => match chr {
-                        chr if is_atom_string_chr(chr) || chr == '"' || chr == '\\' => {
-                            state = State::String
+                    Some((_, '"')) => in_string = false,
+                    Some((_, '\\')) => match self.char_iter.next() {
+                        None => {
+                            return Err(ParseError::UnfinishedString {
+                                pos: self.input_str.len(),
+                            });
                         }
-                        chr => return Err(ParseError::IllegalChrInString { chr, pos: chr_pos }),
+                        Some((_, '"')) | Some((_, '\\')) => {}
+                        Some((_, chr)) if is_atom_string_chr(chr) => {}
+                        Some((chr_pos, chr)) => {
+                            return Err(ParseError::IllegalChrInString { chr, pos: chr_pos });
+                        }
                     },
-                },
+                    Some((_, chr)) if is_atom_string_chr(chr) => {}
+                    Some((chr_pos, chr)) => {
+                        return Err(ParseError::IllegalChrInString { chr, pos: chr_pos });
+                    }
+                }
             }
         }
     }
