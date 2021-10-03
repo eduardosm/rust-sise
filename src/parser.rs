@@ -190,39 +190,34 @@ impl<'a> Lexer<'a> {
                     // end-of-file
                     return Ok((self.input_str.len(), Token::Eof));
                 }
-                Some((chr_pos, chr)) => match chr {
-                    // skip whitespace
-                    ' ' | '\t' | '\n' | '\r' => {}
-                    // skip comments
-                    ';' => {
-                        for (chr_pos, chr) in &mut self.char_iter {
-                            match chr {
-                                '\n' | '\r' => break,
-                                '\t' | ' '..='~' => {}
-                                chr => {
-                                    return Err(ParseError::IllegalChrInComment {
-                                        chr,
-                                        pos: chr_pos,
-                                    });
-                                }
+                // skip whitespace
+                Some((_, ' ' | '\t' | '\n' | '\r')) => {}
+                // skip comments
+                Some((_, ';')) => {
+                    for (chr_pos, chr) in &mut self.char_iter {
+                        match chr {
+                            '\n' | '\r' => break,
+                            '\t' | ' '..='~' => {}
+                            chr => {
+                                return Err(ParseError::IllegalChrInComment { chr, pos: chr_pos });
                             }
                         }
                     }
-                    // delimiters
-                    '(' => return Ok((chr_pos, Token::LeftParen)),
-                    ')' => return Ok((chr_pos, Token::RightParen)),
-                    // atom
-                    chr if is_atom_chr(chr) || chr == '"' => {
-                        let begin_pos = chr_pos;
-                        let end_pos = self.lex_atom(chr)?;
-                        let atom = &self.input_str[begin_pos..end_pos];
-                        return Ok((begin_pos, Token::Atom(atom)));
-                    }
-                    // invalid character
-                    chr => {
-                        return Err(ParseError::IllegalChr { chr, pos: chr_pos });
-                    }
-                },
+                }
+                // delimiters
+                Some((chr_pos, '(')) => return Ok((chr_pos, Token::LeftParen)),
+                Some((chr_pos, ')')) => return Ok((chr_pos, Token::RightParen)),
+                // atom
+                Some((chr_pos, chr)) if is_atom_chr(chr) || chr == '"' => {
+                    let begin_pos = chr_pos;
+                    let end_pos = self.lex_atom(chr)?;
+                    let atom = &self.input_str[begin_pos..end_pos];
+                    return Ok((begin_pos, Token::Atom(atom)));
+                }
+                // invalid character
+                Some((chr_pos, chr)) => {
+                    return Err(ParseError::IllegalChr { chr, pos: chr_pos });
+                }
             }
         }
     }
@@ -255,7 +250,7 @@ impl<'a> Lexer<'a> {
                                 pos: self.input_str.len(),
                             });
                         }
-                        Some((_, '"')) | Some((_, '\\')) => {}
+                        Some((_, '"' | '\\')) => {}
                         Some((_, chr)) if is_atom_string_chr(chr) => {}
                         Some((chr_pos, chr)) => {
                             return Err(ParseError::IllegalChrInString { chr, pos: chr_pos });

@@ -60,7 +60,7 @@ pub fn check_atom(atom: &str) -> bool {
                 None => return false,
                 Some('"') => in_string = false,
                 Some('\\') => match iter.next() {
-                    Some('"') | Some('\\') => {}
+                    Some('"' | '\\') => {}
                     Some(chr) if is_atom_string_chr(chr) => {}
                     // Invalid character or unfinished string
                     Some(_) | None => return false,
