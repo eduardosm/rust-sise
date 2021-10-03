@@ -71,8 +71,6 @@ pub struct SerializerStyle<'a> {
 /// assert_eq!(result, expected_result);
 /// ```
 ///
-///
-///
 /// You can write specified nodes in a single line:
 ///
 /// ```
