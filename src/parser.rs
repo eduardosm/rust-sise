@@ -186,24 +186,22 @@ impl<'a> Lexer<'a> {
     fn get_token(&mut self) -> Result<(usize, Token<'a>), ParseError> {
         loop {
             match self.char_iter.next() {
-                None => {
-                    // end-of-file
-                    return Ok((self.input_str.len(), Token::Eof));
-                }
+                // end-of-file
+                None => return Ok((self.input_str.len(), Token::Eof)),
                 // skip whitespace
                 Some((_, ' ' | '\t' | '\n' | '\r')) => {}
                 // skip comments
-                Some((_, ';')) => {
-                    for (chr_pos, chr) in &mut self.char_iter {
-                        match chr {
-                            '\n' | '\r' => break,
-                            '\t' | ' '..='~' => {}
-                            chr => {
-                                return Err(ParseError::IllegalChrInComment { chr, pos: chr_pos });
-                            }
+                Some((_, ';')) => loop {
+                    match self.char_iter.next() {
+                        // end-of-comment and end-of-file
+                        None => return Ok((self.input_str.len(), Token::Eof)),
+                        Some((_, '\n' | '\r')) => break,
+                        Some((_, '\t' | ' '..='~')) => {}
+                        Some((chr_pos, chr)) => {
+                            return Err(ParseError::IllegalChrInComment { chr, pos: chr_pos });
                         }
                     }
-                }
+                },
                 // delimiters
                 Some((chr_pos, '(')) => return Ok((chr_pos, Token::LeftParen)),
                 Some((chr_pos, ')')) => return Ok((chr_pos, Token::RightParen)),
