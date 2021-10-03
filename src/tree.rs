@@ -8,9 +8,9 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-/// A SISE node.
+/// A SISE tree node.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Node {
+pub enum TreeNode {
     /// An atom, that matches the following regular expression:
     ///
     /// > `"([:atomchar:]|\"(\\([:stringchar:]|\\|\")|[:stringchar:])+\")+"`
@@ -28,20 +28,20 @@ pub enum Node {
     Atom(String),
 
     /// A list of nodes
-    List(Vec<Node>),
+    List(Vec<TreeNode>),
 }
 
-impl Node {
+impl TreeNode {
     /// Return whether the node is an `Atom`.
     #[inline]
     pub fn is_atom(&self) -> bool {
-        matches!(self, Node::Atom(_))
+        matches!(self, Self::Atom(_))
     }
 
     /// Return whether the node is a `List`.
     #[inline]
     pub fn is_list(&self) -> bool {
-        matches!(self, Node::List(_))
+        matches!(self, Self::List(_))
     }
 
     /// Consumes the node and returns the atom value if it is an
@@ -49,7 +49,7 @@ impl Node {
     #[inline]
     pub fn into_atom(self) -> Option<String> {
         match self {
-            Node::Atom(s) => Some(s),
+            Self::Atom(s) => Some(s),
             _ => None,
         }
     }
@@ -57,9 +57,9 @@ impl Node {
     /// Consumes the node and returns the list if it is a
     /// `List`.
     #[inline]
-    pub fn into_list(self) -> Option<Vec<Node>> {
+    pub fn into_list(self) -> Option<Vec<Self>> {
         match self {
-            Node::List(l) => Some(l),
+            Self::List(l) => Some(l),
             _ => None,
         }
     }
@@ -69,7 +69,7 @@ impl Node {
     #[inline]
     pub fn as_atom(&self) -> Option<&String> {
         match *self {
-            Node::Atom(ref s) => Some(s),
+            Self::Atom(ref s) => Some(s),
             _ => None,
         }
     }
@@ -77,9 +77,9 @@ impl Node {
     /// Returns a reference to the list if the node is
     /// a `List`.
     #[inline]
-    pub fn as_list(&self) -> Option<&Vec<Node>> {
+    pub fn as_list(&self) -> Option<&Vec<Self>> {
         match *self {
-            Node::List(ref l) => Some(l),
+            Self::List(ref l) => Some(l),
             _ => None,
         }
     }
@@ -89,7 +89,7 @@ impl Node {
     #[inline]
     pub fn as_mut_atom(&mut self) -> Option<&mut String> {
         match *self {
-            Node::Atom(ref mut s) => Some(s),
+            Self::Atom(ref mut s) => Some(s),
             _ => None,
         }
     }
@@ -97,9 +97,9 @@ impl Node {
     /// Returns mutable a reference to the list if the node is
     /// a `List`.
     #[inline]
-    pub fn as_mut_list(&mut self) -> Option<&mut Vec<Node>> {
+    pub fn as_mut_list(&mut self) -> Option<&mut Vec<Self>> {
         match *self {
-            Node::List(ref mut l) => Some(l),
+            Self::List(ref mut l) => Some(l),
             _ => None,
         }
     }
@@ -109,13 +109,13 @@ impl Node {
     /// # Example
     ///
     /// ```
-    /// use sise::sise_expr;
+    /// use sise::sise_tree;
     ///
     /// // (example (1 2 3) (a b c))
-    /// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+    /// let tree = sise_tree!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
     /// assert_eq!(*tree.index_path(&[]).unwrap(), tree);
     /// assert_eq!(*tree.index_path(&[0]).unwrap(), "example");
-    /// assert_eq!(*tree.index_path(&[1]).unwrap(), sise_expr!(["1", "2", "3"]));
+    /// assert_eq!(*tree.index_path(&[1]).unwrap(), sise_tree!(["1", "2", "3"]));
     /// assert_eq!(tree.index_path(&[1, 0]).unwrap(), "1");
     /// assert_eq!(tree.index_path(&[2, 0]).unwrap(), "a");
     /// assert!(tree.index_path(&[3]).is_none());
@@ -125,58 +125,58 @@ impl Node {
         let mut current_node = self;
         for &index in path {
             match current_node {
-                Node::Atom(_) => return None,
-                Node::List(ref list) => current_node = list.get(index)?,
+                Self::Atom(_) => return None,
+                Self::List(ref list) => current_node = list.get(index)?,
             }
         }
         Some(current_node)
     }
 }
 
-impl PartialEq<str> for Node {
+impl PartialEq<str> for TreeNode {
     fn eq(&self, other: &str) -> bool {
         match *self {
-            Node::Atom(ref atom) => atom == other,
+            Self::Atom(ref atom) => atom == other,
             _ => false,
         }
     }
 }
 
-impl PartialEq<&str> for Node {
+impl PartialEq<&str> for TreeNode {
     fn eq(&self, other: &&str) -> bool {
         match *self {
-            Node::Atom(ref atom) => atom == *other,
+            Self::Atom(ref atom) => atom == *other,
             _ => false,
         }
     }
 }
 
-impl PartialEq<String> for Node {
+impl PartialEq<String> for TreeNode {
     fn eq(&self, other: &String) -> bool {
         match *self {
-            Node::Atom(ref atom) => atom == other,
+            Self::Atom(ref atom) => atom == other,
             _ => false,
         }
     }
 }
 
-impl<'a> From<&'a str> for Node {
+impl<'a> From<&'a str> for TreeNode {
     #[inline]
-    fn from(atom: &'a str) -> Node {
-        Node::Atom(String::from(atom))
+    fn from(atom: &'a str) -> Self {
+        Self::Atom(String::from(atom))
     }
 }
 
-impl From<String> for Node {
+impl From<String> for TreeNode {
     #[inline]
-    fn from(atom: String) -> Node {
-        Node::Atom(atom)
+    fn from(atom: String) -> Self {
+        Self::Atom(atom)
     }
 }
 
-impl From<Vec<Node>> for Node {
+impl From<Vec<TreeNode>> for TreeNode {
     #[inline]
-    fn from(list: Vec<Node>) -> Node {
-        Node::List(list)
+    fn from(list: Vec<Self>) -> Self {
+        Self::List(list)
     }
 }

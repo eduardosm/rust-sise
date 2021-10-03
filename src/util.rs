@@ -6,7 +6,7 @@
 // copied, modified, or distributed except according to those terms.
 
 /// Returns whether `chr` is a valid atom character outside a
-/// string (i.e. one of `:atomchar:` documented at `Node::Atom`).
+/// string (i.e. one of `:atomchar:` documented at `TreeNode::Atom`).
 pub fn is_atom_chr(chr: char) -> bool {
     let chars = [
         '!', '#', '$', '%', '&', '*', '+', '-', '.', '/', ':', '<', '=', '>', '?', '@', '_', '~',
@@ -16,13 +16,13 @@ pub fn is_atom_chr(chr: char) -> bool {
 
 /// Returns whether `chr` is a valid atom character inside a
 /// string, excluding `"` and `\` (i.e. one of `:stringchar:`
-/// documented at `Node::Atom`).
+/// documented at `TreeNode::Atom`).
 pub fn is_atom_string_chr(chr: char) -> bool {
     (chr.is_ascii_graphic() && chr != '"' && chr != '\\') || chr == ' '
 }
 
 /// Checks whether `atom` is a valid atom (i.e. matches the regular
-/// expression documented at `Node::Atom`).
+/// expression documented at `TreeNode::Atom`).
 pub fn check_atom(atom: &str) -> bool {
     enum State {
         Beginning,

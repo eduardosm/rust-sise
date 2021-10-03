@@ -7,13 +7,13 @@
 
 use alloc::string::String;
 
-use crate::sise_expr;
+use crate::sise_tree;
 use crate::write_from_tree;
 use crate::CompactStringWriter;
-use crate::Node;
 use crate::SpacedStringWriter;
 use crate::SpacedStringWriterNodeOptions;
 use crate::SpacedStringWriterStyle;
+use crate::TreeNode;
 use crate::Writer as _;
 
 const SPACED_STYLE: SpacedStringWriterStyle<'static> = SpacedStringWriterStyle {
@@ -22,7 +22,7 @@ const SPACED_STYLE: SpacedStringWriterStyle<'static> = SpacedStringWriterStyle {
 };
 
 struct StringWriterTest<'a> {
-    root_node: Node,
+    root_node: TreeNode,
     expected_compact: &'a str,
     expected_spaced: &'a str,
 }
@@ -48,7 +48,7 @@ impl<'a> StringWriterTest<'a> {
 #[test]
 fn test_empty_list() {
     StringWriterTest {
-        root_node: sise_expr!([]),
+        root_node: sise_tree!([]),
         expected_compact: "()",
         expected_spaced: "()",
     }
@@ -58,7 +58,7 @@ fn test_empty_list() {
 #[test]
 fn test_single_atom() {
     StringWriterTest {
-        root_node: sise_expr!("atom"),
+        root_node: sise_tree!("atom"),
         expected_compact: "atom",
         expected_spaced: "atom",
     }
@@ -68,7 +68,7 @@ fn test_single_atom() {
 #[test]
 fn test_list_with_one_atom() {
     StringWriterTest {
-        root_node: sise_expr!(["1"]),
+        root_node: sise_tree!(["1"]),
         expected_compact: "(1)",
         expected_spaced: "(1)",
     }
@@ -78,7 +78,7 @@ fn test_list_with_one_atom() {
 #[test]
 fn test_list_with_two_atoms() {
     StringWriterTest {
-        root_node: sise_expr!(["1", "2"]),
+        root_node: sise_tree!(["1", "2"]),
         expected_compact: "(1 2)",
         expected_spaced: "(1\n\t2\n)",
     }
@@ -88,7 +88,7 @@ fn test_list_with_two_atoms() {
 #[test]
 fn test_list_with_three_atoms() {
     StringWriterTest {
-        root_node: sise_expr!(["1", "2", "3"]),
+        root_node: sise_tree!(["1", "2", "3"]),
         expected_compact: "(1 2 3)",
         expected_spaced: "(1\n\t2\n\t3\n)",
     }
@@ -98,7 +98,7 @@ fn test_list_with_three_atoms() {
 #[test]
 fn test_nested_list_1() {
     StringWriterTest {
-        root_node: sise_expr!([[]]),
+        root_node: sise_tree!([[]]),
         expected_compact: "(())",
         expected_spaced: "(\n\t()\n)",
     }
@@ -108,7 +108,7 @@ fn test_nested_list_1() {
 #[test]
 fn test_nested_list_2() {
     StringWriterTest {
-        root_node: sise_expr!([[], []]),
+        root_node: sise_tree!([[], []]),
         expected_compact: "(() ())",
         expected_spaced: "(\n\t()\n\t()\n)",
     }
@@ -118,7 +118,7 @@ fn test_nested_list_2() {
 #[test]
 fn test_mixed() {
     StringWriterTest {
-        root_node: sise_expr!([
+        root_node: sise_tree!([
             "atom-1",
             ["atom-2"],
             ["atom-3", ["atom-4"], "atom-5"],
@@ -133,8 +133,6 @@ fn test_mixed() {
 
 #[test]
 fn test_spaced_with_keep_line_1() {
-    //let root_node = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
-
     let mut result = String::new();
     let mut writer = SpacedStringWriter::new(SPACED_STYLE, &mut result);
 
@@ -164,8 +162,6 @@ fn test_spaced_with_keep_line_1() {
 
 #[test]
 fn test_spaced_with_keep_line_2() {
-    //let root_node = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
-
     let mut result = String::new();
     let mut writer = SpacedStringWriter::new(SPACED_STYLE, &mut result);
 
@@ -195,8 +191,6 @@ fn test_spaced_with_keep_line_2() {
 
 #[test]
 fn test_spaced_with_keep_line_3() {
-    //let root_node = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
-
     let mut result = String::new();
     let mut writer = SpacedStringWriter::new(SPACED_STYLE, &mut result);
 

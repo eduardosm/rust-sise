@@ -7,21 +7,21 @@
 
 use alloc::vec::Vec;
 
-use crate::{Node, ParseError, ParsedItem, Parser};
+use crate::{ParseError, ParsedItem, Parser, TreeNode};
 
-/// Parses into a tree of `Node`.
+/// Parses into a tree of `TreeNode`.
 ///
 /// # Example
 ///
 /// ```
-/// use sise::sise_expr;
+/// use sise::sise_tree;
 ///
 /// let data = "(test (1 2 3))";
 /// let mut parser = sise::Parser::new(data);
 /// let root_node = sise::parse_into_tree(&mut parser).unwrap();
 /// // Do not forget calling `finish` on the parser.
 /// parser.finish().unwrap();
-/// let expected_result = sise_expr!(["test", ["1", "2", "3"]]);
+/// let expected_result = sise_tree!(["test", ["1", "2", "3"]]);
 /// assert_eq!(root_node, expected_result);
 /// ```
 ///
@@ -29,7 +29,7 @@ use crate::{Node, ParseError, ParsedItem, Parser};
 /// a sub-tree:
 ///
 /// ```
-/// use sise::sise_expr;
+/// use sise::sise_tree;
 ///
 /// let data = "(head (1 2 3) tail)";
 /// let mut parser = sise::Parser::new(data);
@@ -43,7 +43,7 @@ use crate::{Node, ParseError, ParsedItem, Parser};
 ///
 /// // Parse the subtree
 /// let root_node = sise::parse_into_tree(&mut parser).unwrap();
-/// let expected_result = sise_expr!(["1", "2", "3"]);
+/// let expected_result = sise_tree!(["1", "2", "3"]);
 /// assert_eq!(root_node, expected_result);
 ///
 /// // Parse the tail
@@ -54,9 +54,9 @@ use crate::{Node, ParseError, ParsedItem, Parser};
 /// assert_eq!(parser.next_item().unwrap(), sise::ParsedItem::ListEnd(18));
 /// parser.finish().unwrap();
 /// ```
-pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<Node, ParseError> {
+pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<TreeNode, ParseError> {
     struct StackItem {
-        list_items: Vec<Node>,
+        list_items: Vec<TreeNode>,
     }
 
     enum State {
@@ -65,7 +65,7 @@ pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<Node, ParseError> {
             stack: Vec<StackItem>,
             current: StackItem,
         },
-        Finished(Node),
+        Finished(TreeNode),
     }
 
     let mut state = State::Beginning;
@@ -74,7 +74,7 @@ pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<Node, ParseError> {
         match state {
             State::Beginning => match parser.next_item()? {
                 ParsedItem::Atom(atom, _) => {
-                    let root_node = Node::Atom(atom.into());
+                    let root_node = TreeNode::Atom(atom.into());
                     state = State::Finished(root_node);
                 }
                 ParsedItem::ListStart(_) => {
@@ -92,7 +92,7 @@ pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<Node, ParseError> {
                 ref mut current,
             } => match parser.next_item()? {
                 ParsedItem::Atom(atom, _) => {
-                    current.list_items.push(Node::Atom(atom.into()));
+                    current.list_items.push(TreeNode::Atom(atom.into()));
                 }
                 ParsedItem::ListStart(_) => {
                     let new_current = StackItem {
@@ -103,9 +103,11 @@ pub fn parse_into_tree(parser: &mut Parser<'_>) -> Result<Node, ParseError> {
                 ParsedItem::ListEnd(_) => {
                     if let Some(previous) = stack.pop() {
                         let old_current = core::mem::replace(current, previous);
-                        current.list_items.push(Node::List(old_current.list_items));
+                        current
+                            .list_items
+                            .push(TreeNode::List(old_current.list_items));
                     } else {
-                        let root_node = Node::List(core::mem::take(&mut current.list_items));
+                        let root_node = TreeNode::List(core::mem::take(&mut current.list_items));
                         state = State::Finished(root_node);
                     }
                 }

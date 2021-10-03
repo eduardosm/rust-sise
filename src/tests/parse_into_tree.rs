@@ -6,13 +6,13 @@
 // copied, modified, or distributed except according to those terms.
 
 use crate::parse_into_tree;
-use crate::sise_expr;
-use crate::Node;
+use crate::sise_tree;
 use crate::Parser;
+use crate::TreeNode;
 
 struct ParseTreeTest<'a> {
     src_data: &'a str,
-    expected_tree: Node,
+    expected_tree: TreeNode,
 }
 
 impl<'a> ParseTreeTest<'a> {
@@ -28,7 +28,7 @@ impl<'a> ParseTreeTest<'a> {
 fn test_empty_list() {
     ParseTreeTest {
         src_data: "()",
-        expected_tree: sise_expr!([]),
+        expected_tree: sise_tree!([]),
     }
     .run();
 }
@@ -37,7 +37,7 @@ fn test_empty_list() {
 fn test_single_atom() {
     ParseTreeTest {
         src_data: "atom",
-        expected_tree: sise_expr!("atom"),
+        expected_tree: sise_tree!("atom"),
     }
     .run();
 }
@@ -46,7 +46,7 @@ fn test_single_atom() {
 fn test_simple_list_1() {
     ParseTreeTest {
         src_data: "(atom-1)",
-        expected_tree: sise_expr!(["atom-1"]),
+        expected_tree: sise_tree!(["atom-1"]),
     }
     .run();
 }
@@ -55,7 +55,7 @@ fn test_simple_list_1() {
 fn test_simple_list_2() {
     ParseTreeTest {
         src_data: "(atom-1 atom-2)",
-        expected_tree: sise_expr!(["atom-1", "atom-2"]),
+        expected_tree: sise_tree!(["atom-1", "atom-2"]),
     }
     .run();
 }
@@ -64,7 +64,7 @@ fn test_simple_list_2() {
 fn test_nested_list_1() {
     ParseTreeTest {
         src_data: "(())",
-        expected_tree: sise_expr!([[]]),
+        expected_tree: sise_tree!([[]]),
     }
     .run();
 }
@@ -73,7 +73,7 @@ fn test_nested_list_1() {
 fn test_nested_list_2() {
     ParseTreeTest {
         src_data: "(() ())",
-        expected_tree: sise_expr!([[], []]),
+        expected_tree: sise_tree!([[], []]),
     }
     .run();
 }
@@ -82,7 +82,7 @@ fn test_nested_list_2() {
 fn test_nested_list_3() {
     ParseTreeTest {
         src_data: "((atom-1) (atom-2 atom-3))",
-        expected_tree: sise_expr!([["atom-1"], ["atom-2", "atom-3"]]),
+        expected_tree: sise_tree!([["atom-1"], ["atom-2", "atom-3"]]),
     }
     .run();
 }

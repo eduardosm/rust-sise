@@ -8,7 +8,7 @@
 use alloc::vec::Vec;
 
 use crate::MaybeMultilineOptions;
-use crate::Node;
+use crate::TreeNode;
 use crate::Writer;
 
 pub trait WriteFromTreeAtomOptions {
@@ -33,10 +33,10 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// # Example
 ///
 /// ```
-/// use sise::sise_expr;
+/// use sise::sise_tree;
 /// use sise::Writer as _;
 ///
-/// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+/// let tree = sise_tree!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 ///
 /// let mut result = String::new();
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
@@ -52,10 +52,10 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// will be placed in the same line as the openning `(`:
 ///
 /// ```
-/// use sise::sise_expr;
+/// use sise::sise_tree;
 /// use sise::Writer as _;
 ///
-/// let tree = sise_expr!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
+/// let tree = sise_tree!(["example", ["1", "2", "3"], ["a", "b", "c"]]);
 ///
 /// let style = sise::SpacedStringWriterStyle {
 ///     line_break: "\n",
@@ -76,10 +76,10 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// a sub-tree:
 ///
 /// ```
-/// use sise::sise_expr;
+/// use sise::sise_tree;
 /// use sise::Writer as _;
 ///
-/// let tree = sise_expr!(["1", "2", "3"]);
+/// let tree = sise_tree!(["1", "2", "3"]);
 ///
 /// let mut result = String::new();
 /// let mut writer = sise::CompactStringWriter::new(&mut result);
@@ -99,17 +99,17 @@ impl<T: MaybeMultilineOptions> WriteFromTreeAtomOptions for T {
 /// let expected_result = "(head (1 2 3) tail)";
 /// assert_eq!(result, expected_result);
 /// ```
-pub fn write_from_tree<W: Writer>(writer: &mut W, root_node: &Node) -> Result<(), W::Error>
+pub fn write_from_tree<W: Writer>(writer: &mut W, root_node: &TreeNode) -> Result<(), W::Error>
 where
     W::AtomOptions: Default + WriteFromTreeAtomOptions,
     W::BeginListOptions: Default,
     W::EndListOptions: Default,
 {
     enum State<'a> {
-        Beginning(&'a Node),
+        Beginning(&'a TreeNode),
         Writing {
-            stack: Vec<core::slice::Iter<'a, Node>>,
-            current_list: core::slice::Iter<'a, Node>,
+            stack: Vec<core::slice::Iter<'a, TreeNode>>,
+            current_list: core::slice::Iter<'a, TreeNode>,
             list_beginning: bool,
         },
         Finished,
@@ -120,11 +120,11 @@ where
     loop {
         match state {
             State::Beginning(node) => match node {
-                Node::Atom(atom) => {
+                TreeNode::Atom(atom) => {
                     writer.write_atom(atom, W::AtomOptions::default())?;
                     state = State::Finished;
                 }
-                Node::List(list) => {
+                TreeNode::List(list) => {
                     writer.begin_list(W::BeginListOptions::default())?;
                     state = State::Writing {
                         stack: Vec::new(),
@@ -140,7 +140,7 @@ where
             } => {
                 if let Some(node) = current_list.next() {
                     match node {
-                        Node::Atom(atom) => {
+                        TreeNode::Atom(atom) => {
                             if *list_beginning {
                                 writer.write_atom(atom, W::AtomOptions::list_beginning())?;
                             } else {
@@ -148,7 +148,7 @@ where
                             }
                             *list_beginning = false;
                         }
-                        Node::List(list) => {
+                        TreeNode::List(list) => {
                             writer.begin_list(W::BeginListOptions::default())?;
                             stack.push(core::mem::replace(current_list, list.iter()));
                             *list_beginning = true;

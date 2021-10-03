@@ -30,21 +30,21 @@ extern crate std;
 mod tests;
 
 mod compact_string_writer;
-mod node;
 mod parse_into_tree;
 mod parser;
 mod spaced_string_writer;
+mod tree;
 mod util;
 mod write_from_tree;
 mod writer;
 
 pub use compact_string_writer::CompactStringWriter;
-pub use node::Node;
 pub use parse_into_tree::parse_into_tree;
 pub use parser::{ParseError, ParsedItem, Parser};
 pub use spaced_string_writer::{
     SpacedStringWriter, SpacedStringWriterNodeOptions, SpacedStringWriterStyle,
 };
+pub use tree::TreeNode;
 pub use util::{check_atom, is_atom_chr, is_atom_string_chr};
 pub use write_from_tree::{write_from_tree, WriteFromTreeAtomOptions};
 pub use writer::{MaybeMultilineOptions, Writer};
@@ -54,45 +54,45 @@ pub use writer::{MaybeMultilineOptions, Writer};
 /// # Example
 ///
 /// ```
-/// use sise::sise_expr;
+/// use sise::sise_tree;
 ///
 /// // atom
-/// let value1 = sise::Node::Atom(String::from("atom"));
-/// let value2 = sise_expr!("atom");
+/// let value1 = sise::TreeNode::Atom(String::from("atom"));
+/// let value2 = sise_tree!("atom");
 /// assert_eq!(value1, value2);
 ///
 /// // ()
-/// let value1 = sise::Node::List(vec![]);
-/// let value2 = sise_expr!([]);
+/// let value1 = sise::TreeNode::List(vec![]);
+/// let value2 = sise_tree!([]);
 /// assert_eq!(value1, value2);
 ///
 /// // (atom)
-/// let value1 = sise::Node::List(vec![sise::Node::Atom(String::from("atom"))]);
-/// let value2 = sise_expr!(["atom"]);
+/// let value1 = sise::TreeNode::List(vec![sise::TreeNode::Atom(String::from("atom"))]);
+/// let value2 = sise_tree!(["atom"]);
 /// assert_eq!(value1, value2);
 ///
 /// // (atom (1 2 3) (a b c))
-/// let value1 = sise::Node::List(vec![
-///     sise::Node::Atom(String::from("atom")),
-///     sise::Node::List(vec![
-///         sise::Node::Atom(String::from("1")),
-///         sise::Node::Atom(String::from("2")),
-///         sise::Node::Atom(String::from("3")),
+/// let value1 = sise::TreeNode::List(vec![
+///     sise::TreeNode::Atom(String::from("atom")),
+///     sise::TreeNode::List(vec![
+///         sise::TreeNode::Atom(String::from("1")),
+///         sise::TreeNode::Atom(String::from("2")),
+///         sise::TreeNode::Atom(String::from("3")),
 ///     ]),
-///     sise::Node::List(vec![
-///         sise::Node::Atom(String::from("a")),
-///         sise::Node::Atom(String::from("b")),
-///         sise::Node::Atom(String::from("c")),
+///     sise::TreeNode::List(vec![
+///         sise::TreeNode::Atom(String::from("a")),
+///         sise::TreeNode::Atom(String::from("b")),
+///         sise::TreeNode::Atom(String::from("c")),
 ///     ]),
 /// ]);
-/// let value2 = sise_expr!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
+/// let value2 = sise_tree!(["atom", ["1", "2", "3"], ["a", "b", "c"]]);
 /// assert_eq!(value1, value2);
 /// ```
 #[macro_export]
-macro_rules! sise_expr {
-    ([$($item:tt),*]) => { $crate::Node::List($crate::__vec![$($crate::sise_expr!($item)),*]) };
-    ([$($item:tt,)*]) => { $crate::Node::List($crate::__vec![$($crate::sise_expr!($item)),*]) };
-    ($node:expr) => { $crate::Node::from($node) };
+macro_rules! sise_tree {
+    ([$($item:tt),*]) => { $crate::TreeNode::List($crate::__vec![$($crate::sise_tree!($item)),*]) };
+    ([$($item:tt,)*]) => { $crate::TreeNode::List($crate::__vec![$($crate::sise_tree!($item)),*]) };
+    ($node:expr) => { $crate::TreeNode::from($node) };
 }
 
 #[doc(hidden)]
