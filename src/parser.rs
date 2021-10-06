@@ -171,51 +171,96 @@ enum Token<'a> {
 }
 
 struct Lexer<'a> {
-    input_str: &'a str,
-    char_iter: core::str::CharIndices<'a>,
+    rem_input: &'a str,
+    rem_offset: usize,
 }
 
 impl<'a> Lexer<'a> {
     fn new(input: &'a str) -> Self {
         Lexer {
-            input_str: input,
-            char_iter: input.char_indices(),
+            rem_input: input,
+            rem_offset: 0,
+        }
+    }
+
+    #[must_use]
+    #[inline]
+    fn eat_any_char(&mut self) -> Option<char> {
+        let mut iter = self.rem_input.chars();
+        if let Some(chr) = iter.next() {
+            let new_rem = iter.as_str();
+            self.rem_offset += self.rem_input.len() - new_rem.len();
+            self.rem_input = new_rem;
+            Some(chr)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    #[inline]
+    fn eat_char(&mut self, chr: char) -> bool {
+        if let Some(new_rem) = self.rem_input.strip_prefix(chr) {
+            self.rem_offset += self.rem_input.len() - new_rem.len();
+            self.rem_input = new_rem;
+            true
+        } else {
+            false
+        }
+    }
+
+    #[must_use]
+    #[inline]
+    fn eat_char_if(&mut self, pred: impl FnMut(char) -> bool) -> bool {
+        if let Some(new_rem) = self.rem_input.strip_prefix(pred) {
+            self.rem_offset += self.rem_input.len() - new_rem.len();
+            self.rem_input = new_rem;
+            true
+        } else {
+            false
         }
     }
 
     fn get_token(&mut self) -> Result<(usize, Token<'a>), ParseError> {
         loop {
-            match self.char_iter.next() {
-                // end-of-file
-                None => return Ok((self.input_str.len(), Token::Eof)),
+            let start_str = self.rem_input;
+            let chr_pos = self.rem_offset;
+            if self.eat_char(' ')
+                || self.eat_char('\t')
+                || self.eat_char('\n')
+                || self.eat_char('\r')
+            {
                 // skip whitespace
-                Some((_, ' ' | '\t' | '\n' | '\r')) => {}
+            } else if self.eat_char(';') {
                 // skip comments
-                Some((_, ';')) => loop {
-                    match self.char_iter.next() {
-                        // end-of-comment and end-of-file
-                        None => return Ok((self.input_str.len(), Token::Eof)),
-                        Some((_, '\n' | '\r')) => break,
-                        Some((_, '\t' | ' '..='~')) => {}
-                        Some((chr_pos, chr)) => {
+                loop {
+                    let chr_pos = self.rem_offset;
+                    match self.eat_any_char() {
+                        None => return Ok((self.rem_offset, Token::Eof)),
+                        Some('\n' | '\r') => break,
+                        Some('\t' | ' '..='~') => {}
+                        Some(chr) => {
                             return Err(ParseError::IllegalChrInComment { chr, pos: chr_pos });
                         }
                     }
-                },
-                // delimiters
-                Some((chr_pos, '(')) => return Ok((chr_pos, Token::LeftParen)),
-                Some((chr_pos, ')')) => return Ok((chr_pos, Token::RightParen)),
-                // atom
-                Some((chr_pos, chr)) if is_atom_chr(chr) || chr == '"' => {
+                }
+            } else if self.eat_char('(') {
+                return Ok((chr_pos, Token::LeftParen));
+            } else if self.eat_char(')') {
+                return Ok((chr_pos, Token::RightParen));
+            } else if let Some(chr) = self.eat_any_char() {
+                if is_atom_chr(chr) || chr == '"' {
                     let begin_pos = chr_pos;
                     let end_pos = self.lex_atom(chr)?;
-                    let atom = &self.input_str[begin_pos..end_pos];
+                    let atom = &start_str[..(end_pos - begin_pos)];
                     return Ok((begin_pos, Token::Atom(atom)));
-                }
-                // invalid character
-                Some((chr_pos, chr)) => {
+                } else {
+                    // invalid character
                     return Err(ParseError::IllegalChr { chr, pos: chr_pos });
                 }
+            } else {
+                // end-of-file
+                return Ok((self.rem_offset, Token::Eof));
             }
         }
     }
@@ -223,42 +268,30 @@ impl<'a> Lexer<'a> {
     fn lex_atom(&mut self, first_chr: char) -> Result<usize, ParseError> {
         let mut in_string = first_chr == '"';
         loop {
-            if !in_string {
-                let saved_iter = self.char_iter.clone();
-                match self.char_iter.next() {
-                    None => return Ok(self.input_str.len()),
-                    Some((_, '"')) => in_string = true,
-                    Some((_, chr)) if is_atom_chr(chr) => {}
-                    Some((chr_pos, _)) => {
-                        self.char_iter = saved_iter;
-                        return Ok(chr_pos);
-                    }
-                }
-            } else {
-                match self.char_iter.next() {
-                    None => {
-                        return Err(ParseError::UnfinishedString {
-                            pos: self.input_str.len(),
-                        });
-                    }
-                    Some((_, '"')) => in_string = false,
-                    Some((_, '\\')) => match self.char_iter.next() {
-                        None => {
-                            return Err(ParseError::UnfinishedString {
-                                pos: self.input_str.len(),
-                            });
-                        }
-                        Some((_, '"' | '\\')) => {}
-                        Some((_, chr)) if is_atom_string_chr(chr) => {}
-                        Some((chr_pos, chr)) => {
+            let chr_pos = self.rem_offset;
+            if in_string {
+                if self.eat_char('"') {
+                    in_string = false;
+                } else if self.eat_char('\\') {
+                    let chr_pos = self.rem_offset;
+                    if let Some(chr) = self.eat_any_char() {
+                        if chr != '"' && chr != '\\' && !is_atom_string_chr(chr) {
                             return Err(ParseError::IllegalChrInString { chr, pos: chr_pos });
                         }
-                    },
-                    Some((_, chr)) if is_atom_string_chr(chr) => {}
-                    Some((chr_pos, chr)) => {
+                    } else {
+                        return Err(ParseError::UnfinishedString { pos: chr_pos });
+                    }
+                } else if let Some(chr) = self.eat_any_char() {
+                    if !is_atom_string_chr(chr) {
                         return Err(ParseError::IllegalChrInString { chr, pos: chr_pos });
                     }
+                } else {
+                    return Err(ParseError::UnfinishedString { pos: chr_pos });
                 }
+            } else if self.eat_char('"') {
+                in_string = true;
+            } else if !self.eat_char_if(is_atom_chr) {
+                return Ok(chr_pos);
             }
         }
     }
