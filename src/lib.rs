@@ -2,7 +2,7 @@
 //!
 //! # Minimum Rust version
 //!
-//! The minimum Rust version required by this crate is 1.53.
+//! The minimum Rust version required by this crate is 1.56.
 
 #![deny(
     rust_2018_idioms,
