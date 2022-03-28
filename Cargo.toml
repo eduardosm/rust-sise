@@ -1,6 +1,6 @@
 [package]
 name = "sise"
-version = "0.8.0-pre"
+version = "0.8.0"
 authors = ["Eduardo Sánchez Muñoz <esm@eduardosm.net>"]
 edition = "2021"
 rust-version = "1.56"
