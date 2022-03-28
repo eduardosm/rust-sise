@@ -8,7 +8,7 @@ description = "SISE (Simple S-expression) parser, serializer and utilities libra
 repository = "https://github.com/eduardosm/rust-sise"
 keywords = ["s-expression", "sexp", "sexpr"]
 license = "MIT OR Apache-2.0"
-publish = false
+publish = true
 
 [features]
 default = ["std"]
