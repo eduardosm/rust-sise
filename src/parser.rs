@@ -69,7 +69,7 @@ impl core::fmt::Display for ParseError {
 #[cfg(feature = "std")]
 impl std::error::Error for ParseError {}
 
-/// Parser that decodes a SISE file from memory.
+/// Parser that decodes a SISE file into a sequence of [`ParsedItem`].
 ///
 /// # Example
 ///
