@@ -8,15 +8,6 @@
 )]
 #![forbid(unsafe_code)]
 
-use std::io::Read as _;
-
-fn read_file(path: &std::path::Path) -> Result<Vec<u8>, std::io::Error> {
-    let mut file = std::fs::OpenOptions::new().read(true).open(path)?;
-    let mut data = Vec::new();
-    file.read_to_end(&mut data)?;
-    Ok(data)
-}
-
 fn main() {
     let args: Vec<_> = std::env::args_os().collect();
     if args.len() != 2 {
@@ -24,7 +15,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    let file_data = read_file(std::path::Path::new(&args[1])).unwrap();
+    let file_data = std::fs::read(&args[1]).unwrap();
     let file_data = String::from_utf8(file_data).unwrap();
     let mut parser = sise::Parser::new(&file_data);
     let parsed = sise::parse_tree(&mut parser).unwrap();
