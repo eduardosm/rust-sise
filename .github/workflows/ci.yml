@@ -15,7 +15,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.56.0
+          toolchain: 1.59.0
           override: true
           components: clippy
       - name: clippy
@@ -31,7 +31,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.56.0
+          toolchain: 1.59.0
           override: true
           components: rustfmt
       - name: clippy
