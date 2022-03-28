@@ -134,7 +134,7 @@ impl<'a, 'b> Serializer<'a, 'b> {
         }
     }
 
-    pub fn write_indent(indentation: &str, n: usize, out: &mut String) -> usize {
+    fn write_indent(indentation: &str, n: usize, out: &mut String) -> usize {
         let prev_len = out.len();
         for _ in 0..n {
             out.push_str(indentation);
